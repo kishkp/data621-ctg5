@@ -1,0 +1,18 @@
+VARIABLE_NAME,DEFINITION,THEORETICAL_EFFECT
+INDEX,Identification Variable (do not use)   ,None   
+TARGET_WINS,Number of wins     ,Target   
+TEAM_BATTING_H,"Base Hits by batters (1B,2B,3B,HR)   ",Positive Impact on Wins
+TEAM_BATTING_2B,Doubles by batters (2B)    ,Positive Impact on Wins
+TEAM_BATTING_3B,Triples by batters (3B)    ,Positive Impact on Wins
+TEAM_BATTING_HR,Homeruns by batters (4B)    ,Positive Impact on Wins
+TEAM_BATTING_BB,Walks by batters     ,Positive Impact on Wins
+TEAM_BATTING_HBP,Batters hit by pitch (get a free base),Positive Impact on Wins
+TEAM_BATTING_SO,Strikeouts by batters     ,Negative Impact on Wins
+TEAM_BASERUN_SB,Stolen bases      ,Positive Impact on Wins
+TEAM_BASERUN_CS,Caught stealing      ,Negative Impact on Wins
+TEAM_FIELDING_E,Errors       ,Negative Impact on Wins
+TEAM_FIELDING_DP,Double Plays      ,Positive Impact on Wins
+TEAM_PITCHING_BB,Walks allowed      ,Negative Impact on Wins
+TEAM_PITCHING_H,Hits allowed      ,Negative Impact on Wins
+TEAM_PITCHING_HR,Homeruns allowed      ,Negative Impact on Wins
+TEAM_PITCHING_SO,Strikeouts by pitchers     ,Positive Impact on Wins

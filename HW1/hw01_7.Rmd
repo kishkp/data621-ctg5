@@ -37,7 +37,7 @@ library(knitr)
 library(xtable)
 library(dplyr)
 
-moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-training-data.csv")
+moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
 kable(moneyballvars)
 
 ```
@@ -222,7 +222,9 @@ Correlation <- c(cor(moneyball2$TARGET_WINS, moneyball2$TARGET_WINS, use = "na.o
 )
 
 df <- data.frame(Variable,"Count Missing Values" = Missing, Mean, Correlation, 
-           'Theoretical Impact '= moneyballvars$THEORETICAL_EFFECT[2:17])
+            'Theoretical Impact '= moneyballvars$THEORETICAL_EFFECT[2:17])
+
+
 
 kable(df)
 
