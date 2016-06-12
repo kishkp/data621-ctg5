@@ -1,0 +1,148 @@
+---
+title: "Assignment01"
+output: pdf_document
+author: "Group 5"
+---
+
+
+
+
+#### Data Exploration and Preparation \
+
+
+As the quality of our inputs decide the quality of your output, we will be spending more time and efforts in data exploration, cleaning and preparation. We will be following the below steps for our data exploration and preparation:
+
+1- Variable Identification \
+2- Univariate Analysis \
+3- Bi-variate Analysis\
+4- Missing values treatment\
+5- Outlier treatment\
+6- Variable transformation\
+7- Variable creation\
+\
+\
+
+
+####1- Variable Identification\
+
+
+First let's display and examine the data dictionary or the data columns.     
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+
+moneyballvars <- read.csv("C:/CUNY/Courses/IS621/Assignment602/Assignment01/data/moneyballVars.csv")
+kable(moneyballvars)
+
+```
+
+\
+
+We notice that all variables are numeric.  The variable names seem to follow certain naming pattern to highlight certain arithmetic relationships.  In other words, we can compute the number of '1B' hits by taking the difference between overall hits and '2B', '3B', 'HR'. Although such naming and construct is not recommended in normalized database design ( as it violates third normal form), it is very frequent practice in the data analytics.
+\
+
+
+Then , we will identify Predictor (Input) and Target (output) variables. Next, we will identify the data type and category of the variables.
+
+Our predictor input is made of 15 variables. And our dependent variable is one variable called TARGET_WINS.
+
+Below are the variable that have been identified and their respective type and category:
+
+![Alt text](C:\CUNY\Courses\IS621\Assignment602\Assignment01\dataexplore.pdf)  \
+
+\
+
+
+
+####2- Univariate Analysis \
+
+
+At this stage, we explore variables one by one. Method to perform uni-variate analysis will depend on whether 
+the variable type is categorical or continuous. in our case all variables are coutinous. Hence we need to understand 
+the central tendency and spread of each variable. 
+These are measured using various statistical metrics visualization methods:
+
+![Alt text](C:\CUNY\Courses\IS621\Assignment602\Assignment01\fig2.png)
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+
+library(MASS)
+
+library(knitr)
+library(xtable)
+library(dplyr)
+
+moneyball <- read.csv("C:/CUNY/Courses/IS621/Assignment602/Assignment01/data/moneyball-training-data.csv")
+
+moneyball2<- select(moneyball, -(INDEX))
+print(summary(moneyball2),tabular.environment="longtable",floating=FALSE, format= "latex")
+
+#kable(summary(moneyball2))
+#print(summary(moneyball$TARGET_WINS)  )
+
+```
+
+
+
+####3- Bi-variate Analysis \
+
+
+Bi-variate Analysis finds out the relationship between two variables. 
+Here, we look for association and disassociation between variables at a pre-defined significance level. \
+\
+
+In our case we have only continuous variables we will be doing bi-variate analysis between two continuous variables.  We will use scatter plot and find out the relationship between two variables: 
+We are looking to find the pattern and if the relationship between the variables is linear or non-linear. \
+\
+Also we will use the scatter plot to show the strength of the relationship between two variable. 
+To find the strength of the relationship, we use Correlation. Correlation varies between -1 and +1. \
+\
+-1: perfect negative linear correlation \
++1:perfect positive linear correlation and  \
+0: No correlation \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+cor(moneyball2) 
+
+library(corrgram) 
+col.corrgram <- function(ncol){   
+  colorRampPalette(c("darkgoldenrod4", "burlywood1",
+  "darkkhaki", "darkgreen"))(ncol)} 
+corrgram(moneyball2, order=TRUE, lower.panel=panel.shade, 
+   upper.panel=panel.pie, text.panel=panel.txt, 
+   main="Correlogram of moneyball data")
+
+
+```
+
+##### Correlation of our dependable variable TARGET_WINS relative to the other 15 independable variables:
+
+
+
+```{r, echo=FALSE}
+
+for (i in 3: 15) {
+x<- cor(moneyball[2], moneyball[i])
+print(kable(x))
+}
+```
+
+
+
+####4- Missing values treatment\
+
+
+Missing data in the training data set can reduce the power / fit of a model or can lead to a biased model because we have not analysed the behavior and relationship with other variables correctly. It can lead to wrong prediction or classification.
+
