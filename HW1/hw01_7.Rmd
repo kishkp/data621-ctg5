@@ -224,13 +224,88 @@ Correlation <- c(cor(moneyball2$TARGET_WINS, moneyball2$TARGET_WINS, use = "na.o
 df <- data.frame(Variable,"Count Missing Values" = Missing, Mean, Correlation, 
             'Theoretical Impact '= moneyballvars$THEORETICAL_EFFECT[2:17])
 
-
-
 kable(df)
 
 ```
 
 
+####5- Outlier treatment\
+
+Outliers might make a huge impact on the model if not identified and handled appropriately. Here we identify the outliers and exclude them if they seem to have an impact. To do this, we will first identify the variables with outliers and then check the correlation with and without the outliers to the dependent variable. We will then retain or exclude those outliers that seem to make a difference. \
+
+First lets have a look at all the variables and outliers.\
 
 
+```{r}
+
+# Has many outliers on both ends
+boxplot(moneyball2$TEAM_BATTING_H)
+
+# Has some outliers on both ends
+boxplot(moneyball2$TEAM_BATTING_2B)
+
+# Has many outliers on the higher end 
+boxplot(moneyball2$TEAM_BATTING_3B)
+
+# No Outliers 
+boxplot(moneyball2$TEAM_BATTING_HR)
+
+# Has many outliers on the both end 
+boxplot(moneyball2$TEAM_BATTING_BB)
+
+# Has one outlier on the higher end 
+boxplot(moneyball2$TEAM_BATTING_HBP)
+
+# No Outliers 
+boxplot(moneyball2$TEAM_BATTING_SO)
+
+# Has many outliers on the higher end 
+boxplot(moneyball2$TEAM_BASERUN_SB)
+
+# Has many outliers on the higher end 
+boxplot(moneyball2$TEAM_BASERUN_CS)
+
+# Has many outliers on the higher end 
+boxplot(moneyball2$TEAM_FIELDING_E)
+
+# Has some outliers on the higher end 
+boxplot(moneyball2$TEAM_FIELDING_DP)
+
+# Has many outliers on both end 
+boxplot(moneyball2$TEAM_PITCHING_BB)
+
+# Has many outliers on the higher end 
+boxplot(moneyball2$TEAM_PITCHING_H)
+
+# Has some outliers on the higher end 
+boxplot(moneyball2$TEAM_PITCHING_HR)
+
+# Has many outliers on the higher end 
+boxplot(moneyball2$TEAM_PITCHING_SO)
+
+
+# function for removing outliers - http://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset
+
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+
+# remove outliers and place in new variable
+new_TEAM_BATTING_H <- remove_outliers(moneyball2$TEAM_BATTING_H)
+
+# check the boxplot now
+boxplot(new_TEAM_BATTING_H)
+
+# compare the correlations
+cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_H, use = "na.or.complete")
+cor(moneyball2$TARGET_WINS, new_TEAM_BATTING_H, use = "na.or.complete")
+
+
+
+             
 
