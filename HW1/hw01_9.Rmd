@@ -1,7 +1,7 @@
 ---
 title: "Assignment01"
-output: pdf_document
 author: "Group 5"
+output: html_document
 ---
 
 

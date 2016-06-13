@@ -305,7 +305,3 @@ boxplot(new_TEAM_BATTING_H)
 cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_H, use = "na.or.complete")
 cor(moneyball2$TARGET_WINS, new_TEAM_BATTING_H, use = "na.or.complete")
 
-
-
-             
-
