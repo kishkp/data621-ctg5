@@ -1,0 +1,307 @@
+---
+title: "Assignment01"
+output: pdf_document
+author: "Group 5"
+---
+
+
+
+
+#### Data Exploration and Preparation \
+
+
+As the quality of our inputs decide the quality of your output, we will be spending more time and efforts in data exploration, cleaning and preparation. We will be following the below steps for our data exploration and preparation:
+
+1- Variable Identification \
+2- Univariate Analysis \
+3- Bi-variate Analysis\
+4- Missing values treatment\
+5- Outlier treatment\
+6- Variable transformation\
+7- Variable creation\
+\
+\
+
+
+####1- Variable Identification\
+
+
+First let's display and examine the data dictionary or the data columns.     
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+
+moneyballvars <- read.csv("C:/CUNY/Courses/IS621/Assignment602/Assignment01/data/moneyballVars.csv")
+kable(moneyballvars)
+
+```
+
+\
+
+We notice that all variables are numeric.  The variable names seem to follow certain naming pattern to highlight certain arithmetic relationships.  In other words, we can compute the number of '1B' hits by taking the difference between overall hits and '2B', '3B', 'HR'. Although such naming and construct is not recommended in normalized database design ( as it violates third normal form), it is very frequent practice in the data analytics.
+\
+
+
+Then , we will identify Predictor (Input) and Target (output) variables. Next, we will identify the data type and category of the variables.
+
+Our predictor input is made of 15 variables. And our dependent variable is one variable called TARGET_WINS.
+
+Below are the variable that have been identified and their respective type and category:
+
+![Alt text](C:\CUNY\Courses\IS621\Assignment602\Assignment01\dataexplore.pdf)  \
+
+\
+
+
+
+####2- Univariate Analysis \
+
+
+At this stage, we explore variables one by one. Method to perform uni-variate analysis will depend on whether 
+the variable type is categorical or continuous. in our case all variables are coutinous. Hence we need to understand 
+the central tendency and spread of each variable. 
+These are measured using various statistical metrics visualization methods:
+
+![Alt text](C:\CUNY\Courses\IS621\Assignment602\Assignment01\fig2.png)
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+
+library(MASS)
+
+library(knitr)
+library(xtable)
+library(dplyr)
+
+moneyball <- read.csv("C:/CUNY/Courses/IS621/Assignment602/Assignment01/data/moneyball-training-data.csv")
+
+moneyball2<- select(moneyball, -(INDEX))
+print(summary(moneyball2),tabular.environment="longtable",floating=FALSE, format= "latex")
+
+#kable(summary(moneyball2))
+#print(summary(moneyball$TARGET_WINS)  )
+
+```
+
+
+
+####3- Bi-variate Analysis \
+
+
+Bi-variate Analysis finds out the relationship between two variables. 
+Here, we look for association and disassociation between variables at a pre-defined significance level. \
+\
+
+In our case we have only continuous variables we will be doing bi-variate analysis between two continuous variables.  We will use scatter plot and find out the relationship between two variables: 
+We are looking to find the pattern and if the relationship between the variables is linear or non-linear. \
+\
+Also we will use the scatter plot to show the strength of the relationship between two variable. 
+To find the strength of the relationship, we use Correlation. Correlation varies between -1 and +1. \
+\
+-1: perfect negative linear correlation \
++1:perfect positive linear correlation and  \
+0: No correlation \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#cor(moneyball2) 
+
+library(corrgram) 
+col.corrgram <- function(ncol){   
+  colorRampPalette(c("darkgoldenrod4", "burlywood1",
+  "darkkhaki", "darkgreen"))(ncol)} 
+corrgram(moneyball2, order=TRUE, lower.panel=panel.shade, 
+   upper.panel=panel.pie, text.panel=panel.txt, 
+   main="Correlogram of moneyball data")
+
+
+```
+
+##### Correlation of our dependable variable TARGET_WINS relative to the other 15 independable variables:
+
+
+
+```{r, echo=FALSE}
+x<- c('')
+for (i in 3: 15) {
+x<- c(x, cor(moneyball[2], moneyball[i], use = "na.or.complete"))
+#kable(x)
+}
+#kable(x)
+```
+
+
+
+####4- Missing values treatment\
+
+
+Missing data in the training data set can reduce the power / fit of a model or can lead to a biased model because we have not analysed the behavior and relationship with other variables correctly. It can lead to wrong prediction or classification. \
+
+
+First let identify the missing data and find the mean for each variable by excluding the missing the data.  \
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+Missing <- c(sum(!complete.cases(moneyball2$TARGET_WINS)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_H)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_2B)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_3B)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_HR)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_BB)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_HBP)),
+ sum(!complete.cases(moneyball2$TEAM_BATTING_SO)),
+ sum(!complete.cases(moneyball2$TEAM_BASERUN_SB)),
+ sum(!complete.cases(moneyball2$TEAM_BASERUN_CS)),
+ sum(!complete.cases(moneyball2$TEAM_FIELDING_E)),
+ sum(!complete.cases(moneyball2$TEAM_FIELDING_DP)),
+ sum(!complete.cases(moneyball2$TEAM_PITCHING_BB)),
+ sum(!complete.cases(moneyball2$TEAM_PITCHING_H)),
+ sum(!complete.cases(moneyball2$TEAM_PITCHING_HR)),
+ sum(!complete.cases(moneyball2$TEAM_PITCHING_SO))
+)
+
+Variable<- c('TARGET_WINS',
+'TEAM_BATTING_H',
+'TEAM_BATTING_2B',
+'TEAM_BATTING_3B',
+'TEAM_BATTING_HR',
+'TEAM_BATTING_BB',
+'TEAM_BATTING_HBP',
+'TEAM_BATTING_SO',
+'TEAM_BASERUN_SB',
+'TEAM_BASERUN_CS',
+'TEAM_FIELDING_E',
+'TEAM_FIELDING_DP',
+'TEAM_PITCHING_BB',
+'TEAM_PITCHING_H',
+'TEAM_PITCHING_HR',
+'TEAM_PITCHING_SO'
+)
+
+Mean<- c(mean(moneyball2$TARGET_WINS, na.rm=T),
+mean(moneyball2$TEAM_BATTING_H, na.rm=T),
+mean(moneyball2$TEAM_BATTING_2B, na.rm=T),
+mean(moneyball2$TEAM_BATTING_3B, na.rm=T),
+mean(moneyball2$TEAM_BATTING_HR, na.rm=T),
+mean(moneyball2$TEAM_BATTING_BB, na.rm=T),
+mean(moneyball2$TEAM_BATTING_HBP, na.rm=T),
+mean(moneyball2$TEAM_BATTING_SO, na.rm=T),
+mean(moneyball2$TEAM_BASERUN_SB, na.rm=T),
+mean(moneyball2$TEAM_BASERUN_CS, na.rm=T),
+mean(moneyball2$TEAM_FIELDING_E, na.rm=T),
+mean(moneyball2$TEAM_FIELDING_DP, na.rm=T),
+mean(moneyball2$TEAM_PITCHING_BB, na.rm=T),
+mean(moneyball2$TEAM_PITCHING_H, na.rm=T),
+mean(moneyball2$TEAM_PITCHING_HR, na.rm=T),
+mean(moneyball2$TEAM_PITCHING_SO, na.rm=T)
+)
+
+Correlation <- c(cor(moneyball2$TARGET_WINS, moneyball2$TARGET_WINS, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_H, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_2B, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_3B, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_HR, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_BB, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_HBP, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_SO, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BASERUN_SB, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BASERUN_CS, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_FIELDING_E, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_FIELDING_DP, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_BB, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_H, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_HR, use = "na.or.complete"),
+  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_SO, use = "na.or.complete")
+)
+
+df <- data.frame(Variable,"Count Missing Values" = Missing, Mean, Correlation, 
+           'Theoretical Impact '= moneyballvars$THEORETICAL_EFFECT[2:17])
+
+kable(df)
+
+```
+
+
+Now that we have identified the count of missing for each variable and the correlation of each variable to our dependent variable TARGET_WINS,  we need to decide how to handle the missing the data and which variables to keep based on their correlation. \
+
+We observe that the sign of the correlation roughly matches up with our initial proposed theoretical effect; with BATTING_SO, FIELDING_E, and PITCHING_H indicating a negative correlation. However, there are some instances where the sign conflicts with the proposed theoretical effect for instance PITCHING_HR, and PITCHING_BB have the opposite signs. \
+
+Based on the correlations and missing values, we infer that we abandon imputing values for BATTING_HBP, BATTING_SO, BASERUN_CS, FIELDING_DP due to low correlation to TARGET_WINS. \
+
+However, we are considering the need to impute BASERUN_SB as it has a correlation of 0.1351389 which is relatively acceptable to other correlations. There are few methods to treat missing data such as: 
+
+#####1- Deletion: 
+Either list wise deletion or pair wise deletion, the deletion method is the simplest method. 
+
+#####2- Mean/ Mode/ Median Imputation: 
+Imputation is a method to fill in the missing values with estimated ones. 
+The objective is to employ known relationships that can be identified in the valid values of the data set to assist in estimating the missing values. 
+Mean / Mode / Median imputation is one of the most frequently used methods
+
+#####3- Prediction Model: 
+This is one of the sophisticated methods for handling missing data. Here, we create a predictive model to estimate values that will substitute the missing data by dividing our data set into two sets. One set with no missing values for the variable and another one with missing values. 
+       
+#####4- KNN Imputation: 
+In this method of imputation, the missing values of an attribute are imputed using the given number of attributes that are most similar to the attribute whose values are missing. The similarity of two attributes is determined using a distance function \
+
+
+
+
+
+###Appendix A 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+p1<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_H)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p2<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_2B)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p3<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_3B)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p4<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_HR)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p5<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_BB)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p6<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_HBP)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p7<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BATTING_SO)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p8<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BASERUN_SB)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p9<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_BASERUN_CS)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p10<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_FIELDING_E)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p11<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_FIELDING_DP)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p12<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_PITCHING_BB)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p13<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_PITCHING_H)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p14<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_PITCHING_HR)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+p15<- ggplot(moneyball2, aes(x = factor(0), y = TEAM_PITCHING_SO)) + geom_boxplot() + xlab("") +
+  scale_x_discrete(breaks = NULL) 
+##
+
+library(gridExtra)
+grid.arrange(p1, p2, p3, p4, ncol=4)
+grid.arrange(p5, p6, p7, p8, ncol=4)
+grid.arrange(p9, p10, p11, p12, ncol=4)
+grid.arrange( p13, p14, p15, ncol=4)
+
+
+```
+
+
+
