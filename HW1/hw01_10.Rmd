@@ -1,7 +1,7 @@
 ---
 title: "Assignment01"
-output: pdf_document
 author: "Group 5"
+output: html_document
 ---
 
 
@@ -74,11 +74,10 @@ These are measured using various statistical metrics visualization methods:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 library(ggplot2)
-
 library(MASS)
-
 library(knitr)
 library(xtable)
+library(stringr)
 library(dplyr)
 
 moneyball <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-training-data.csv")
@@ -152,24 +151,6 @@ First let identify the missing data and find the mean for each variable by exclu
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-Missing <- c(sum(!complete.cases(moneyball2$TARGET_WINS)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_H)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_2B)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_3B)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_HR)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_BB)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_HBP)),
- sum(!complete.cases(moneyball2$TEAM_BATTING_SO)),
- sum(!complete.cases(moneyball2$TEAM_BASERUN_SB)),
- sum(!complete.cases(moneyball2$TEAM_BASERUN_CS)),
- sum(!complete.cases(moneyball2$TEAM_FIELDING_E)),
- sum(!complete.cases(moneyball2$TEAM_FIELDING_DP)),
- sum(!complete.cases(moneyball2$TEAM_PITCHING_BB)),
- sum(!complete.cases(moneyball2$TEAM_PITCHING_H)),
- sum(!complete.cases(moneyball2$TEAM_PITCHING_HR)),
- sum(!complete.cases(moneyball2$TEAM_PITCHING_SO))
-)
-
 Variable<- c('TARGET_WINS',
 'TEAM_BATTING_H',
 'TEAM_BATTING_2B',
@@ -188,41 +169,14 @@ Variable<- c('TARGET_WINS',
 'TEAM_PITCHING_SO'
 )
 
-Mean<- c(mean(moneyball2$TARGET_WINS, na.rm=T),
-mean(moneyball2$TEAM_BATTING_H, na.rm=T),
-mean(moneyball2$TEAM_BATTING_2B, na.rm=T),
-mean(moneyball2$TEAM_BATTING_3B, na.rm=T),
-mean(moneyball2$TEAM_BATTING_HR, na.rm=T),
-mean(moneyball2$TEAM_BATTING_BB, na.rm=T),
-mean(moneyball2$TEAM_BATTING_HBP, na.rm=T),
-mean(moneyball2$TEAM_BATTING_SO, na.rm=T),
-mean(moneyball2$TEAM_BASERUN_SB, na.rm=T),
-mean(moneyball2$TEAM_BASERUN_CS, na.rm=T),
-mean(moneyball2$TEAM_FIELDING_E, na.rm=T),
-mean(moneyball2$TEAM_FIELDING_DP, na.rm=T),
-mean(moneyball2$TEAM_PITCHING_BB, na.rm=T),
-mean(moneyball2$TEAM_PITCHING_H, na.rm=T),
-mean(moneyball2$TEAM_PITCHING_HR, na.rm=T),
-mean(moneyball2$TEAM_PITCHING_SO, na.rm=T)
-)
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(moneyball2[Variable], FUN = fun) 
 
-Correlation <- c(cor(moneyball2$TARGET_WINS, moneyball2$TARGET_WINS, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_H, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_2B, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_3B, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_HR, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_BB, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_HBP, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BATTING_SO, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BASERUN_SB, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_BASERUN_CS, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_FIELDING_E, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_FIELDING_DP, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_BB, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_H, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_HR, use = "na.or.complete"),
-  cor(moneyball2$TARGET_WINS, moneyball2$TEAM_PITCHING_SO, use = "na.or.complete")
-)
+fun <- function(x) mean(x, na.rm=T)
+Mean <- sapply(moneyball2[Variable], FUN = fun) 
+
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(moneyball2[Variable], FUN = fun, y=moneyball2$TARGET_WINS) 
 
 df <- data.frame(Variable,"Count Missing Values" = Missing, Mean, Correlation, 
            'Theoretical Impact '= moneyballvars$THEORETICAL_EFFECT[2:17])
@@ -328,108 +282,36 @@ cor(moneyball2$TARGET_WINS, new_TEAM_BATTING_H, use = "na.or.complete")
 ```
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
 
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
- plot(jitter(moneyball2$TEAM_BATTING_H),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_H ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
- 
+show_charts <- function(x, y, ...) {
+    
+    par(mfrow=c(1,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+    plot(jitter(x),jitter(y),xlab=xlabel, ylab=ylabel, main=paste(xlabel, " Vs. ", ylabel ))
 
- boxplot(moneyball2$TEAM_BATTING_2B,main="TEAM_BATTING_2B")
- plot(jitter(moneyball2$TEAM_BATTING_2B),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_2B ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_2B,main="TEAM_BATTING_2B")
- 
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_BATTING_3B,main="TEAM_BATTING_3B")
- plot(jitter(moneyball2$TEAM_BATTING_3B),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_3B ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_3B,main="TEAM_BATTING_3B")
- 
+}
 
- boxplot(moneyball2$TEAM_BATTING_HR,main="TEAM_BATTING_HR")
- plot(jitter(moneyball2$TEAM_BATTING_HR),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_HR ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_HR,main="TEAM_BATTING_HR")
- 
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_BATTING_BB,main="TEAM_BATTING_BB")
- plot(jitter(moneyball2$TEAM_BATTING_BB),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_BB ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_BB,main="TEAM_BATTING_BB")
- 
- 
- boxplot(moneyball2$TEAM_BATTING_HBP,main="TEAM_BATTING_HBP")
- plot(jitter(moneyball2$TEAM_BATTING_HBP),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_HBP ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_HBP,main="TEAM_BATTING_HBP")
-
- 
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_BATTING_SO,main="TEAM_BATTING_SO")
- plot(jitter(moneyball2$TEAM_BATTING_SO),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BATTING_SO ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BATTING_SO,main="TEAM_BATTING_SO")
- 
-
- 
- boxplot(moneyball2$TEAM_BASERUN_SB,main="TEAM_BASERUN_SB")
- plot(jitter(moneyball2$TEAM_BASERUN_SB),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BASERUN_SB ", 
-      ylab="TARGET_WINS",main="BATTING_H vs. WINS")
- hist(moneyball2$TEAM_BASERUN_SB,main="TEAM_BASERUN_SB")
- 
- 
- 
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_FIELDING_E,main="TEAM_FIELDING_E")
- plot(jitter(moneyball2$TEAM_FIELDING_E),jitter(moneyball2$TARGET_WINS),xlab="TEAM_FIELDING_E ", 
-      ylab="TARGET_WINS",main="TEAM_FIELDING_E vs. WINS")
- hist(moneyball2$TEAM_FIELDING_E,main="TEAM_FIELDING_E")
- 
-  boxplot(moneyball2$TEAM_BASERUN_CS,main="TEAM_BASERUN_CS")
- plot(jitter(moneyball2$TEAM_BASERUN_CS),jitter(moneyball2$TARGET_WINS),xlab="TEAM_BASERUN_CS ", 
-      ylab="TARGET_WINS",main="TEAM_BASERUN_CS vs. WINS")
- hist(moneyball2$TEAM_BASERUN_CS,main="TEAM_BASERUN_CS")
-
-
-
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_FIELDING_DP,main="TEAM_FIELDING_DP")
- plot(jitter(moneyball2$TEAM_FIELDING_DP),jitter(moneyball2$TARGET_WINS),xlab="TEAM_FIELDING_DP ", 
-      ylab="TARGET_WINS",main="TEAM_FIELDING_DP vs. WINS")
- hist(moneyball2$TEAM_FIELDING_DP,main="TEAM_FIELDING_DP")
-
-
- boxplot(moneyball2$TEAM_PITCHING_BB,main="TEAM_PITCHING_BB")
- plot(jitter(moneyball2$TEAM_PITCHING_BB),jitter(moneyball2$TARGET_WINS),xlab="TEAM_PITCHING_BB ", 
-      ylab="TARGET_WINS",main="TEAM_PITCHING_BB vs. WINS")
- hist(moneyball2$TEAM_PITCHING_BB,main="TEAM_PITCHING_BB")
-
-
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_PITCHING_H,main="TEAM_PITCHING_H")
- plot(jitter(moneyball2$TEAM_PITCHING_H),jitter(moneyball2$TARGET_WINS),xlab="TEAM_PITCHING_H ", 
-      ylab="TARGET_WINS",main="TEAM_PITCHING_H vs. WINS")
- hist(moneyball2$TEAM_PITCHING_H,main="TEAM_PITCHING_H")
-
-  boxplot(moneyball2$TEAM_PITCHING_HR,main="TEAM_PITCHING_HR")
- plot(jitter(moneyball2$TEAM_PITCHING_HR),jitter(moneyball2$TARGET_WINS),xlab="TEAM_PITCHING_HR ", 
-      ylab="TARGET_WINS",main="TEAM_PITCHING_HR vs. WINS")
- hist(moneyball2$TEAM_PITCHING_HR,main="TEAM_PITCHING_HR")
-
-
-
-
- par(mfrow=c(2,3))
- boxplot(moneyball2$TEAM_PITCHING_SO,main="TEAM_PITCHING_SO")
- plot(jitter(moneyball2$TEAM_PITCHING_SO),jitter(moneyball2$TARGET_WINS),xlab="TEAM_PITCHING_SO ", 
-      ylab="TARGET_WINS",main="TEAM_PITCHING_SO vs. WINS")
- hist(moneyball2$TEAM_PITCHING_SO,main="TEAM_PITCHING_SO")
-
-
-
+show_charts(moneyball2$TEAM_BATTING_H,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BATTING_2B,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BATTING_3B,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BATTING_HR,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BATTING_BB,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BATTING_HBP,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BATTING_SO,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BASERUN_SB,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_FIELDING_E,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_BASERUN_CS,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_FIELDING_DP,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_PITCHING_BB,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_PITCHING_H,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_PITCHING_HR,moneyball2$TARGET_WINS)
+show_charts(moneyball2$TEAM_PITCHING_SO,moneyball2$TARGET_WINS)
 ```
 
 

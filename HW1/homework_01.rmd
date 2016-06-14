@@ -1,0 +1,117 @@
+---
+title: "Home Work Assignment - 01"
+author: "Critical Thinking Group 5"
+output: 
+    html_document: 
+        toc: true
+---
+
+# Data Exploration
+ 
+Describe the size and the variables in the moneyball training data set. Consider that too much detail will cause a manager to lose interest while too little detail will make the manager consider that you aren't doing your job. Some suggestions are given below. Please do NOT treat this as a check list of things to do to complete the assignment. You should have your own thoughts on what to tell the boss. 
+
+These are just ideas.
+
+a. Mean / Standard Deviation / Median
+
+```{r}
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+
+moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
+kable(moneyballvars)
+
+moneyball<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-training-data.csv")
+
+moneyball2<- select(moneyball, -(INDEX))
+
+# 
+# print(summary(moneyball2),tabular.environment="longtable",floating=FALSE, format= "latex")
+# 
+# kable(summary(moneyball2))
+# #print(summary(moneyball$TARGET_WINS)  )
+
+library(psych)
+#describe(moneyball, skew = FALSE, na.rm = FALSE)
+describe(moneyball, skew = FALSE, na.rm = TRUE)
+
+#hist(moneyball2$TARGET_WINS,n=30)
+#boxplot(moneyball2$TARGET_WINS,
+#  add=TRUE,horizontal=TRUE,at=-5,border="darkred",boxwex=50,outline=FALSE)
+
+#hist(moneyball2$TARGET_WINS,n=30)
+# stripchart(jitter(moneyball2$TARGET_WINS,amount=.5),
+#       method="jitter",jitter=.5,pch=16,cex=.05,add=TRUE,at=-5,col='purple3')
+```
+
+Based on the summaries and descriptives for the variables listed above, there are some things that stand out:
+
+1. Some of the variables like TEAM_PITCHING_H, TEAM_PITCHING_SO and TEAM_FIELDING_E seem to be influenced heavily by outliers which is evident from the mean, median and trimmed mean values.
+
+2. TEAM_BATTING_HBP seems to be missing a lot of values which casts doubt on its usefulness as a predictor. Maybe the presense or absense of TEAM_BATTING_HBP might be a better predictor. 
+\
+\
+\
+
+b. Bar Chart or Box Plot of the data
+
+```{r}
+
+show_charts <- function(x, y, ...) {
+    
+    par(mfrow=c(1,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+    plot(jitter(x),jitter(y),xlab=xlabel, ylab=ylabel, main=paste(xlabel, " Vs. ", ylabel ))
+
+}
+```
+
+```{r}
+show_charts(moneyball2$TEAM_BATTING_H,moneyball2$TARGET_WINS)
+
+```
+
+As we can see from the above charts, 
+
+c. Is the data correlated to the target variable (or to other variables?)
+
+```{r}
+
+pairs(moneyball2) 
+
+```
+
+
+d. Are any of the variables missing and need to be imputed "fixed"?
+
+# Data Preparation
+
+Describe how you have transformed the data by changing the original variables or creating new variables. If you did transform the data or create new variables, discuss why you did this. Here are some possible transformations.
+a. Fix missing values (maybe with a Mean or Median value)
+b. Create flags to suggest if a variable was missing
+c. Transform data by putting it into buckets
+d. Mathematical transforms such as log or square root (or use Box-Cox)
+e. Combine variables (such as ratios or adding or multiplying) to create new variables
+
+
+# Build Models
+
+Using the training data set, build at least three different multiple linear regression models, using different variables (or the same variables with different transformations). Since we have not yet covered automated variable selection methods, you should select the variables manually (unless you previously learned Forward or Stepwise selection, etc.). Since you manually selected a variable for inclusion into the model or exclusion into the model, indicate why this was done.
+Discuss the coefficients in the models, do they make sense? For example, if a team hits a lot of Home Runs, it would be reasonably expected that such a team would win more games. However, if the coefficient is negative (suggesting that the team would lose more games), then that needs to be discussed. Are you keeping the model even though it is counter intuitive? Why? The boss needs to know.
+
+
+# Select Models
+
+Decide on the criteria for selecting the best multiple linear regression model. Will you select a model with slightly worse performance if it makes more sense or is more parsimonious? Discuss why you selected your model.
+For the multiple linear regression model, will you use a metric such as Adjusted R2, RMSE, etc.? Be sure to explain how you can make inferences from the model, discuss multi-collinearity issues (if any), and discuss other relevant model output. Using the training data set, evaluate the multiple linear regression model based on (a) mean squared error, (b) R2, (c) F-statistic, and (d) residual plots. Make predictions using the evaluation data set.
+
+
+
