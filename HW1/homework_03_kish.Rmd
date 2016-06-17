@@ -507,6 +507,13 @@ model1<-lm(TARGET_WINS~TEAM_BATTING_H+TEAM_BATTING_2B+TEAM_BATTING_3B+TEAM_BATTI
 
 summary(model1)
 
+
+AIC(model1)
+
+
+
+mo
+
 # coefficients(model1) # model coefficients
 # confint(model1, level=0.95) # CIs for model parameters 
 # fitted(model1) # predicted values
@@ -528,6 +535,14 @@ step1 <- step(model1,direction="backward",test="F")
 
 coefficients(step1)
 
+summary(step1)
+
+AIC(step1)
+
+anova(step1,model1)
+
+# step 1 is better model compare to model 1
+
 ```
 
 \
@@ -541,6 +556,8 @@ coefficients(step1)
 model2<-lm(TARGET_WINS~TEAM_BATTING_H_NEW+TEAM_BATTING_2B_NEW+TEAM_BATTING_3B_NEW+TEAM_BATTING_BB_NEW+TEAM_BASERUN_SB_NEW+TEAM_FIELDING_E_NEW+TEAM_FIELDING_DP_NEW+TEAM_PITCHING_BB_NEW+TEAM_PITCHING_H_NEW+TEAM_PITCHING_HR_NEW+TEAM_PITCHING_SO_NEW, na.omit(moneyball2))
 
 summary(model2)
+
+AIC(model2)
 # coefficients(model1) # model coefficients
 # confint(model1, level=0.95) # CIs for model parameters 
 # fitted(model1) # predicted values
@@ -560,7 +577,13 @@ Lets now step thru this model and retain only those variables that have the most
 
 step2 <- step(model2,direction="backward",test="F")
 
+summary(step2)
+
+AIC(step2)
+
 coefficients(step2)
+
+anova(step1,step2)
 
 ```
 
@@ -594,6 +617,10 @@ Lets now step thru this model and retain only those variables that have the most
 ```{r}
 
 step3 <- step(model3,direction="backward",test="F")
+
+summary(step3)
+
+AIC(step3)
 
 coefficients(step3)
 
@@ -629,7 +656,16 @@ Lets now step thru this model and retain only those variables that have the most
 
 step4 <- step(model4,direction="backward",test="F")
 
+
+summary(step4)
+
+AIC(step1)
+
 coefficients(step4)
+
+
+
+
 
 ```
 
@@ -649,15 +685,34 @@ Decide on the criteria for selecting the best multiple linear regression model. 
 For the multiple linear regression model, will you use a metric such as Adjusted R2, RMSE, etc.? Be sure to explain how you can make inferences from the model, discuss multi-collinearity issues (if any), and discuss other relevant model output. Using the training data set, evaluate the multiple linear regression model based on (a) mean squared error, (b) R2, (c) F-statistic, and (d) residual plots. Make predictions using the evaluation data set.
 
 
+### Model selection
+
+```{r model comparison,echo=FALSE}
+
+AIC(step1)
+AIC(step2)
+AIC(step3)
+AIC(step4)
+
+# from AIC values it appears model "step1" & "step 4" are comparativey better two. 
+
+summary(step1);summary(step4)
+
+# Based on r^2 value and also Standard errors it appears model "step4" is the best one.
+
+#score<-predict(step4,)
+
+
+```
 
 ### Model One with original data
 
 ```{r}
 
-library(car)
+#library(car)
 
 
-mod1<- lm(TARGET_WINS ~ 
+#mod1<- lm(TARGET_WINS ~ 
      TEAM_BATTING_H +
      TEAM_BATTING_2B +
      TEAM_BATTING_3B +
