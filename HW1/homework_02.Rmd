@@ -2,9 +2,9 @@
 title: "Home Work Assignment - 01"
 author: "Critical Thinking Group 5"
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
@@ -36,7 +36,7 @@ In this section we will explore how the data looks like. The goal of data explor
 First lets look at the variables.
 
 ```{r, echo = TRUE, warning=FALSE, message=FALSE}
-moneyballvars <- read.csv("C:/CUNY/Courses/IS-621/Assignments/Assignment1/moneyballvars.csv")
+moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
 
 kable(moneyballvars)
 
@@ -107,20 +107,92 @@ Based on the table for the variables listed above, there are some things that st
 
 In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the outliers. 
 
+
+Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect outliers if any and treat it accordingly.
+
 ```{r}
 
-#par(mfrow=c(6,2))
-boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
-boxplot(moneyball2$TEAM_BATTING_2B,main="TEAM_BATTING_2B")
-boxplot(moneyball2$TEAM_BATTING_BB,main="TEAM_BATTING_BB")
-boxplot(moneyball2$TEAM_BATTING_SO,main="TEAM_BATTING_SO")
-boxplot(moneyball2$TEAM_BASERUN_SB,main="TEAM_BASERUN_SB")
-boxplot(moneyball2$TEAM_FIELDING_E,main="TEAM_FIELDING_E")
-boxplot(moneyball2$TEAM_FIELDING_DP,main="TEAM_FIELDING_DP")
-boxplot(moneyball2$TEAM_PITCHING_BB,main="TEAM_PITCHING_BB")
-boxplot(moneyball2$TEAM_PITCHING_H,main="TEAM_PITCHING_H")
-boxplot(moneyball2$TEAM_PITCHING_HR,main="TEAM_PITCHING_HR")
-boxplot(moneyball2$TEAM_PITCHING_SO,main="TEAM_PITCHING_SO")
+
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+}
+
+
+
+#show_charts(moneyball2$TEAM_BATTING_H,moneyball2$TARGET_WINS)
+
+
+show_charts(moneyball2$TEAM_BATTING_H)
+show_charts(moneyball2$TEAM_BATTING_2B)
+show_charts(moneyball2$TEAM_BATTING_BB)
+show_charts(moneyball2$TEAM_BATTING_SO)
+show_charts(moneyball2$TEAM_BASERUN_SB)
+show_charts(moneyball2$TEAM_FIELDING_E)
+show_charts(moneyball2$TEAM_FIELDING_DP)
+show_charts(moneyball2$TEAM_PITCHING_BB)
+show_charts(moneyball2$TEAM_PITCHING_H)
+show_charts(moneyball2$TEAM_PITCHING_HR)
+show_charts(moneyball2$TEAM_PITCHING_SO)
+
+
+# par(mfrow=c(2,2))
+# hist(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
+# boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
+# 
+# hist(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
+# boxplot(sin(moneyball2$TEAM_BATTING_H),main="TEAM_BATTING_H")
+# 
+# boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
+# 
+# boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
+# boxplot(moneyball2$TEAM_BATTING_2B,main="TEAM_BATTING_2B")
+# boxplot(moneyball2$TEAM_BATTING_BB,main="TEAM_BATTING_BB")
+# boxplot(moneyball2$TEAM_BATTING_SO,main="TEAM_BATTING_SO")
+# boxplot(moneyball2$TEAM_BASERUN_SB,main="TEAM_BASERUN_SB")
+# boxplot(moneyball2$TEAM_FIELDING_E,main="TEAM_FIELDING_E")
+# boxplot(moneyball2$TEAM_FIELDING_DP,main="TEAM_FIELDING_DP")
+# boxplot(moneyball2$TEAM_PITCHING_BB,main="TEAM_PITCHING_BB")
+# boxplot(moneyball2$TEAM_PITCHING_H,main="TEAM_PITCHING_H")
+# boxplot(moneyball2$TEAM_PITCHING_HR,main="TEAM_PITCHING_HR")
+# boxplot(moneyball2$TEAM_PITCHING_SO,main="TEAM_PITCHING_SO")
+# 
+
+
+```
+
+```{r}
+
+
+
+# par(mfrow=c(3,4))
+# boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
+# boxplot(moneyball2$TEAM_BATTING_2B,main="TEAM_BATTING_2B")
+# boxplot(moneyball2$TEAM_BATTING_BB,main="TEAM_BATTING_BB")
+# boxplot(moneyball2$TEAM_BATTING_SO,main="TEAM_BATTING_SO")
+# boxplot(moneyball2$TEAM_BASERUN_SB,main="TEAM_BASERUN_SB")
+# boxplot(moneyball2$TEAM_FIELDING_E,main="TEAM_FIELDING_E")
+# boxplot(moneyball2$TEAM_FIELDING_DP,main="TEAM_FIELDING_DP")
+# boxplot(moneyball2$TEAM_PITCHING_BB,main="TEAM_PITCHING_BB")
+# boxplot(moneyball2$TEAM_PITCHING_H,main="TEAM_PITCHING_H")
+# boxplot(moneyball2$TEAM_PITCHING_HR,main="TEAM_PITCHING_HR")
+# boxplot(moneyball2$TEAM_PITCHING_SO,main="TEAM_PITCHING_SO")
+
 ```
 
 
@@ -216,7 +288,7 @@ Lets see how the new variables look in boxplots.
 
 ```{r}
 
-#par(mfrow=c(5,2))
+par(mfrow=c(3,4))
 
 boxplot(TEAM_BATTING_H_NEW,main="TEAM_BATTING_H_NEW")
 boxplot(TEAM_BATTING_2B_NEW,main="TEAM_BATTING_2B_NEW")

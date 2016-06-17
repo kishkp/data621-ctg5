@@ -1,13 +1,15 @@
 ---
 title: "Home Work Assignment - 01"
 author: "Critical Thinking Group 5"
-output: 
-    html_document: 
-        toc: true
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    toc: yes
 ---
 
 
-```{r, echo = TRUE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(MASS)
 library(knitr)
@@ -108,7 +110,8 @@ In this section we look at boxplots to determine the outliers in variables and d
 
 ```{r}
 
-#par(mfrow=c(6,2))
+par(mfrow=c(2,2))
+
 boxplot(moneyball2$TEAM_BATTING_H,main="TEAM_BATTING_H")
 boxplot(moneyball2$TEAM_BATTING_2B,main="TEAM_BATTING_2B")
 boxplot(moneyball2$TEAM_BATTING_BB,main="TEAM_BATTING_BB")
@@ -215,7 +218,7 @@ Lets see how the new variables look in boxplots.
 
 ```{r}
 
-#par(mfrow=c(5,2))
+par(mfrow=c(3,4))
 
 boxplot(TEAM_BATTING_H_NEW,main="TEAM_BATTING_H_NEW")
 boxplot(TEAM_BATTING_2B_NEW,main="TEAM_BATTING_2B_NEW")
