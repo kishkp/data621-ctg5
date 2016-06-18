@@ -821,10 +821,10 @@ sqrt(vif(step4_up))
 
 #### Now the change in adjusted R^2 value is from .5526 to .5462 which is some compromise with the performance at the cost of reducing complexity. Reduction of variable will simplify the model and hence updated model is selected with some compromise in performance.
 
-# Looking at the table F and P values we can not reject the null hypothesis that additional variable is helping the model. Hence we can conclude step4_final is the best model. We do a final check wit VIF value to see if any further iteration is required or not
+#### Looking at the table F and P values we can not reject the null hypothesis that additional variable is helping the model. Hence we can conclude step4_final is the best model. We do a final check wit VIF value to see if any further iteration is required or not
 
 
-#Now all VIF values are under 2 for all the variables and which is clean indication that there is no collinearity issue with the model anymore.
+####Now all VIF values are under 2 for all the variables and which is clean indication that there is no collinearity issue with the model anymore.
 
 
 
