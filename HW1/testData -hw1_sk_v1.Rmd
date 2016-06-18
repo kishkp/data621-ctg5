@@ -1,0 +1,294 @@
+---
+title: "Home Work Assignment - 01 - Test/ Evaluation Data"
+author: "Critical Thinking Group 5"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+
+
+url <- "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-evaluation-data.csv"
+moneyball<- read.csv(url)
+head(moneyball)
+moneyball2<- select(moneyball, -(INDEX))
+summary(moneyball2)
+
+```
+
+
+# Data Exploration
+
+
+## Summary / Descriptives / Correlation
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+ds_stats <- psych::describe(moneyball2, skew = FALSE, na.rm = TRUE)[c(3:6)]
+ds_stats <- cbind(VARIABLE_NAME = rownames(ds_stats), ds_stats)
+#rownames(ds_stats) <- NULL
+
+Variable<- rownames(ds_stats)
+
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(moneyball2[Variable], FUN = fun) 
+
+
+```
+
+
+## Distribution and Correlation
+
+```{r}
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+}
+
+
+show_charts(moneyball2$TEAM_BATTING_H)
+
+show_charts(moneyball2$TEAM_BATTING_2B)
+
+show_charts(moneyball2$TEAM_BATTING_3B)
+
+show_charts(moneyball2$TEAM_BATTING_HR)
+
+show_charts(moneyball2$TEAM_BATTING_BB)
+
+show_charts(moneyball2$TEAM_BATTING_SO)
+
+show_charts(moneyball2$TEAM_BASERUN_SB)
+
+show_charts(moneyball2$TEAM_FIELDING_E)
+
+show_charts(moneyball2$TEAM_FIELDING_DP)
+
+show_charts(moneyball2$TEAM_PITCHING_BB)
+
+show_charts(moneyball2$TEAM_PITCHING_H)
+
+show_charts(moneyball2$TEAM_PITCHING_HR)
+
+show_charts(moneyball2$TEAM_PITCHING_SO)
+```
+
+
+# Data Preparation
+
+Now that we have the preliminary analysis ready, we will go ahead and carry out the necessary transformations to the data. 
+
+This will primarily take care of Missing Values, Handle Outliers and create some additional variables.
+\
+\
+
+## Outliers 
+
+For outliers, we will create 2 sets of variables. 
+
+The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables as is. 
+
+TEAM_BATTING_H_NEW
+TEAM_BATTING_2B_NEW
+TEAM_BATTING_3B_NEW
+TEAM_BATTING_BB_NEW
+TEAM_BASERUN_SB_NEW
+TEAM_FIELDING_E_NEW
+TEAM_FIELDING_DP_NEW
+TEAM_PITCHING_BB_NEW
+TEAM_PITCHING_H_NEW
+TEAM_PITCHING_HR_NEW
+TEAM_PITCHING_SO_NEW
+
+
+```{r}
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+moneyball2$TEAM_BATTING_H_NEW <- treat_outliers(moneyball2$TEAM_BATTING_H)
+moneyball2$TEAM_BATTING_2B_NEW <- treat_outliers(moneyball2$TEAM_BATTING_2B)
+moneyball2$TEAM_BATTING_3B_NEW <- treat_outliers(moneyball2$TEAM_BATTING_3B)
+moneyball2$TEAM_BATTING_BB_NEW <- treat_outliers(moneyball2$TEAM_BATTING_BB)
+moneyball2$TEAM_BASERUN_SB_NEW <- treat_outliers(moneyball2$TEAM_BASERUN_SB)
+moneyball2$TEAM_FIELDING_E_NEW <- treat_outliers(moneyball2$TEAM_FIELDING_E)
+moneyball2$TEAM_FIELDING_DP_NEW <- treat_outliers(moneyball2$TEAM_FIELDING_DP)
+moneyball2$TEAM_PITCHING_BB_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_BB)
+moneyball2$TEAM_PITCHING_H_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_H)
+moneyball2$TEAM_PITCHING_HR_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_HR)
+moneyball2$TEAM_PITCHING_SO_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_SO)
+
+```
+
+
+Lets see how the new variables look in boxplots.
+
+```{r}
+
+par(mfrow=c(3,4))
+
+boxplot(moneyball2$TEAM_BATTING_H_NEW,main="TEAM_BATTING_H_NEW")
+boxplot(moneyball2$TEAM_BATTING_2B_NEW,main="TEAM_BATTING_2B_NEW")
+boxplot(moneyball2$TEAM_BATTING_3B_NEW,main="TEAM_BATTING_3B_NEW")
+boxplot(moneyball2$TEAM_BATTING_BB_NEW,main="TEAM_BATTING_BB_NEW")
+boxplot(moneyball2$TEAM_BASERUN_SB_NEW,main="TEAM_BASERUN_SB_NEW")
+boxplot(moneyball2$TEAM_FIELDING_E_NEW,main="TEAM_FIELDING_E_NEW")
+boxplot(moneyball2$TEAM_FIELDING_DP_NEW,main="TEAM_FIELDING_DP_NEW")
+boxplot(moneyball2$TEAM_PITCHING_BB_NEW,main="TEAM_PITCHING_BB_NEW")
+boxplot(moneyball2$TEAM_PITCHING_H_NEW,main="TEAM_PITCHING_H_NEW")
+boxplot(moneyball2$TEAM_PITCHING_HR_NEW,main="TEAM_PITCHING_HR_NEW")
+boxplot(moneyball2$TEAM_PITCHING_SO_NEW,main="TEAM_PITCHING_SO_NEW")
+
+```
+\
+\
+\
+
+In the second set, we will use the sin transformation and create the following variables:
+
+TEAM_BATTING_H_SIN
+TEAM_BATTING_2B_SIN
+TEAM_BATTING_3B_SIN
+TEAM_BATTING_BB_SIN
+TEAM_BASERUN_SB_SIN
+TEAM_FIELDING_E_SIN
+TEAM_FIELDING_DP_SIN
+TEAM_PITCHING_BB_SIN
+TEAM_PITCHING_H_SIN
+TEAM_PITCHING_HR_SIN
+TEAM_PITCHING_SO_SIN
+
+```{r}
+
+moneyball2$TEAM_BATTING_H_SIN <- sin(moneyball2$TEAM_BATTING_H)
+moneyball2$TEAM_BATTING_2B_SIN <- sin(moneyball2$TEAM_BATTING_2B)
+moneyball2$TEAM_BATTING_3B_SIN <- sin(moneyball2$TEAM_BATTING_3B)
+moneyball2$TEAM_BATTING_BB_SIN <- sin(moneyball2$TEAM_BATTING_BB)
+moneyball2$TEAM_BASERUN_SB_SIN <- sin(moneyball2$TEAM_BASERUN_SB)
+moneyball2$TEAM_FIELDING_E_SIN <- sin(moneyball2$TEAM_FIELDING_E)
+moneyball2$TEAM_FIELDING_DP_SIN <- sin(moneyball2$TEAM_FIELDING_DP)
+moneyball2$TEAM_PITCHING_BB_SIN <- sin(moneyball2$TEAM_PITCHING_BB)
+moneyball2$TEAM_PITCHING_H_SIN <- sin(moneyball2$TEAM_PITCHING_H)
+moneyball2$TEAM_PITCHING_HR_SIN <- sin(moneyball2$TEAM_PITCHING_HR)
+moneyball2$TEAM_PITCHING_SO_SIN <- sin(moneyball2$TEAM_PITCHING_SO)
+
+```
+
+\
+\
+
+## Missing Values
+
+Next we impute missing values. Since we have handled outliers, we can go ahead and use the mean as impute values. As with outliers, we will go ahead and create new variables for the following:
+
+TEAM_BATTING_SO_NEW
+
+We will re-use the already created new variables for fixing the missing values for the below:
+
+TEAM_PITCHING_SO_NEW 
+TEAM_BASERUN_SB_NEW
+TEAM_FIELDING_DP_NEW
+
+
+```{r}
+
+moneyball2$TEAM_BATTING_SO_NEW <- moneyball2$TEAM_BATTING_SO
+moneyball2$TEAM_BATTING_SO_NEW[is.na(moneyball2$TEAM_BATTING_SO_NEW)] <- mean(moneyball2$TEAM_BATTING_SO_NEW, na.rm = T) 
+
+moneyball2$TEAM_PITCHING_SO_NEW[is.na(moneyball2$TEAM_PITCHING_SO_NEW)] <- mean(moneyball2$TEAM_PITCHING_SO_NEW, na.rm = T) 
+moneyball2$TEAM_BASERUN_SB_NEW[is.na(moneyball2$TEAM_BASERUN_SB_NEW)] <- mean(moneyball2$TEAM_BASERUN_SB_NEW, na.rm = T) 
+moneyball2$TEAM_FIELDING_DP_NEW[is.na(moneyball2$TEAM_FIELDING_DP_NEW)] <- mean(moneyball2$TEAM_FIELDING_DP_NEW, na.rm = T) 
+
+```
+
+## Additional Variables 
+
+Lets now create some additional variables that might help us in out analysis. 
+
+### Missing Flags
+
+First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0.
+
+```{r}
+
+moneyball2$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyball2$TEAM_BATTING_HBP),1,0)
+moneyball2$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyball2$TEAM_BASERUN_CS),1,0)
+
+```
+\
+\
+
+
+###Ratios
+
+\
+
+Next we create some additional variables, that we think may be useful with the prediction. Here we create the following ratios:
+
+
+```{r}
+
+moneyball2$Hits_R <- moneyball2$TEAM_BATTING_H/moneyball2$TEAM_PITCHING_H
+moneyball2$Walks_R <- moneyball2$TEAM_BATTING_BB/moneyball2$TEAM_PITCHING_BB
+moneyball2$HomeRuns_R <- moneyball2$TEAM_BATTING_HR/moneyball2$TEAM_PITCHING_HR
+moneyball2$Strikeout_R <- moneyball2$TEAM_BATTING_SO/moneyball2$TEAM_PITCHING_SO
+```
+
+\
+\
+
+
+###Calculated Variables
+
+\
+
+Finally, we create some calculated variables as below:
+
+1. TEAM_BATTING_EB (Extra Base Hits) = 2B + 3B + HR
+2. TEAM_BATTING_1B (Singles by batters) = TEAM_BATTING_H - TEAM_BATTING_EB
+
+```{r}
+
+moneyball2$TEAM_BATTING_EB <- moneyball2$TEAM_BATTING_2B + moneyball2$TEAM_BATTING_3B + moneyball2$TEAM_BATTING_HR
+
+moneyball2$TEAM_BATTING_1B <- moneyball2$TEAM_BATTING_H - moneyball2$TEAM_BATTING_EB
+summary(moneyball2)
+
+```
+
