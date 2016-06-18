@@ -689,18 +689,18 @@ NOTE: New code added from this section
 
 ```{r model comparison,echo=FALSE}
 
-# Compae the four models build above to identify the best model to be used for prediction
+# Compare the four models created above to identify the best model. By using AIC values on the four models  
 
 AIC(step1)
 AIC(step2)
 AIC(step3)
 AIC(step4)
 
-# from AIC values it appears model "step1" & "step 4" are comparativey better model of the pack. Now evaluate the model by using adjusted R^2 values
+# Lokking at the AIC values it appears that model "step1" & "step 4" are comparatively better model of the pack. By using adjusted R^2 values on those two models-
 
 summary(step1);summary(step4)
 
-# Based on adjusted R^2 value for Models "step2" and "step4" we can conslude model "step4" is the best one with R^2 value .5585. Hence this model can explain 55.55% of variablity in the model. 
+# Based on adjusted R^2 value for Models "step2" and "step4", it can be seen "step1" can explain 51.67% variability in the model, where as "step4" can explain "55.85%" variability in the model. With this we can conclude that model "step4" is the best one among the pack.
 
 ```
 
@@ -710,7 +710,7 @@ summary(step1);summary(step4)
 
 ```{r model dignostics}
 
-#  First let plot residuals to see if they look like a normal distribution:
+#  Analysis of plot on residuals to verify normal distribution of residuals
 
 library(MASS)
 sresid <- studres(step4) 
@@ -720,7 +720,7 @@ xfit<-seq(min(sresid),max(sresid),length=40)
 yfit<-dnorm(xfit) 
 lines(xfit, yfit)
 
-# Based on the plot it appears residula distrubution is normal.
+# Based on the normal plot it appears that residual distrubution is close to normal
 
 # plot residuals with resect to predicted value and check if the distribution is random
 
@@ -730,7 +730,7 @@ score<-predict(step4,type="response")
 plot(score, step4.res,  ylab="Residuals", xlab="Number of Predicted Wins", main="Residual vs Predicted values") 
 abline(0, 0) 
 
-# Distribution of residual is random
+# Distribution of residual vaules are random and does not show any pattern arouund based line
 
 # Evaluate homoscedasticity
 library(car)
@@ -742,16 +742,9 @@ spreadLevelPlot(step4)
 ```
 
 ####The residuals are normally distributed, this indicates That the mean of the difference between our predictions 
-####and the actual values is close to 0 which is good for our analysis. 
+####and the actual values is close to 0 which is good for the analysis. 
 #### Distribution of the residual is random and do not follow any pattern
 
-
-
-
-
-####The residuals are normally distributed, this indicates That the mean of the difference between our predictions 
-####and the actual values is close to 0 which is good for our analysis. 
-#### Also, it's unlikely that no relationship exists between TEAM_FIELDING_E and TARGET_WINS.
 
 ### homoscedasticity check or non-constant error variance test
 ####The test confirms the non-constant error variance test. It also has a p-value higher than a significance level of 0.05. 
@@ -759,57 +752,81 @@ spreadLevelPlot(step4)
 
 
 
+# Analysis of collinearity 
 
-
-# Analysis of collinearity and enhanceof of model
-
-```{r collonearity of model}
+```{r collonearity of model step 1}
 
 library(faraway)
 
-# Evaluate Collinearity 
+# Evaluate Collinearity of the variables in model "step4"
 vif(step4) # variance inflation factors 
 sqrt(vif(step4)) 
-
-# Based on that VIF values delete the variable "TEAM_PITCHING_BB " from model and evaluate model performance
 
 step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_SO+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
 
 summary(step4_up)
-# There was no significant change in adjusted R^2 values
+
+```
+
+#### Based on that variance inflation factors (VIF) values following variable having highest VIF ,"TEAM_PITCHING_BB" is removed from model and model is evaluted without that variable 
+
+#### There was no significant change in adjusted R^2 values due to emoval of the variable and change in adjusted R^2 value is from .5585 to .5562. Hence this variable is not adding lot of value to the model and can be removed
+
+```{r collonearity of model step 2}
 
 sqrt(vif(step4_up))
 
-# Based on that VIF values delete the variable "TEAM_BATTING_SO " from model and evaluate model performance
 
 step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
 
 summary(step4_up)
-# There was no significant change in adjusted R^2 values
 
+```
+
+####Based on that variance inflation factors (VIF) values following variable having now highest VIF "TEAM_BATTING_SO ". The variable "TEAM_BATTING_SO " is removed from the model and the model is evaluted without that variable 
+
+#### There was no significant change in adjusted R^2 values from .5562 to .5534 due to removal of above variable. Hence the above variable can be removed from the model. Same process is continued and VIF value is identified for the model 
+
+```{r collonearity of model step 3}
 sqrt(vif(step4_up))
-
-# Based on that VIF values delete the variable " Strikeout_R " from model and evaluate model performance
 
 step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +HomeRuns_R  ,data=moneyball2 )
 
 summary(step4_up)
-# There was no significant change in adjusted R^2 values
-
-sqrt(vif(step4_up))
-
-# Based on that VIF values delete the variable " HomeRuns_R " from model and evaluate model performance
-
-step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R  ,data=moneyball2 )
-
-summary(step4_up)
-# There was no significant change in adjusted R^2 values
-
-sqrt(vif(step4_up))
-#Now VIF values are under 2 for all the variables and this variable looks like the best one
-
 
 ```
+
+#### Based on that variance inflation factors (VIF) values following variable having now highest VIF " Strikeout_R " . The variable " Strikeout_R " is removed from the model and the model is evaluted without that variable
+
+#### There was no significant change in adjusted R^2 values from .5534 to .5526. The variable " Strikeout_R " is removed from the model. Next step is to reduce the VIF of the model-
+
+
+```{r collonearity of model step 4}
+
+sqrt(vif(step4_up))
+
+step4_final<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R  ,data=moneyball2 )
+
+summary(step4_final)
+
+# Doing Annova test for the model "step4_up" and "step4_final"
+
+anova(step4_final,step4_up)
+
+sqrt(vif(step4_up))
+
+```
+
+#### Based on that variance inflation factors (VIF) values following variable having now highest VIF " HomeRuns_R " . The variable " HomeRuns_R " is removed from the model and the model is evaluted without that variable
+
+#### Now the change in adjusted R^2 value is from .5526 to .5462 which is so compromoprise with the performance at the cost of one variable. Reduction of variable simplify the model and hence updated model is selected with some compormise in performance.
+
+# Loorking at the table F and P values we can not reject the null hupothesis that additional variable is helping the model. Hence we can conclude step4_final is the best model. We do a final check wit VIF value to see if any further iteration is required or not
+
+
+#Now all VIF values are under 2 for all the variables and which is clean indication that there is no collinearity issue with the model anymore.
+
+
 
 
 
