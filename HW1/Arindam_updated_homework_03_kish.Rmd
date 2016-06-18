@@ -768,9 +768,9 @@ summary(step4_up)
 
 ```
 
-#### Based on that variance inflation factors (VIF) values following variable having highest VIF ,"TEAM_PITCHING_BB" is removed from model and model is evaluted without that variable 
+#### Based on that variance inflation factors (VIF) values following variable having highest VIF ,"TEAM_PITCHING_BB" is removed from model and model is evaluated without that variable 
 
-#### There was no significant change in adjusted R^2 values due to emoval of the variable and change in adjusted R^2 value is from .5585 to .5562. Hence this variable is not adding lot of value to the model and can be removed
+#### There was no significant change in adjusted R^2 values due to removal of the variable and change in adjusted R^2 value is from .5585 to .5562. Hence this variable is not adding lot of value to the model and can be removed
 
 ```{r collonearity of model step 2}
 
@@ -796,7 +796,7 @@ summary(step4_up)
 
 ```
 
-#### Based on that variance inflation factors (VIF) values following variable having now highest VIF " Strikeout_R " . The variable " Strikeout_R " is removed from the model and the model is evaluted without that variable
+#### Based on that variance inflation factors (VIF) values following variable having now highest VIF " Strikeout_R " . The variable " Strikeout_R " is removed from the model and the model is evaluated without that variable
 
 #### There was no significant change in adjusted R^2 values from .5534 to .5526. The variable " Strikeout_R " is removed from the model. Next step is to reduce the VIF of the model-
 
@@ -819,9 +819,9 @@ sqrt(vif(step4_up))
 
 #### Based on that variance inflation factors (VIF) values following variable having now highest VIF " HomeRuns_R " . The variable " HomeRuns_R " is removed from the model and the model is evaluted without that variable
 
-#### Now the change in adjusted R^2 value is from .5526 to .5462 which is so compromoprise with the performance at the cost of one variable. Reduction of variable simplify the model and hence updated model is selected with some compormise in performance.
+#### Now the change in adjusted R^2 value is from .5526 to .5462 which is some compromise with the performance at the cost of reducing complexity. Reduction of variable will simplify the model and hence updated model is selected with some compromise in performance.
 
-# Loorking at the table F and P values we can not reject the null hupothesis that additional variable is helping the model. Hence we can conclude step4_final is the best model. We do a final check wit VIF value to see if any further iteration is required or not
+# Looking at the table F and P values we can not reject the null hypothesis that additional variable is helping the model. Hence we can conclude step4_final is the best model. We do a final check wit VIF value to see if any further iteration is required or not
 
 
 #Now all VIF values are under 2 for all the variables and which is clean indication that there is no collinearity issue with the model anymore.
