@@ -1010,15 +1010,18 @@ pass 4- Based on that variance inflation factors (VIF) following variable "HomeR
 
 ```{r collonearity of model step 2,echo=FALSE}
 
+data_step4 <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H", "TEAM_BATTING_2B", "TEAM_BATTING_3B", "TEAM_BATTING_HR", "TEAM_BATTING_BB", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_FIELDING_E_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_BASERUN_SB_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Strikeout_R")] 
+
+
 # pass 1
-step4_up<-lm(TARGET_WINS~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_SO+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
+step4_up<-lm(TARGET_WINS~. ,data=data_step4)
 
 # summary(step4_up)
 
 #sqrt(vif(step4_up))
 
 #pass 2
-step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
+step4_up<-lm(TARGET_WINS ~ .-TEAM_BATTING_H ,data=data_step4)
 
 #summary(step4_up)
 
@@ -1174,6 +1177,5 @@ summary(step4_final)
 pred_test <- predict(step4_final, data, interval="prediction", level=0.95)
 
 head(pred_test)
-
 
 ```
