@@ -455,7 +455,7 @@ Lets now create some additional variables that might help us in out analysis.
 
 ##2.3 Missing Flags
 
-First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0. \
+First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 0 and if the value is present we code it with 1. \
 We will name our missing flag variables as follow: \
 TEAM_BATTING_HBP_Missing \
 TEAM_BASERUN_CS_Missing \
@@ -527,7 +527,8 @@ Lets see how the new variables stack up against wins.
 
 fun <- function(x, y) cor(y, x, use = "na.or.complete")
 Correlation <- sapply(moneyball2[, 40:47], FUN = fun, y=moneyball2$TARGET_WINS) 
-kable(Correlation, caption = "New variables Correlation ")
+#kable(Correlation, caption = "New variables Correlation ")
+Correlation
 ```
 
 \
@@ -563,7 +564,9 @@ First we will produce the summary model as per below:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model1<-lm(TARGET_WINS~TEAM_BATTING_H+TEAM_BATTING_2B+TEAM_BATTING_3B+TEAM_BATTING_HR+TEAM_BATTING_BB+TEAM_BATTING_HBP+TEAM_BATTING_SO+TEAM_BASERUN_SB+TEAM_BASERUN_CS+TEAM_FIELDING_E+TEAM_FIELDING_DP+TEAM_PITCHING_BB+TEAM_PITCHING_H+TEAM_PITCHING_HR+TEAM_PITCHING_SO, na.omit(moneyball2))
+data <- moneyball2[, c("TARGET_WINS","TEAM_BATTING_H","TEAM_BATTING_2B","TEAM_BATTING_3B","TEAM_BATTING_HR","TEAM_BATTING_BB", "TEAM_BATTING_SO", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO")] 
+
+model1<-lm(TARGET_WINS~TEAM_BATTING_H+TEAM_BATTING_2B+TEAM_BATTING_3B+TEAM_BATTING_HR+TEAM_BATTING_BB+TEAM_BATTING_SO+TEAM_BASERUN_SB+TEAM_FIELDING_E+TEAM_FIELDING_DP+TEAM_PITCHING_BB+TEAM_PITCHING_H+TEAM_PITCHING_HR+TEAM_PITCHING_SO, na.omit(data))
 
 summary(model1)
 
@@ -576,17 +579,6 @@ summary(model1)
 # influence(model1) # regression diagnostics 
 
 ```
-\
-\
-We notice that model 1 has the following summary characteristics: \
--The Residual standard error is 8.467 \
--Degrees of freedom: 175 \
--Deleted observations due missing data: 2085. \
--Multiple R-squared: 0.5501 \
--Adjusted R-squared: 0.5116 \
--F-statistic: 14.27 on 15 and 175 DF \
--p-value: < 2.2e-16 \
-
 
 Next. we will step thru this model (model 1) and retain only those variables that have the most impact. 
 below the relevant variables for model 1: 
@@ -608,6 +600,18 @@ summary(step1)
 
 ```
 
+\
+\
+We notice that model 1 has the following summary characteristics: \
+-The Residual standard error is 10.18 \
+-Multiple R-squared: 0.4058 \
+-Adjusted R-squared: 0.4019 \
+-F-statistic: 103.7 on 12 and 1822 DF \
+-p-value: < 2.2e-16 \
+\
+\
+
+
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 #summary(step1)
 
@@ -621,11 +625,13 @@ kable(coef1)
 Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
 \
 \
-TEAM_FIELDING_DP (-0.12) and TEAM_PITCHING_SO ( -0.031) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
+
+TEAM_BATTING_H (-0.034), TEAM_BATTING_2B (-0.049), TEAM_FIELDING_DP (-0.112), TEAM_PITCHING_SO (-0.054) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
 \
-Similarly, TEAM_PITCHING_BB (0.057) and TEAM_PITCHING_HR (0.090) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
+
+Similarly, TEAM_BATTING_SO (0.033), TEAM_PITCHING_H (0.06) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
 \
-TEAM_BATTING_H (0.025), TEAM_BATTING_HBP (0.087) and TEAM_FIELDING_E (-0.17) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+TEAM_BATTING_3B (0.183), TEAM_BATTING_HR (0.1), TEAM_BATTING_BB (0.118), TEAM_BASERUN_SB (0.069), TEAM_FIELDING_E (-0.119), TEAM_PITCHING_BB (-0.08) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
 \
 \
 
@@ -643,7 +649,9 @@ First we will produce the summary model as per below: \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model2<-lm(TARGET_WINS~TEAM_BATTING_H_NEW+TEAM_BATTING_2B_NEW+TEAM_BATTING_3B_NEW+TEAM_BATTING_BB_NEW+TEAM_BASERUN_SB_NEW+TEAM_FIELDING_E_NEW+TEAM_FIELDING_DP_NEW+TEAM_PITCHING_BB_NEW+TEAM_PITCHING_H_NEW+TEAM_PITCHING_HR_NEW+TEAM_PITCHING_SO_NEW, na.omit(moneyball2))
+data <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_BATTING_3B_NEW", "TEAM_BATTING_BB_NEW", "TEAM_BASERUN_SB_NEW", "TEAM_FIELDING_E_NEW", "TEAM_FIELDING_DP_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_PITCHING_H_NEW", "TEAM_PITCHING_HR_NEW", "TEAM_PITCHING_SO_NEW")] 
+
+model2<-lm(TARGET_WINS~TEAM_BATTING_H_NEW+TEAM_BATTING_2B_NEW+TEAM_BATTING_3B_NEW+TEAM_BATTING_BB_NEW+TEAM_BASERUN_SB_NEW+TEAM_FIELDING_E_NEW+TEAM_FIELDING_DP_NEW+TEAM_PITCHING_BB_NEW+TEAM_PITCHING_H_NEW+TEAM_PITCHING_HR_NEW+TEAM_PITCHING_SO_NEW, na.omit(data))
 
 summary(model2)
 # coefficients(model1) # model coefficients
@@ -657,6 +665,7 @@ summary(model2)
 ```
 \
 \
+
 Lets now step thru this model and retain only those variables that have the most impact. 
 \
 \
@@ -664,10 +673,21 @@ Lets now step thru this model and retain only those variables that have the most
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
 
 step2 <- step(model2,direction="backward",test="F")
-
+summary(step2)
 #coefficients(step2)
 
 ```
+
+\
+\
+We notice that model 2 has the following summary characteristics: \
+-The Residual standard error is 13.42 \
+-Multiple R-squared: 0.2779 \
+-Adjusted R-squared: 0.2747 \
+-F-statistic: 87.16 on 10 and 2265 DF \
+-p-value: < 2.2e-16 \
+\
+\
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
@@ -684,13 +704,17 @@ kable(coef2)
 Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
 \
 \
-TEAM_BATTING_3B (-0.12), TEAM_FIELDING_DP ( -0.112) and TEAM_PITCHING_SO (-0.028) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
+TEAM_FIELDING_DP_NEW (-0.104), TEAM_PITCHING_SO_NEW (-0.006) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
 
 \
-Similarly, TEAM_PITCHING_H (0.031) and TEAM_PITCHING_HR (0.081) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
+
+Similarly, TEAM_PITCHING_H_NEW (0.01), TEAM_PITCHING_HR_NEW (0.075) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
 
 \
-TEAM_BATTING_BB (0.055) and TEAM_FIELDING_E (-0.174) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+
+
+
+TEAM_BATTING_H_NEW (0.026), TEAM_BATTING_3B_NEW (0.126), TEAM_BATTING_BB_NEW (0.051), TEAM_BASERUN_SB_NEW (0.044), TEAM_FIELDING_E_NEW (-0.022), TEAM_PITCHING_BB_NEW (-0.031) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
 
 \
 \
@@ -710,7 +734,9 @@ First we will produce the summary model as per below: \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model3<-lm(TARGET_WINS~TEAM_BATTING_H_SIN+TEAM_BATTING_2B_SIN+TEAM_BATTING_3B_SIN+TEAM_BATTING_BB_SIN+TEAM_BASERUN_SB_SIN+TEAM_FIELDING_E_SIN+TEAM_FIELDING_DP_SIN+TEAM_PITCHING_BB_SIN+TEAM_PITCHING_H_SIN+TEAM_PITCHING_HR_SIN+TEAM_PITCHING_SO_SIN+TEAM_BATTING_HBP_Missing+TEAM_BASERUN_CS_Missing+Hits_R+Walks_R+HomeRuns_R+Strikeout_R+TEAM_BATTING_EB+TEAM_BATTING_1B, na.omit(moneyball2))
+data <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H_SIN", "TEAM_BATTING_2B_SIN", "TEAM_BATTING_3B_SIN", "TEAM_BATTING_BB_SIN", "TEAM_BASERUN_SB_SIN", "TEAM_FIELDING_E_SIN", "TEAM_FIELDING_DP_SIN", "TEAM_PITCHING_BB_SIN", "TEAM_PITCHING_H_SIN", "TEAM_PITCHING_HR_SIN", "TEAM_PITCHING_SO_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Walks_R", "HomeRuns_R", "Strikeout_R", "TEAM_BATTING_EB", "TEAM_BATTING_1B")] 
+
+model3<-lm(TARGET_WINS~TEAM_BATTING_H_SIN+TEAM_BATTING_2B_SIN+TEAM_BATTING_3B_SIN+TEAM_BATTING_BB_SIN+TEAM_BASERUN_SB_SIN+TEAM_FIELDING_E_SIN+TEAM_FIELDING_DP_SIN+TEAM_PITCHING_BB_SIN+TEAM_PITCHING_H_SIN+TEAM_PITCHING_HR_SIN+TEAM_PITCHING_SO_SIN+TEAM_BATTING_HBP_Missing+TEAM_BASERUN_CS_Missing+Hits_R+Walks_R+HomeRuns_R+Strikeout_R+TEAM_BATTING_EB+TEAM_BATTING_1B, na.omit(data))
 
 summary(model3)
 # coefficients(model1) # model coefficients
@@ -724,6 +750,7 @@ summary(model3)
 ```
 \
 \
+
 Lets now step thru this model and retain only those variables that have the most impact. 
 \
 \
@@ -731,10 +758,21 @@ Lets now step thru this model and retain only those variables that have the most
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
 
 step3 <- step(model3,direction="backward",test="F")
-
+summary(step3)
 #coefficients(step3)
 
 ```
+
+\
+\
+We notice that model 3 has the following summary characteristics: \
+-The Residual standard error is 12.05 \
+-Multiple R-squared: 0.1648 \
+-Adjusted R-squared: 0.1612 \
+-F-statistic: 45.05 on 8 and 1826 DF \
+-p-value: < 2.2e-16 \
+\
+\
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
@@ -751,15 +789,18 @@ kable(coef3)
 Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
 \
 \
-TEAM_BATTING_BB (-2.00) and TEAM_BASERUN_SB ( -2.20) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins.This means that a unit change in each of these variables will decrease the number of a wins. 
+TEAM_BATTING_BB_SIN (-0.587), TEAM_BASERUN_SB_SIN (-0.71) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
 
 \
-TEAM_FIELDING_DP (2.40), TEAM_PITCHING_HR (-1.78), TEAM_BATTING_EB (0.102) and TEAM_BATTING_1B (0.044) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+TEAM_BATTING_EB (0.074), TEAM_BATTING_1B (0.024) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
 
 \
 \
+The newly derived variables TEAM_BATTING_HBP_Missing (-5.665) and TEAM_BASERUN_CS_Missing (-2.019) seem to a negative impact on wins. This means that a missing value will decrease the number of a wins. 
 
-The newly derived variables, Walks_R (-5393.06) and HomeRuns_R (4971.97) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
+
+
+The newly derived variables, Walks_R (-1074.48), Strikeout_R (1081.787) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
 \
 \
 At this point, we will retain this model as is for comparision with other models. 
@@ -777,9 +818,11 @@ First we will produce the summary model as per below: \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model4<-lm(TARGET_WINS~., na.omit(moneyball2))
+data <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H", "TEAM_BATTING_2B", "TEAM_BATTING_3B", "TEAM_BATTING_HR", "TEAM_BATTING_BB", "TEAM_BATTING_SO", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_BATTING_3B_NEW", "TEAM_BATTING_BB_NEW", "TEAM_BASERUN_SB_NEW", "TEAM_FIELDING_E_NEW", "TEAM_FIELDING_DP_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_PITCHING_H_NEW", "TEAM_PITCHING_HR_NEW", "TEAM_PITCHING_SO_NEW", "TEAM_BATTING_H_SIN", "TEAM_BATTING_2B_SIN", "TEAM_BATTING_3B_SIN", "TEAM_BATTING_BB_SIN", "TEAM_BASERUN_SB_SIN", "TEAM_FIELDING_E_SIN", "TEAM_FIELDING_DP_SIN", "TEAM_PITCHING_BB_SIN", "TEAM_PITCHING_H_SIN", "TEAM_PITCHING_HR_SIN", "TEAM_PITCHING_SO_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Walks_R", "HomeRuns_R", "Strikeout_R", "TEAM_BATTING_EB", "TEAM_BATTING_1B")] 
 
-sumary(model4)
+model4<-lm(TARGET_WINS~., na.omit(data))
+
+summary(model4)
 # coefficients(model1) # model coefficients
 # confint(model1, level=0.95) # CIs for model parameters 
 # fitted(model1) # predicted values
@@ -798,10 +841,22 @@ Lets now step thru this model and retain only those variables that have the most
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results= 'hide'}
 
 step4 <- step(model4,direction="backward",test="F")
-
+summary(step4)
 #coefficients(step4)
 
 ```
+
+\
+\
+We notice that model 4 has the following summary characteristics: \
+-The Residual standard error is 10.02 \
+-Multiple R-squared: 0.4264 \
+-Adjusted R-squared: 0.4197 \
+-F-statistic: 64.17 on 21 and 1813 DF \
+-p-value: < 2.2e-16 \
+\
+\
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
@@ -816,31 +871,32 @@ kable(coef4)
 Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
 \
 \
-TEAM_FIELDING_DP (-0.107), TEAM_BATTING_BB_SIN (-1.47) and TEAM_BASERUN_SB_SIN(-2.44) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
+
+TEAM_BATTING_H (-0.127), TEAM_FIELDING_DP (-0.105), TEAM_PITCHING_SO (-0.019), TEAM_BATTING_2B_NEW (-0.202), TEAM_BASERUN_SB_SIN (-0.699) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
 
 \
 
-TEAM_PITCHING_HR (0.083) has a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
+TEAM_PITCHING_H (0.062), TEAM_FIELDING_E_NEW (0.063) has a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
 \
 
-TEAM_BATTING_H (0.017), TEAM_BATTING_BB (8.604), TEAM_BATTING_SO (-6.535), TEAM_BATTING_HBP (0.095), TEAM_PITCHING_BB (-8.551), TEAM_PITCHING_SO (6.5), TEAM_FIELDING_E (-0.181), TEAM_FIELDING_DP_SIN (1.897), Walks_R (-14747.74), HomeRuns_R (4845.243), Strikeout_R (11798.72) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+
+TEAM_BATTING_2B (0.154), TEAM_BATTING_3B (0.192), TEAM_BATTING_HR (0.208), TEAM_BATTING_BB (0.16), TEAM_BASERUN_SB (0.069), TEAM_FIELDING_E (-0.197), TEAM_PITCHING_BB (-0.081), TEAM_PITCHING_HR (-0.103), 
+TEAM_BATTING_H_NEW (0.091), TEAM_PITCHING_BB_NEW (-0.041) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
 
 \
 \
 
-The newly derived variables, Walks_R (-14747.74), HomeRuns_R (4845.243) and Strikeout_R (11798.72) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
+\
+\
+The newly derived variables TEAM_BATTING_HBP_Missing (-2.539), TEAM_BASERUN_CS_Missing (-4.136) seem to a negative impact on wins. This means that a missing value will decrease the number of a wins. 
+\
+
+The newly derived variables, Hits_R (-1458.464), Strikeout_R (1465.04) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
 \
 \
 At this point, we will retain this model as is for comparision with other models and further refining. 
 \
 \
-
-
-
-\
-\
-\
-
 
 #4 Model Selection 
 
@@ -955,7 +1011,7 @@ pass 4- Based on that variance inflation factors (VIF) following variable "HomeR
 ```{r collonearity of model step 2,echo=FALSE}
 
 # pass 1
-step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_SO+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
+step4_up<-lm(TARGET_WINS~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_SO+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
 
 # summary(step4_up)
 
@@ -1097,8 +1153,13 @@ moneyballTest$TEAM_BATTING_EB <- moneyballTest$TEAM_BATTING_2B + moneyballTest$T
 
 moneyballTest$TEAM_BATTING_1B <- moneyballTest$TEAM_BATTING_H - moneyballTest$TEAM_BATTING_EB
 
+
+# retain only those variables that are used in the final refined model4.
+
+data <- moneyballTest[, c("TEAM_BATTING_H", "TEAM_BATTING_2B", "TEAM_BATTING_3B", "TEAM_BATTING_HR", "TEAM_BATTING_BB", "TEAM_BATTING_SO", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_BATTING_3B_NEW", "TEAM_BATTING_BB_NEW", "TEAM_BASERUN_SB_NEW", "TEAM_FIELDING_E_NEW", "TEAM_FIELDING_DP_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_PITCHING_H_NEW", "TEAM_PITCHING_HR_NEW", "TEAM_PITCHING_SO_NEW", "TEAM_BATTING_H_SIN", "TEAM_BATTING_2B_SIN", "TEAM_BATTING_3B_SIN", "TEAM_BATTING_BB_SIN", "TEAM_BASERUN_SB_SIN", "TEAM_FIELDING_E_SIN", "TEAM_FIELDING_DP_SIN", "TEAM_PITCHING_BB_SIN", "TEAM_PITCHING_H_SIN", "TEAM_PITCHING_HR_SIN", "TEAM_PITCHING_SO_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Walks_R", "HomeRuns_R", "Strikeout_R", "TEAM_BATTING_EB", "TEAM_BATTING_1B")] 
+
 #head(moneyballTest)
-summary(moneyballTest)
+summary(data)
 
 ```
 \
@@ -1110,7 +1171,7 @@ Now that we have the test data prepared, we will go ahead and run the final mode
 
 summary(step4_final)
 
-pred_test <- predict(step4_final, moneyballTest, interval="prediction", level=0.95)
+pred_test <- predict(step4_final, data, interval="prediction", level=0.95)
 
 head(pred_test)
 
