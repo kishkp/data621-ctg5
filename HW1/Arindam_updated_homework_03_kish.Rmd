@@ -2,9 +2,9 @@
 title: "Home Work Assignment - 01"
 author: "Critical Thinking Group 5"
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
@@ -512,7 +512,7 @@ AIC(model1)
 
 
 
-mo
+
 
 # coefficients(model1) # model coefficients
 # confint(model1, level=0.95) # CIs for model parameters 
@@ -685,9 +685,21 @@ Decide on the criteria for selecting the best multiple linear regression model. 
 For the multiple linear regression model, will you use a metric such as Adjusted R2, RMSE, etc.? Be sure to explain how you can make inferences from the model, discuss multi-collinearity issues (if any), and discuss other relevant model output. Using the training data set, evaluate the multiple linear regression model based on (a) mean squared error, (b) R2, (c) F-statistic, and (d) residual plots. Make predictions using the evaluation data set.
 =================================================================
 NOTE: New code added from this section
-### Model selection
 
-```{r model comparison,echo=FALSE}
+## Model selection strategy:
+
+Following model selection strategy has been used for this assignment:
+(1) Akaike information criterion (AIC) measure has been used to compare relative performance of different models
+(2) Along with that of adjusted R^2 values are also used to compare different models performance 
+(3) Different regression model diagnostics plots has been used to test assumptions for regression- (a) test for normality of residuals (b) plot  for randomness of residuals, (c) evaluation of homoscedasticity
+(4) Finally model has been tested for collinearity and enhanced by removing collinearity  with the use of variance inflation factors (VIF)
+
+
+
+
+#### Compare models by AIC measures and adjusted R^2 values
+
+```{r model comparison, echo=FALSE}
 
 # Compare the four models created above to identify the best model. By using AIC values on the four models  
 
@@ -696,19 +708,21 @@ AIC(step2)
 AIC(step3)
 AIC(step4)
 
-# Lokking at the AIC values it appears that model "step1" & "step 4" are comparatively better model of the pack. By using adjusted R^2 values on those two models-
+summary(step4)
 
-summary(step1);summary(step4)
 
-# Based on adjusted R^2 value for Models "step2" and "step4", it can be seen "step1" can explain 51.67% variability in the model, where as "step4" can explain "55.85%" variability in the model. With this we can conclude that model "step4" is the best one among the pack.
 
 ```
 
+Looking at the AIC values it appears that models, "step1" & "step 4" are comparatively better models of the pack.  "step1" has adjusted R^2 value .5167 which means this model can explain 51.67% variability in data. "step4" has adjusted R^2 value of .5585 and this model can explain 55.85% variability in data. From this two data points model "step4" was picked for further evaluation.
 
 
-### Model dignostics to validate the assumption of Linear Regression
 
-```{r model dignostics}
+## Model diagnostics plots to validate the assumption of Linear Regression:
+
+Plot for normality of residual values:
+
+```{r model diagnostics, echo=FALSE}
 
 #  Analysis of plot on residuals to verify normal distribution of residuals
 
@@ -719,20 +733,27 @@ hist(sresid, freq=FALSE,
 xfit<-seq(min(sresid),max(sresid),length=40) 
 yfit<-dnorm(xfit) 
 lines(xfit, yfit)
+```
 
-# Based on the normal plot it appears that residual distrubution is close to normal
+Based on the normality plot it appears that residual distribution is normal. This indicates the mean of the difference between our predictions. 
 
-# plot residuals with resect to predicted value and check if the distribution is random
+plot residuals with respect to predicted value for randomness:
+
+```{r model diagnostics II,echo=FALSE}
 
 step4.res <- resid(step4)
 score<-predict(step4,type="response")
 
 plot(score, step4.res,  ylab="Residuals", xlab="Number of Predicted Wins", main="Residual vs Predicted values") 
 abline(0, 0) 
+```
 
-# Distribution of residual vaules are random and does not show any pattern arouund based line
+Distribution of residual values are random around base line and do not show any pattern around base line.
 
-# Evaluate homoscedasticity
+Evaluate homoscedasticity:
+
+```{r model diagnostics III,echo=FALSE,eval=FALSE}
+
 library(car)
 
 ncvTest(step4)
@@ -741,90 +762,72 @@ spreadLevelPlot(step4)
 
 ```
 
-####The residuals are normally distributed, this indicates That the mean of the difference between our predictions 
-####and the actual values is close to 0 which is good for the analysis. 
-#### Distribution of the residual is random and do not follow any pattern
+The test confirms the non-constant error variance test. It also has a p-value higher than a significance level of 0.05. 
 
 
-### homoscedasticity check or non-constant error variance test
-####The test confirms the non-constant error variance test. It also has a p-value higher than a significance level of 0.05. 
-####Therefore we can accept the null hypothesis that the variance of the residuals is constant and infer that heteroscedasticity is not present.
+Analysis of collinearity: 
 
 
-
-# Analysis of collinearity 
-
-```{r collonearity of model step 1}
+```{r collinearity y of model step 1,echo=FALSE,warning=FALSE,message=FALSE}
 
 library(faraway)
 
-# Evaluate Collinearity of the variables in model "step4"
-vif(step4) # variance inflation factors 
+# Evaluate Collinearity of the variables in model "step4" vif(step4) # variance inflation factors 
 sqrt(vif(step4)) 
 
+```
+
+Variables have been tested with variance inflation factors (VIF). If any variable has value which is greater than 2 then the highest value variable been removed from model and model performance has been evaluated. Following are the out comes from this assessment steps-
+
+pass 1- Based on that variance inflation factors (VIF) following variable "TEAM_PITCHING_BB" has highest value > 2 and is removed from model, and model is evaluated without that variable. Adjusted R^2 value changed from .5585 to .5562. Hence this variable is not adding lot of value to the model and can be removed.
+
+pass 2- Based on that variance inflation factors (VIF) following variable "TEAM_BATTING_SO" has highest value > 2 and is removed from model, and model is evaluated without that variable. Adjusted R^2 values changed from .5562 to .5534. Hence this variable is not adding lot of value to the model and can be removed.
+
+pass 3- Based on that variance inflation factors (VIF) following variable "Strikeout_R" has highest value > 2 and is removed from model, and model is evaluated without that variable. Adjusted R^2 value changed from .5534 to .5526. Hence this variable is not adding lot of value to the model and can be removed.
+
+pass 4- Based on that variance inflation factors (VIF) following variable "HomeRuns_R" has highest value > 2 and is removed from model, and model is evaluated without that variable. Adjusted R^2 value  changed from .5526 to .5462 which is some compromise with the performance at the cost of reducing complexity. Reduction of variable will simplify the model and hence updated model is selected with some compromise in performance.
+
+
+
+```{r collonearity of model step 2,echo=FALSE}
+
+# pass 1
 step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_SO+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
 
-summary(step4_up)
+# summary(step4_up)
 
-```
+#sqrt(vif(step4_up))
 
-#### Based on that variance inflation factors (VIF) values following variable having highest VIF ,"TEAM_PITCHING_BB" is removed from model and model is evaluated without that variable 
-
-#### There was no significant change in adjusted R^2 values due to removal of the variable and change in adjusted R^2 value is from .5585 to .5562. Hence this variable is not adding lot of value to the model and can be removed
-
-```{r collonearity of model step 2}
-
-sqrt(vif(step4_up))
-
-
+#pass 2
 step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +Strikeout_R +HomeRuns_R  ,data=moneyball2 )
 
-summary(step4_up)
+#summary(step4_up)
 
-```
 
-####Based on that variance inflation factors (VIF) values following variable having now highest VIF "TEAM_BATTING_SO ". The variable "TEAM_BATTING_SO " is removed from the model and the model is evaluted without that variable 
+#sqrt(vif(step4_up))
 
-#### There was no significant change in adjusted R^2 values from .5562 to .5534 due to removal of above variable. Hence the above variable can be removed from the model. Same process is continued and VIF value is identified for the model 
-
-```{r collonearity of model step 3}
-sqrt(vif(step4_up))
-
+# pass 3-
 step4_up<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R +HomeRuns_R  ,data=moneyball2 )
 
-summary(step4_up)
+# summary(step4_up)
 
-```
+# sqrt(vif(step4_up))
 
-#### Based on that variance inflation factors (VIF) values following variable having now highest VIF " Strikeout_R " . The variable " Strikeout_R " is removed from the model and the model is evaluated without that variable
-
-#### There was no significant change in adjusted R^2 values from .5534 to .5526. The variable " Strikeout_R " is removed from the model. Next step is to reduce the VIF of the model-
-
-
-```{r collonearity of model step 4}
-
-sqrt(vif(step4_up))
-
+# pass 4
 step4_final<-lm(TARGET_WINS ~TEAM_BATTING_H + TEAM_BATTING_BB+ TEAM_BATTING_HBP+ TEAM_PITCHING_HR + TEAM_PITCHING_SO + TEAM_FIELDING_E + TEAM_FIELDING_DP + TEAM_BATTING_BB_SIN + TEAM_BASERUN_SB_SIN + TEAM_FIELDING_DP_SIN + Walks_R  ,data=moneyball2 )
+
+sqrt(vif(step4_final))
 
 summary(step4_final)
 
 # Doing Annova test for the model "step4_up" and "step4_final"
 
-anova(step4_final,step4_up)
+ #anova(step4_final,step4_up)
 
-sqrt(vif(step4_up))
 
 ```
 
-#### Based on that variance inflation factors (VIF) values following variable having now highest VIF " HomeRuns_R " . The variable " HomeRuns_R " is removed from the model and the model is evaluted without that variable
-
-#### Now the change in adjusted R^2 value is from .5526 to .5462 which is some compromise with the performance at the cost of reducing complexity. Reduction of variable will simplify the model and hence updated model is selected with some compromise in performance.
-
-#### Looking at the table F and P values we can not reject the null hypothesis that additional variable is helping the model. Hence we can conclude step4_final is the best model. We do a final check wit VIF value to see if any further iteration is required or not
-
-
-####Now all VIF values are under 2 for all the variables and which is clean indication that there is no collinearity issue with the model anymore.
+Final model was derived after four passes of elimination were carried out. Looking at the VIF values in the final model there is no collinearity among variables < 2. In this scenario a model with slightly less performance was selected to avoid collinearity effect among variables. But there was no significant reduction of model performance. But this exercise helped to reduce the model complexity.
 
 
 
