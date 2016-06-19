@@ -1,0 +1,865 @@
+---
+title: "Home Work Assignment - 01"
+author: "Critical Thinking Group 5"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+\newpage
+
+# Overview 
+The data set contains approximately 2200 records. Each record represents a professional baseball team from the years 1871 to 2006 inclusive. Each record has the performance of the team for the given year, with all of the statistics adjusted to match the performance of a 162 game season.
+We will be exploring, analyzing, and modeling the data set to predict a number of wins for a team using Ordinary Least Square (OLS).  
+To attain our objective, we will be following the below best practice steps and guidelines: \
+
+1 -Data Exploration \
+2 -Data Preparation \
+3 -Build Models \
+4 -Select Models \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+library(faraway)
+
+moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
+
+moneyballvars <- moneyballvars[moneyballvars[,1]!="INDEX",] 
+
+moneyball<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-training-data.csv")
+
+moneyball2<- select(moneyball, -(INDEX))
+```
+
+
+
+
+#1 Data Exploration Analysis \
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification \
+
+
+
+##1.1	Variable identification \
+\
+
+First let's display and examine the data dictionary or the data columns as shown in table 1. \
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
+
+kable(moneyballvars, caption = "Variable Definition")
+
+```
+\
+\
+
+
+We notice that all variables are numeric. The variable names seem to follow certain naming pattern to highlight certain arithmetic relationships. In other words, we can compute the number of '1B' hits by taking the difference between overall hits and '2B', '3B', 'HR'. Although such naming and construct is not recommended in normalized database design ( as it violates third normal form), it is very frequent practice in the data analytics.
+
+\
+Our predictor input is made of 15 variables. And our dependent variable is one variable called TARGET_WINS.
+
+Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
+
+
+\newpage
+
+##1.3 Data Summary Analysis \
+
+
+In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+ds_stats <- psych::describe(moneyball2, skew = FALSE, na.rm = TRUE)[c(3:6)]
+
+ds_stats0<- ds_stats
+ds_stats <- cbind(VARIABLE_NAME = rownames(ds_stats), ds_stats)
+#rownames(ds_stats) <- NULL
+kable(ds_stats0, caption = "Data Summary")
+
+
+Variable<- rownames(ds_stats)
+
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(moneyball2[Variable], FUN = fun) 
+
+#ds_stats <- cbind(ds_stats, Missing)
+
+
+# fun <- function(x) mean(x, na.rm=T)
+# Mean <- sapply(moneyball2[Variable], FUN = fun) 
+
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(moneyball2[Variable], FUN = fun, y=moneyball2$TARGET_WINS) 
+
+ds_stats2 <- data.frame(cbind( Missing, Correlation))
+#ds_stats2 <- left_join(ds_stats0, moneyballvars, by="VARIABLE_NAME")
+kable(ds_stats2, caption = "Missing Data and Data Correlation")
+```
+
+Based on table 2 and Table 3, we can make the below observations: \
+
+
+1.Some of the variables like TEAM_PITCHING_H, TEAM_PITCHING_SO and TEAM_FIELDING_E seem to have outliers which is evident from the mean, median and trimmed mean values.
+
+\
+
+2.TEAM_BATTING_HBP and TEAM_BASERUN_CS seems to be missing a lot of values which casts doubt on its usefulness as a predictor. Maybe a flag for presense or absense of TEAM_BATTING_HBP and TEAM_BASERUN_CS might be a better predictor. Also given the fact that there is low correlation, we decided to exclude these 2 variables from any missing value or outlier treatment. 
+
+\
+
+3.Most of the variables seem to indicate a positive / negative correlation in line with the theoretical effect. However, the following stand out as they show a correlation opposite to the theoretical impact: TEAM_BASERUN_CS,  TEAM_PITCHING_HR, TEAM_PITCHING_BB, TEAM_PITCHING_SO and TEAM_FIELDING_DP. Lets evaluate these variables further once we fix any missing values or outliers.
+
+\
+
+4. We will impute the missing values in TEAM_BATTING_SO, FIELDING_DP, BASERUN_SB and TEAM_PITCHING_SO since it has lesser missing values even though there is low correlation. So we will create new variables that will have the respective missing values handled.
+
+
+##1.4	Outliers and Missing Values Identification  \
+
+
+In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the outliers. 
+
+
+Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect outliers if any and treat it accordingly.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+}
+
+#show_charts(moneyball2$TEAM_BATTING_H,moneyball2$TARGET_WINS)
+
+show_charts(moneyball2$TEAM_BATTING_H)
+```
+
+\
+For TEAM_BATTING_H, we can see that there are quite a few outliers, both at the upper and lower end. Accordingly,  we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_BATTING_2B)
+
+```
+
+For TEAM_BATTING_2B, we can see that there are quite a few outliers, both at the upper and a single outlier at the lower end. For this variable we decide to create a new variable that will have the outliers fixed.
+\
+\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_BATTING_3B)
+
+```
+
+\
+\
+For TEAM_BATTING_3B, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outliers fixed.
+\
+\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_BATTING_HR)
+
+```
+
+\
+\
+For TEAM_BATTING_HR, we can see that there are no outliers.
+\
+\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_BATTING_BB)
+
+```
+
+For TEAM_BATTING_BB, we can see that there are quite a few outliers, both at the upper and lower end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_BATTING_SO)
+
+```
+
+For TEAM_BATTING_SO, we can see that there are no outliers. No further action needed for this variable.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_BASERUN_SB)
+
+```
+
+For TEAM_BASERUN_SB, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_FIELDING_E)
+
+```
+
+For TEAM_FIELDING_E, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```
+
+show_charts(moneyball2$TEAM_FIELDING_DP)
+
+```
+
+For TEAM_FIELDING_DP, we can see that there are quite a few outliers, both at the upper and lower end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_PITCHING_BB)
+
+```
+
+For TEAM_PITCHING_BB, we can see that there are quite a few outliers, both at the upper and lower end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_PITCHING_H)
+
+```
+
+For TEAM_PITCHING_H, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_PITCHING_HR)
+
+```
+For TEAM_PITCHING_HR, we can see that there only 3 outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts(moneyball2$TEAM_PITCHING_SO)
+
+```
+
+For TEAM_PITCHING_SO, we can see that there are quite a few outliers at the upper and a single outlier on the lower end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
+
+** In most of the cases above, we see that a SIN transformation seems to work well to take care of the outliers. We will go ahead and create these new variables respectively.**  
+
+
+\newpage
+
+#2. Data Preparation 
+
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+- Outliers treatment \
+- Missing values treatment \
+- Data transformation \
+
+
+
+##2.1 Outliers treatment \
+
+For outliers, we will create 2 sets of variables. 
+
+The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables. 
+
+TEAM_BATTING_H_NEW \
+TEAM_BATTING_2B_NEW \
+TEAM_BATTING_3B_NEW \
+TEAM_BATTING_BB_NEW \
+TEAM_BASERUN_SB_NEW \
+TEAM_FIELDING_E_NEW \
+TEAM_FIELDING_DP_NEW \
+TEAM_PITCHING_BB_NEW \
+TEAM_PITCHING_H_NEW \
+TEAM_PITCHING_HR_NEW \
+TEAM_PITCHING_SO_NEW \
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+moneyball2$TEAM_BATTING_H_NEW <- treat_outliers(moneyball2$TEAM_BATTING_H)
+moneyball2$TEAM_BATTING_2B_NEW <- treat_outliers(moneyball2$TEAM_BATTING_2B)
+moneyball2$TEAM_BATTING_3B_NEW <- treat_outliers(moneyball2$TEAM_BATTING_3B)
+moneyball2$TEAM_BATTING_BB_NEW <- treat_outliers(moneyball2$TEAM_BATTING_BB)
+moneyball2$TEAM_BASERUN_SB_NEW <- treat_outliers(moneyball2$TEAM_BASERUN_SB)
+moneyball2$TEAM_FIELDING_E_NEW <- treat_outliers(moneyball2$TEAM_FIELDING_E)
+moneyball2$TEAM_FIELDING_DP_NEW <- treat_outliers(moneyball2$TEAM_FIELDING_DP)
+moneyball2$TEAM_PITCHING_BB_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_BB)
+moneyball2$TEAM_PITCHING_H_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_H)
+moneyball2$TEAM_PITCHING_HR_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_HR)
+moneyball2$TEAM_PITCHING_SO_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_SO)
+
+```
+
+
+Lets see how the new variables look in boxplots.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(2,4))
+
+boxplot(moneyball2$TEAM_BATTING_H_NEW,main="TEAM_BATTING_H_NEW")
+boxplot(moneyball2$TEAM_BATTING_2B_NEW,main="TEAM_BATTING_2B_NEW")
+boxplot(moneyball2$TEAM_BATTING_3B_NEW,main="TEAM_BATTING_3B_NEW")
+boxplot(moneyball2$TEAM_BATTING_BB_NEW,main="TEAM_BATTING_BB_NEW")
+boxplot(moneyball2$TEAM_BASERUN_SB_NEW,main="TEAM_BASERUN_SB_NEW")
+boxplot(moneyball2$TEAM_FIELDING_E_NEW,main="TEAM_FIELDING_E_NEW")
+boxplot(moneyball2$TEAM_FIELDING_DP_NEW,main="TEAM_FIELDING_DP_NEW")
+boxplot(moneyball2$TEAM_PITCHING_BB_NEW,main="TEAM_PITCHING_BB_NEW")
+boxplot(moneyball2$TEAM_PITCHING_H_NEW,main="TEAM_PITCHING_H_NEW")
+boxplot(moneyball2$TEAM_PITCHING_HR_NEW,main="TEAM_PITCHING_HR_NEW")
+boxplot(moneyball2$TEAM_PITCHING_SO_NEW,main="TEAM_PITCHING_SO_NEW")
+
+```
+
+
+In the second set, we will use the sin transformation and create the following variables:
+
+TEAM_BATTING_H_SIN \
+TEAM_BATTING_2B_SIN \
+TEAM_BATTING_3B_SIN \
+TEAM_BATTING_BB_SIN \
+TEAM_BASERUN_SB_SIN \
+TEAM_FIELDING_E_SIN \
+TEAM_FIELDING_DP_SIN \
+TEAM_PITCHING_BB_SIN \
+TEAM_PITCHING_H_SIN \
+TEAM_PITCHING_HR_SIN \
+TEAM_PITCHING_SO_SIN \
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+moneyball2$TEAM_BATTING_H_SIN <- sin(moneyball2$TEAM_BATTING_H)
+moneyball2$TEAM_BATTING_2B_SIN <- sin(moneyball2$TEAM_BATTING_2B)
+moneyball2$TEAM_BATTING_3B_SIN <- sin(moneyball2$TEAM_BATTING_3B)
+moneyball2$TEAM_BATTING_BB_SIN <- sin(moneyball2$TEAM_BATTING_BB)
+moneyball2$TEAM_BASERUN_SB_SIN <- sin(moneyball2$TEAM_BASERUN_SB)
+moneyball2$TEAM_FIELDING_E_SIN <- sin(moneyball2$TEAM_FIELDING_E)
+moneyball2$TEAM_FIELDING_DP_SIN <- sin(moneyball2$TEAM_FIELDING_DP)
+moneyball2$TEAM_PITCHING_BB_SIN <- sin(moneyball2$TEAM_PITCHING_BB)
+moneyball2$TEAM_PITCHING_H_SIN <- sin(moneyball2$TEAM_PITCHING_H)
+moneyball2$TEAM_PITCHING_HR_SIN <- sin(moneyball2$TEAM_PITCHING_HR)
+moneyball2$TEAM_PITCHING_SO_SIN <- sin(moneyball2$TEAM_PITCHING_SO)
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(2,4))
+
+boxplot(moneyball2$TEAM_BATTING_H_SIN,main="TEAM_BATTING_H_SIN")
+boxplot(moneyball2$TEAM_BATTING_2B_SIN,main="TEAM_BATTING_2B_SIN")
+boxplot(moneyball2$TEAM_BATTING_3B_SIN,main="TEAM_BATTING_3B_SIN")
+boxplot(moneyball2$TEAM_BATTING_BB_SIN,main="TEAM_BATTING_BB_SIN")
+boxplot(moneyball2$TEAM_BASERUN_SB_SIN,main="TEAM_BASERUN_SB_SIN")
+boxplot(moneyball2$TEAM_FIELDING_E_SIN,main="TEAM_FIELDING_E_SIN")
+boxplot(moneyball2$TEAM_FIELDING_DP_SIN,main="TEAM_FIELDING_DP_SIN")
+boxplot(moneyball2$TEAM_PITCHING_BB_SIN,main="TEAM_PITCHING_BB_SIN")
+boxplot(moneyball2$TEAM_PITCHING_H_SIN,main="TEAM_PITCHING_H_SIN")
+boxplot(moneyball2$TEAM_PITCHING_HR_SIN,main="TEAM_PITCHING_HR_SIN")
+boxplot(moneyball2$TEAM_PITCHING_SO_SIN,main="TEAM_PITCHING_SO_SIN")
+
+```
+
+
+
+
+##2.2 Missing values treatment \
+
+Next we impute missing values. Since we have handled outliers, we can go ahead and use the mean as impute values. As with outliers, we will go ahead and create new variables for the following:
+
+TEAM_BATTING_SO_NEW
+
+We will re-use the already created new variables for fixing the missing values for the below:
+
+TEAM_PITCHING_SO_NEW 
+TEAM_BASERUN_SB_NEW
+TEAM_FIELDING_DP_NEW
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+moneyball2$TEAM_BATTING_SO_NEW <- moneyball2$TEAM_BATTING_SO
+moneyball2$TEAM_BATTING_SO_NEW[is.na(moneyball2$TEAM_BATTING_SO_NEW)] <- mean(moneyball2$TEAM_BATTING_SO_NEW, na.rm = T) 
+
+moneyball2$TEAM_PITCHING_SO_NEW[is.na(moneyball2$TEAM_PITCHING_SO_NEW)] <- mean(moneyball2$TEAM_PITCHING_SO_NEW, na.rm = T) 
+moneyball2$TEAM_BASERUN_SB_NEW[is.na(moneyball2$TEAM_BASERUN_SB_NEW)] <- mean(moneyball2$TEAM_BASERUN_SB_NEW, na.rm = T) 
+moneyball2$TEAM_FIELDING_DP_NEW[is.na(moneyball2$TEAM_FIELDING_DP_NEW)] <- mean(moneyball2$TEAM_FIELDING_DP_NEW, na.rm = T) 
+
+```
+
+##2.3 Additional Variables ??? 
+
+Lets now create some additional variables that might help us in out analysis. 
+
+##2.4 Missing Flags ???  0 and 1 flags interchanged?
+
+First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0. \
+We will name our missing flag variables as follow: \
+TEAM_BATTING_HBP_Missing \
+TEAM_BASERUN_CS_Missing \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+moneyball2$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyball2$TEAM_BATTING_HBP),1,0)
+moneyball2$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyball2$TEAM_BASERUN_CS),1,0)
+
+```
+\
+\
+
+
+##2.5 Ratios
+
+\
+
+Next we create some additional variables, that we think may be useful with the prediction. Here we create the following ratios: \
+
+Hits_R  = TEAM_BATTING_H/TEAM_PITCHING_H \
+Walks_R = TEAM_BATTING_BB/TEAM_PITCHING_BB \
+HomeRuns_R = TEAM_BATTING_HR/TEAM_PITCHING_HR \
+Strikeout_R = TEAM_BATTING_SO/TEAM_PITCHING_SO \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+moneyball2$Hits_R <- moneyball2$TEAM_BATTING_H/moneyball2$TEAM_PITCHING_H
+moneyball2$Walks_R <- moneyball2$TEAM_BATTING_BB/moneyball2$TEAM_PITCHING_BB
+moneyball2$HomeRuns_R <- moneyball2$TEAM_BATTING_HR/moneyball2$TEAM_PITCHING_HR
+moneyball2$Strikeout_R <- moneyball2$TEAM_BATTING_SO/moneyball2$TEAM_PITCHING_SO
+
+
+```
+
+\
+\
+
+
+##2.6 Calculated Variables
+
+\
+
+Finally, we will also create calculated variables as below:
+
+1. TEAM_BATTING_EB (Extra Base Hits) = 2B + 3B + HR
+2. TEAM_BATTING_1B (Singles by batters) = TEAM_BATTING_H - TEAM_BATTING_EB
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+moneyball2$TEAM_BATTING_EB <- moneyball2$TEAM_BATTING_2B + moneyball2$TEAM_BATTING_3B + moneyball2$TEAM_BATTING_HR
+
+moneyball2$TEAM_BATTING_1B <- moneyball2$TEAM_BATTING_H - moneyball2$TEAM_BATTING_EB
+
+```
+
+##2.7 Correlation for new variables
+
+\
+
+Lets see how the new variables stack up against wins. 
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(moneyball2[, 40:47], FUN = fun, y=moneyball2$TARGET_WINS) 
+kable(Correlation)
+```
+
+\
+All new variables seem to have a positive correlation with wins. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
+
+\newpage
+
+
+#3 Build Models\
+
+In this phase, we will build four models. The models independent variables will be based initially on the original data set variables, derived dataset variables, transformed dataset variables, and all variables in the dataset.  In addition, for each model, we will perform a stepwise selection and stop at a point where we retain only those variables that have lower AIC (Akaike An Information Criterion).  Recall (AIC) is a measure of the relative quality of statistical models for a given set of data. Given a collection of models for the data, AIC estimates the quality of each model, relative to each of the other models. Lower AIC leads to better quality model.
+
+
+\newpage
+
+Below is a summary table showing models and their respective variables. \
+
+ 
+ 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/ModelVars.csv")
+kable(modelvars)
+
+```
+
+\newpage 
+
+##3.1 Model One
+In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
+
+First we will produce the summary model as per below: 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model1<-lm(TARGET_WINS~TEAM_BATTING_H+TEAM_BATTING_2B+TEAM_BATTING_3B+TEAM_BATTING_HR+TEAM_BATTING_BB+TEAM_BATTING_HBP+TEAM_BATTING_SO+TEAM_BASERUN_SB+TEAM_BASERUN_CS+TEAM_FIELDING_E+TEAM_FIELDING_DP+TEAM_PITCHING_BB+TEAM_PITCHING_H+TEAM_PITCHING_HR+TEAM_PITCHING_SO, na.omit(moneyball2))
+
+sumary(model1)
+
+# coefficients(model1) # model coefficients
+# confint(model1, level=0.95) # CIs for model parameters 
+# fitted(model1) # predicted values
+# residuals(model1) # residuals
+# anova(model1) # anova table 
+# vcov(model1) # covariance matrix for model parameters 
+# influence(model1) # regression diagnostics 
+
+```
+\
+\
+We notice that model 1 has the following summary characteristics: \
+-The Residual standard error is 8.467 \
+-Degrees of freedom: 175 \
+-Deleted observations due missing data: 2085. \
+-Multiple R-squared: 0.5501 \
+-Adjusted R-squared: 0.5116 \
+-F-statistic: 14.27 on 15 and 175 DF \
+-p-value: < 2.2e-16 \
+
+Next. let's step thru this model (model 1) and retain only those variables that have the most impact. 
+below the relevant varuibale for model 1: 
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+
+full<-lm(TARGET_WINS~TEAM_BATTING_H+TEAM_BATTING_2B+TEAM_BATTING_3B+TEAM_BATTING_HR+TEAM_BATTING_BB+TEAM_BATTING_HBP+TEAM_BATTING_SO+TEAM_BASERUN_SB+TEAM_BASERUN_CS+TEAM_FIELDING_E+TEAM_FIELDING_DP+TEAM_PITCHING_BB+TEAM_PITCHING_H+TEAM_PITCHING_HR+TEAM_PITCHING_SO, 
+           na.omit(moneyball2))
+
+null<- lm(TARGET_WINS~1,  data=na.omit(moneyball2))
+#null
+
+stepmod1<- step(null, scope=list(lower=null, upper=full), direction="forward")
+
+#step1 <- coefficients(step(model1,direction="backward",test="F"))
+#coefficients(step1)
+
+#summary(step1)
+#step1$anova
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
+coef1<- data.frame('Coefficients'= stepmod1$coefficients)
+kable(coef1)
+
+```
+
+
+##3.2 Model Two
+In this model (model2), we will be using the adjusted values based on our outlier treatment process. 
+We will create model and we will highlight the variables that being recommended using the AIC value.
+First we will produce the summary model as per below: \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model2<-lm(TARGET_WINS~TEAM_BATTING_H_NEW+TEAM_BATTING_2B_NEW+TEAM_BATTING_3B_NEW+TEAM_BATTING_BB_NEW+TEAM_BASERUN_SB_NEW+TEAM_FIELDING_E_NEW+TEAM_FIELDING_DP_NEW+TEAM_PITCHING_BB_NEW+TEAM_PITCHING_H_NEW+TEAM_PITCHING_HR_NEW+TEAM_PITCHING_SO_NEW, na.omit(moneyball2))
+
+sumary(model2)
+# coefficients(model1) # model coefficients
+# confint(model1, level=0.95) # CIs for model parameters 
+# fitted(model1) # predicted values
+# residuals(model1) # residuals
+# anova(model1) # anova table 
+# vcov(model1) # covariance matrix for model parameters 
+# influence(model1) # regression diagnostics 
+
+```
+\
+\
+Lets now step thru this model and retain only those variables that have the most impact. 
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#step2 <- step(model2,direction="backward",test="F")
+
+#coefficients(step2)
+
+```
+
+
+##3.3 Model Three\
+
+In this model (model3), we will be using the derived values based on our variable transformation process. We will create model and we will highlight the variables that being recommended using the AIC value.
+First we will produce the summary model as per below: \
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model3<-lm(TARGET_WINS~TEAM_BATTING_H_SIN+TEAM_BATTING_2B_SIN+TEAM_BATTING_3B_SIN+TEAM_BATTING_BB_SIN+TEAM_BASERUN_SB_SIN+TEAM_FIELDING_E_SIN+TEAM_FIELDING_DP_SIN+TEAM_PITCHING_BB_SIN+TEAM_PITCHING_H_SIN+TEAM_PITCHING_HR_SIN+TEAM_PITCHING_SO_SIN+TEAM_BATTING_HBP_Missing+TEAM_BASERUN_CS_Missing+Hits_R+Walks_R+HomeRuns_R+Strikeout_R+TEAM_BATTING_EB+TEAM_BATTING_1B, na.omit(moneyball2))
+
+sumary(model3)
+# coefficients(model1) # model coefficients
+# confint(model1, level=0.95) # CIs for model parameters 
+# fitted(model1) # predicted values
+# residuals(model1) # residuals
+# anova(model1) # anova table 
+# vcov(model1) # covariance matrix for model parameters 
+# influence(model1) # regression diagnostics 
+
+```
+\
+\
+Lets now step thru this model and retain only those variables that have the most impact. 
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#step3 <- step(model3,direction="backward",test="F")
+
+#coefficients(step3)
+
+```
+
+
+
+##3.4 Model Four \
+
+In this model (model4), we will be using all variables original, adjusted, and derived values. We will create model and we will highlight the variables that being recommended using the AIC value.
+First we will produce the summary model as per below: \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model4<-lm(TARGET_WINS~., na.omit(moneyball2))
+
+sumary(model4)
+# coefficients(model1) # model coefficients
+# confint(model1, level=0.95) # CIs for model parameters 
+# fitted(model1) # predicted values
+# residuals(model1) # residuals
+# anova(model1) # anova table 
+# vcov(model1) # covariance matrix for model parameters 
+# influence(model1) # regression diagnostics 
+
+```
+\
+\
+Lets now step thru this model and retain only those variables that have the most impact. 
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#step4 <- step(model4,direction="backward",test="F")
+
+#coefficients(step4)
+
+```
+
+
+\
+\
+\
+
+
+
+Discuss the coefficients in the models, do they make sense? For example, if a team hits a lot of Home Runs, it would be reasonably expected that such a team would win more games. However, if the coefficient is negative (suggesting that the team would lose more games), then that needs to be discussed. Are you keeping the model even though it is counter intuitive? Why? The boss needs to know.
+
+
+# Select Models
+
+Decide on the criteria for selecting the best multiple linear regression model. Will you select a model with slightly worse performance if it makes more sense or is more parsimonious? Discuss why you selected your model.
+For the multiple linear regression model, will you use a metric such as Adjusted R2, RMSE, etc.? Be sure to explain how you can make inferences from the model, discuss multi-collinearity issues (if any), and discuss other relevant model output. Using the training data set, evaluate the multiple linear regression model based on (a) mean squared error, (b) R2, (c) F-statistic, and (d) residual plots. Make predictions using the evaluation data set.
+
+
+
+### Model One with original data
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+library(car)
+
+
+mod1<- lm(TARGET_WINS ~ 
+     TEAM_BATTING_H +
+     TEAM_BATTING_2B +
+     TEAM_BATTING_3B +
+     TEAM_BATTING_HR +
+     TEAM_BATTING_BB +
+     TEAM_BATTING_HBP +
+     TEAM_BATTING_SO +
+     TEAM_BASERUN_SB +
+     TEAM_BASERUN_CS +
+     TEAM_FIELDING_E +
+     TEAM_FIELDING_DP +
+     TEAM_PITCHING_BB +
+     TEAM_PITCHING_H +
+     TEAM_PITCHING_HR +
+     TEAM_PITCHING_SO, moneyball2
+   )
+
+summary(mod1)
+#library(faraway)
+#sumary(mod1)
+
+```
+
+### Normality check of Residuals
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#  First let plot residuals to see if they look like a normal distribution:
+
+library(MASS)
+sresid <- studres(mod1) 
+hist(sresid, freq=FALSE, 
+     main="Distribution of Residuals")
+xfit<-seq(min(sresid),max(sresid),length=40) 
+yfit<-dnorm(xfit) 
+lines(xfit, yfit)
+
+
+```
+
+
+
+####The residuals are normally distributed, this indicates That the mean of the difference between our predictions 
+####and the actual values is close to 0 which is good for our analysis. 
+#### Also, it's unlikely that no relationship exists between TEAM_FIELDING_E and TARGET_WINS.
+
+### homoscedasticity check or non-constant error variance test
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+# Evaluate homoscedasticity
+ncvTest(mod1)
+# plot studentized residuals vs. fitted values 
+spreadLevelPlot(mod1)
+
+```
+####The test confirms the non-constant error variance test. It also has a p-value higher than a significance level of 0.05. 
+####Therefore we can accept the null hypothesis that the variance of the residuals is constant and infer that heteroscedasticity is not present.
+
+
+### Collinearity Check
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# Evaluate Collinearity
+vif(mod1) # variance inflation factors 
+Collinearity<- sqrt(vif(mod1)) > 3 # 3 problem?
+data.frame(Collinearity)
+
+```
+
+# Test for Autocorrelated Errors
+durbinWatsonTest(mod1)
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+durbinWatsonTest(mod1)
+
+```
+
+
+### goodness of fit of your model
+### using R-squared and adjusted R-squared, our model is about 55% predicts the TARGET_WINS  
+
+
+
+
+
+
+
+
+
+
+
+
