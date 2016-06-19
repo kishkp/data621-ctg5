@@ -1,0 +1,228 @@
+---
+title: "Home Work Assignment - 01 - Test/ Evaluation Data"
+author: "Critical Thinking Group 5"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+
+# reading the test data from github
+url <- "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-evaluation-data.csv"
+moneyballT<- read.csv(url)
+#head(moneyballT)
+
+#removing the index column which is not required
+moneyballTest<- select(moneyballT, -(INDEX))
+#summary(moneyballTest)
+
+#Handling the missing rows
+ds_stats <- psych::describe(moneyballTest, skew = FALSE, na.rm = TRUE)[c(3:6)]
+ds_stats <- cbind(VARIABLE_NAME = rownames(ds_stats), ds_stats)
+
+Variable<- rownames(ds_stats)
+
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(moneyballTest[Variable], FUN = fun) 
+
+
+#Treating the variables to see best fit as done in training data
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+}
+
+
+show_charts(moneyballTest$TEAM_BATTING_H)
+
+# show_charts(moneyballTest$TEAM_BATTING_2B)
+# 
+# show_charts(moneyballTest$TEAM_BATTING_3B)
+# 
+# show_charts(moneyballTest$TEAM_BATTING_HR)
+# 
+# show_charts(moneyballTest$TEAM_BATTING_BB)
+# 
+# show_charts(moneyballTest$TEAM_BATTING_SO)
+# 
+# show_charts(moneyballTest$TEAM_BASERUN_SB)
+# 
+# show_charts(moneyballTest$TEAM_FIELDING_E)
+# 
+# show_charts(moneyballTest$TEAM_FIELDING_DP)
+# 
+# show_charts(moneyballTest$TEAM_PITCHING_BB)
+# 
+# show_charts(moneyballTest$TEAM_PITCHING_H)
+# 
+# show_charts(moneyballTest$TEAM_PITCHING_HR)
+# 
+# show_charts(moneyballTest$TEAM_PITCHING_SO)
+
+
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+moneyballTest$TEAM_BATTING_H_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_H)
+moneyballTest$TEAM_BATTING_2B_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_2B)
+moneyballTest$TEAM_BATTING_3B_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_3B)
+moneyballTest$TEAM_BATTING_BB_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_BB)
+moneyballTest$TEAM_BASERUN_SB_NEW <- treat_outliers(moneyballTest$TEAM_BASERUN_SB)
+moneyballTest$TEAM_FIELDING_E_NEW <- treat_outliers(moneyballTest$TEAM_FIELDING_E)
+moneyballTest$TEAM_FIELDING_DP_NEW <- treat_outliers(moneyballTest$TEAM_FIELDING_DP)
+moneyballTest$TEAM_PITCHING_BB_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_BB)
+moneyballTest$TEAM_PITCHING_H_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_H)
+moneyballTest$TEAM_PITCHING_HR_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_HR)
+moneyballTest$TEAM_PITCHING_SO_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_SO)
+
+
+
+#Lets see how the new variables look in boxplots.
+
+
+# par(mfrow=c(4,3))
+# 
+# boxplot(moneyballTest$TEAM_BATTING_H_NEW,main="TEAM_BATTING_H_NEW")
+# boxplot(moneyballTest$TEAM_BATTING_2B_NEW,main="TEAM_BATTING_2B_NEW")
+# boxplot(moneyballTest$TEAM_BATTING_3B_NEW,main="TEAM_BATTING_3B_NEW")
+# boxplot(moneyballTest$TEAM_BATTING_BB_NEW,main="TEAM_BATTING_BB_NEW")
+# boxplot(moneyballTest$TEAM_BASERUN_SB_NEW,main="TEAM_BASERUN_SB_NEW")
+# boxplot(moneyballTest$TEAM_FIELDING_E_NEW,main="TEAM_FIELDING_E_NEW")
+# boxplot(moneyballTest$TEAM_FIELDING_DP_NEW,main="TEAM_FIELDING_DP_NEW")
+# boxplot(moneyballTest$TEAM_PITCHING_BB_NEW,main="TEAM_PITCHING_BB_NEW")
+# boxplot(moneyballTest$TEAM_PITCHING_H_NEW,main="TEAM_PITCHING_H_NEW")
+# boxplot(moneyballTest$TEAM_PITCHING_HR_NEW,main="TEAM_PITCHING_HR_NEW")
+# boxplot(moneyballTest$TEAM_PITCHING_SO_NEW,main="TEAM_PITCHING_SO_NEW")
+
+
+
+# In the second set, we will use the sin transformation and create the following variables:
+# 
+# TEAM_BATTING_H_SIN
+# TEAM_BATTING_2B_SIN
+# TEAM_BATTING_3B_SIN
+# TEAM_BATTING_BB_SIN
+# TEAM_BASERUN_SB_SIN
+# TEAM_FIELDING_E_SIN
+# TEAM_FIELDING_DP_SIN
+# TEAM_PITCHING_BB_SIN
+# TEAM_PITCHING_H_SIN
+# TEAM_PITCHING_HR_SIN
+# TEAM_PITCHING_SO_SIN
+
+
+moneyballTest$TEAM_BATTING_H_SIN <- sin(moneyballTest$TEAM_BATTING_H)
+moneyballTest$TEAM_BATTING_2B_SIN <- sin(moneyballTest$TEAM_BATTING_2B)
+moneyballTest$TEAM_BATTING_3B_SIN <- sin(moneyballTest$TEAM_BATTING_3B)
+moneyballTest$TEAM_BATTING_BB_SIN <- sin(moneyballTest$TEAM_BATTING_BB)
+moneyballTest$TEAM_BASERUN_SB_SIN <- sin(moneyballTest$TEAM_BASERUN_SB)
+moneyballTest$TEAM_FIELDING_E_SIN <- sin(moneyballTest$TEAM_FIELDING_E)
+moneyballTest$TEAM_FIELDING_DP_SIN <- sin(moneyballTest$TEAM_FIELDING_DP)
+moneyballTest$TEAM_PITCHING_BB_SIN <- sin(moneyballTest$TEAM_PITCHING_BB)
+moneyballTest$TEAM_PITCHING_H_SIN <- sin(moneyballTest$TEAM_PITCHING_H)
+moneyballTest$TEAM_PITCHING_HR_SIN <- sin(moneyballTest$TEAM_PITCHING_HR)
+moneyballTest$TEAM_PITCHING_SO_SIN <- sin(moneyballTest$TEAM_PITCHING_SO)
+
+
+
+## Missing Values
+
+# Next we impute missing values. Since we have handled outliers, we can go ahead and use the mean as impute values. As with outliers, we will go ahead and create new variables for the following:
+# 
+# TEAM_BATTING_SO_NEW
+# 
+# We will re-use the already created new variables for fixing the missing values for the below:
+# 
+# TEAM_PITCHING_SO_NEW 
+# TEAM_BASERUN_SB_NEW
+# TEAM_FIELDING_DP_NEW
+
+
+
+moneyballTest$TEAM_BATTING_SO_NEW <- moneyballTest$TEAM_BATTING_SO
+moneyballTest$TEAM_BATTING_SO_NEW[is.na(moneyballTest$TEAM_BATTING_SO_NEW)] <- mean(moneyballTest$TEAM_BATTING_SO_NEW, na.rm = T) 
+
+moneyballTest$TEAM_PITCHING_SO_NEW[is.na(moneyballTest$TEAM_PITCHING_SO_NEW)] <- mean(moneyballTest$TEAM_PITCHING_SO_NEW, na.rm = T) 
+moneyballTest$TEAM_BASERUN_SB_NEW[is.na(moneyballTest$TEAM_BASERUN_SB_NEW)] <- mean(moneyballTest$TEAM_BASERUN_SB_NEW, na.rm = T) 
+moneyballTest$TEAM_FIELDING_DP_NEW[is.na(moneyballTest$TEAM_FIELDING_DP_NEW)] <- mean(moneyballTest$TEAM_FIELDING_DP_NEW, na.rm = T) 
+
+
+
+## Additional Variables 
+
+#Lets now create some additional variables that might help us in out analysis. 
+
+### Missing Flags
+
+# First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0.
+
+
+moneyballTest$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BATTING_HBP),1,0)
+moneyballTest$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BASERUN_CS),1,0)
+
+
+###Ratios
+
+# Next we create some additional variables, that we think may be useful with the prediction. Here we create the following ratios:
+
+moneyballTest$Hits_R <- moneyballTest$TEAM_BATTING_H/moneyballTest$TEAM_PITCHING_H
+moneyballTest$Walks_R <- moneyballTest$TEAM_BATTING_BB/moneyballTest$TEAM_PITCHING_BB
+moneyballTest$HomeRuns_R <- moneyballTest$TEAM_BATTING_HR/moneyballTest$TEAM_PITCHING_HR
+moneyballTest$Strikeout_R <- moneyballTest$TEAM_BATTING_SO/moneyballTest$TEAM_PITCHING_SO
+
+
+###Calculated Variables
+
+
+# Finally, we create some calculated variables as below:
+# 
+# 1. TEAM_BATTING_EB (Extra Base Hits) = 2B + 3B + HR
+# 2. TEAM_BATTING_1B (Singles by batters) = TEAM_BATTING_H - TEAM_BATTING_EB
+
+moneyballTest$TEAM_BATTING_EB <- moneyballTest$TEAM_BATTING_2B + moneyballTest$TEAM_BATTING_3B + 
+                                  moneyballTest$TEAM_BATTING_HR
+
+moneyballTest$TEAM_BATTING_1B <- moneyballTest$TEAM_BATTING_H - moneyballTest$TEAM_BATTING_EB
+
+head(moneyballTest)
+summary(moneyballTest)
+
+```
+
