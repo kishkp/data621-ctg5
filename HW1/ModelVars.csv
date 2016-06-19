@@ -4,10 +4,10 @@ TEAM_BATTING_2B,Given,Positive,Y,,,Y
 TEAM_BATTING_3B,Given,Positive,Y,,,Y
 TEAM_BATTING_HR,Given,Positive,Y,,,Y
 TEAM_BATTING_BB,Given,Positive,Y,,,Y
-TEAM_BATTING_HBP,Given,Positive,Y,,,
+TEAM_BATTING_HBP,Given,Positive,,,,
 TEAM_BATTING_SO,Given,Negative,Y,,,Y
 TEAM_BASERUN_SB,Given,Positive,Y,,,Y
-TEAM_BASERUN_CS,Given,Negative,Y,,,
+TEAM_BASERUN_CS,Given,Negative,,,,
 TEAM_FIELDING_E,Given,Negative,Y,,,Y
 TEAM_FIELDING_DP,Given,Positive,Y,,,Y
 TEAM_PITCHING_BB,Given,Negative,Y,,,Y
