@@ -2,9 +2,9 @@
 title: "Home Work Assignment - 01"
 author: "Critical Thinking Group 5"
 output:
-  html_document:
-    toc: yes
   pdf_document:
+    toc: yes
+  html_document:
     toc: yes
 ---
 
