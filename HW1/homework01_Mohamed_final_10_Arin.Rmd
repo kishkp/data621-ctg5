@@ -2,9 +2,9 @@
 title: "Home Work Assignment - 01"
 author: "Critical Thinking Group 5"
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
@@ -589,12 +589,12 @@ We notice that model 1 has the following summary characteristics: \
 
 
 Next. we will step thru this model (model 1) and retain only those variables that have the most impact. 
-below the relevant varuibale for model 1: 
+below the relevant variables for model 1: 
 
 \
 \
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 
 #null<- lm(TARGET_WINS~1,  data=na.omit(moneyball2))
@@ -603,16 +603,35 @@ below the relevant varuibale for model 1:
 
 step1 <- step(model1,direction="backward",test="F")
 #coefficients(step1)
-#summary(step1)
+summary(step1)
 #step1$anova
 
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
+#summary(step1)
+
 coef1<- data.frame('Coefficients'= step1$coefficients)
 kable(coef1)
 
 ```
+\
+\
+
+Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
+\
+\
+TEAM_FIELDING_DP (-0.12) and TEAM_PITCHING_SO ( -0.031) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
+\
+Similarly, TEAM_PITCHING_BB (0.057) and TEAM_PITCHING_HR (0.090) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
+\
+TEAM_BATTING_H (0.025), TEAM_BATTING_HBP (0.087) and TEAM_FIELDING_E (-0.17) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+\
+\
+
+Since we have already seen this result in our data exploration phase, we will retain this model as is for comparision with other models. 
+\
+\
 
 
 ##3.2 Model Two
@@ -659,6 +678,29 @@ kable(coef2)
 
 ```
 
+\
+\
+
+Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
+\
+\
+TEAM_BATTING_3B (-0.12), TEAM_FIELDING_DP ( -0.112) and TEAM_PITCHING_SO (-0.028) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
+
+\
+Similarly, TEAM_PITCHING_H (0.031) and TEAM_PITCHING_HR (0.081) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
+
+\
+TEAM_BATTING_BB (0.055) and TEAM_FIELDING_E (-0.174) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+
+\
+\
+
+However, since the correlation seems to have a minor impact, we will go ahead and retain this model for further comparision.
+ 
+\
+\
+
+
 
 ##3.3 Model Three
 
@@ -703,6 +745,28 @@ kable(coef3)
 
 ```
 
+\
+\
+
+Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
+\
+\
+TEAM_BATTING_BB (-2.00) and TEAM_BASERUN_SB ( -2.20) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins.This means that a unit change in each of these variables will decrease the number of a wins. 
+
+\
+TEAM_FIELDING_DP (2.40), TEAM_PITCHING_HR (-1.78), TEAM_BATTING_EB (0.102) and TEAM_BATTING_1B (0.044) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+
+\
+\
+
+The newly derived variables, Walks_R (-5393.06) and HomeRuns_R (4971.97) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
+\
+\
+At this point, we will retain this model as is for comparision with other models. 
+\
+\
+
+
 
 ##3.4 Model Four
 
@@ -746,15 +810,36 @@ kable(coef4)
 
 
 ```
+\
+\
+
+Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
+\
+\
+TEAM_FIELDING_DP (-0.107), TEAM_BATTING_BB_SIN (-1.47) and TEAM_BASERUN_SB_SIN(-2.44) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
+
+\
+
+TEAM_PITCHING_HR (0.083) has a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
+\
+
+TEAM_BATTING_H (0.017), TEAM_BATTING_BB (8.604), TEAM_BATTING_SO (-6.535), TEAM_BATTING_HBP (0.095), TEAM_PITCHING_BB (-8.551), TEAM_PITCHING_SO (6.5), TEAM_FIELDING_E (-0.181), TEAM_FIELDING_DP_SIN (1.897), Walks_R (-14747.74), HomeRuns_R (4845.243), Strikeout_R (11798.72) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
+
+\
+\
+
+The newly derived variables, Walks_R (-14747.74), HomeRuns_R (4845.243) and Strikeout_R (11798.72) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
+\
+\
+At this point, we will retain this model as is for comparision with other models and further refining. 
+\
+\
+
 
 
 \
 \
 \
-
-
-
-Discuss the coefficients in the models, do they make sense? For example, if a team hits a lot of Home Runs, it would be reasonably expected that such a team would win more games. However, if the coefficient is negative (suggesting that the team would lose more games), then that needs to be discussed. Are you keeping the model even though it is counter intuitive? Why? The boss needs to know.
 
 
 #4 Model Selection 
@@ -906,8 +991,128 @@ summary(step4_final)
 ```
 
 Final model was derived after four passes of elimination were carried out. Looking at the VIF values in the final model there is no collinearity among variables < 2. In this scenario a model with slightly less performance was selected to avoid collinearity effect among variables. But there was no significant reduction of model performance. But this exercise helped to reduce the model complexity.
+\
+\
+
+
+###Test Data 
+
+We will now run the final model on the test data. 
+\
+Prior to this, we still have to carry out the same transformations that we did to the train dataset to the test dataset. Below is a quick summary after the transformations:
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# reading the test data from github
+
+url <- "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-evaluation-data.csv"
+moneyballT<- read.csv(url)
+
+#removing the index column which is not required
+moneyballTest<- select(moneyballT, -(INDEX))
+#summary(moneyballTest)
+
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+moneyballTest$TEAM_BATTING_H_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_H)
+moneyballTest$TEAM_BATTING_2B_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_2B)
+moneyballTest$TEAM_BATTING_3B_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_3B)
+moneyballTest$TEAM_BATTING_BB_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_BB)
+moneyballTest$TEAM_BASERUN_SB_NEW <- treat_outliers(moneyballTest$TEAM_BASERUN_SB)
+moneyballTest$TEAM_FIELDING_E_NEW <- treat_outliers(moneyballTest$TEAM_FIELDING_E)
+moneyballTest$TEAM_FIELDING_DP_NEW <- treat_outliers(moneyballTest$TEAM_FIELDING_DP)
+moneyballTest$TEAM_PITCHING_BB_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_BB)
+moneyballTest$TEAM_PITCHING_H_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_H)
+moneyballTest$TEAM_PITCHING_HR_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_HR)
+moneyballTest$TEAM_PITCHING_SO_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_SO)
+
+# In the second set, we will use the sin transformation and create the following variables:
+
+moneyballTest$TEAM_BATTING_H_SIN <- sin(moneyballTest$TEAM_BATTING_H)
+moneyballTest$TEAM_BATTING_2B_SIN <- sin(moneyballTest$TEAM_BATTING_2B)
+moneyballTest$TEAM_BATTING_3B_SIN <- sin(moneyballTest$TEAM_BATTING_3B)
+moneyballTest$TEAM_BATTING_BB_SIN <- sin(moneyballTest$TEAM_BATTING_BB)
+moneyballTest$TEAM_BASERUN_SB_SIN <- sin(moneyballTest$TEAM_BASERUN_SB)
+moneyballTest$TEAM_FIELDING_E_SIN <- sin(moneyballTest$TEAM_FIELDING_E)
+moneyballTest$TEAM_FIELDING_DP_SIN <- sin(moneyballTest$TEAM_FIELDING_DP)
+moneyballTest$TEAM_PITCHING_BB_SIN <- sin(moneyballTest$TEAM_PITCHING_BB)
+moneyballTest$TEAM_PITCHING_H_SIN <- sin(moneyballTest$TEAM_PITCHING_H)
+moneyballTest$TEAM_PITCHING_HR_SIN <- sin(moneyballTest$TEAM_PITCHING_HR)
+moneyballTest$TEAM_PITCHING_SO_SIN <- sin(moneyballTest$TEAM_PITCHING_SO)
+
+
+## Missing Values
+
+# Next we impute missing values. Since we have handled outliers, we can go ahead and use the mean as impute values. As with outliers, we will go ahead and create new variables for the following:
+# 
+# TEAM_BATTING_SO_NEW
+# 
+# We will re-use the already created new variables for fixing the missing values for the below:
+# 
+# TEAM_PITCHING_SO_NEW 
+# TEAM_BASERUN_SB_NEW
+# TEAM_FIELDING_DP_NEW
 
 
 
-#### End model Selection \
+moneyballTest$TEAM_BATTING_SO_NEW <- moneyballTest$TEAM_BATTING_SO
+moneyballTest$TEAM_BATTING_SO_NEW[is.na(moneyballTest$TEAM_BATTING_SO_NEW)] <- mean(moneyballTest$TEAM_BATTING_SO_NEW, na.rm = T) 
 
+moneyballTest$TEAM_PITCHING_SO_NEW[is.na(moneyballTest$TEAM_PITCHING_SO_NEW)] <- mean(moneyballTest$TEAM_PITCHING_SO_NEW, na.rm = T) 
+moneyballTest$TEAM_BASERUN_SB_NEW[is.na(moneyballTest$TEAM_BASERUN_SB_NEW)] <- mean(moneyballTest$TEAM_BASERUN_SB_NEW, na.rm = T) 
+moneyballTest$TEAM_FIELDING_DP_NEW[is.na(moneyballTest$TEAM_FIELDING_DP_NEW)] <- mean(moneyballTest$TEAM_FIELDING_DP_NEW, na.rm = T) 
+
+### Missing Flags
+
+# First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0.
+
+
+moneyballTest$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BATTING_HBP),1,0)
+moneyballTest$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BASERUN_CS),1,0)
+
+
+###Ratios
+
+# Next we create some additional variables, that we think may be useful with the prediction. Here we create the following ratios:
+
+moneyballTest$Hits_R <- moneyballTest$TEAM_BATTING_H/moneyballTest$TEAM_PITCHING_H
+moneyballTest$Walks_R <- moneyballTest$TEAM_BATTING_BB/moneyballTest$TEAM_PITCHING_BB
+moneyballTest$HomeRuns_R <- moneyballTest$TEAM_BATTING_HR/moneyballTest$TEAM_PITCHING_HR
+moneyballTest$Strikeout_R <- moneyballTest$TEAM_BATTING_SO/moneyballTest$TEAM_PITCHING_SO
+
+
+###Calculated Variables
+
+moneyballTest$TEAM_BATTING_EB <- moneyballTest$TEAM_BATTING_2B + moneyballTest$TEAM_BATTING_3B + 
+                                  moneyballTest$TEAM_BATTING_HR
+
+moneyballTest$TEAM_BATTING_1B <- moneyballTest$TEAM_BATTING_H - moneyballTest$TEAM_BATTING_EB
+
+#head(moneyballTest)
+summary(moneyballTest)
+
+```
+\
+\
+
+Now that we have the test data prepared, we will go ahead and run the final model on this dataset.
+
+```{r}
+
+summary(step4_final)
+
+pred_test <- predict(step4_final, moneyballTest, interval="prediction", level=0.95)
+
+head(pred_test)
+
+
+```
