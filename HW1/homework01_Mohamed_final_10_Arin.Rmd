@@ -2,9 +2,9 @@
 title: "Home Work Assignment - 01"
 author: "Critical Thinking Group 5"
 output:
-  html_document:
-    toc: yes
   pdf_document:
+    toc: yes
+  html_document:
     toc: yes
 ---
 
@@ -895,8 +895,8 @@ The newly derived variables, Hits_R (-1458.464), Strikeout_R (1465.04) seem to h
 \
 \
 At this point, we will retain this model as is for comparision with other models and further refining. 
-\
-\
+
+
 
 #4 Model Selection 
 
@@ -1134,10 +1134,8 @@ moneyballTest$TEAM_FIELDING_DP_NEW[is.na(moneyballTest$TEAM_FIELDING_DP_NEW)] <-
 
 # First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0.
 
-
 moneyballTest$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BATTING_HBP),1,0)
 moneyballTest$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BASERUN_CS),1,0)
-
 
 ###Ratios
 
@@ -1174,8 +1172,10 @@ Now that we have the test data prepared, we will go ahead and run the final mode
 
 summary(step4_final)
 
-pred_test <- predict(step4_final, data, interval="prediction", level=0.95)
+#pred_test <- predict(step4_final, data, interval="prediction", level=0.95)
 
-head(pred_test)
+#head(pred_test)
 
 ```
+
+
