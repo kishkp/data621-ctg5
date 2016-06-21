@@ -1,0 +1,131 @@
+---
+title: "Home Work Assignment - 02"
+author:
+- Critical Thinking Group 5
+- Arindam Barman
+- Mohamed Elmoudni
+- Shazia Khan
+- Kishore Prasad
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+library(faraway)
+```
+
+
+1. Download the classification output data set (attached in Blackboard to the assignment).
+
+```{r}
+
+class_data <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW2/classification-output-data.csv")
+
+#summary(class_data)
+
+```
+
+
+2. The data set has three key columns we will use:
+- class: the actual class for the observation
+- scored.class: the predicted class for the observation (based on a threshold of 0.5)
+- scored.probability: the predicted probability of success for the observation
+
+Use the table() function to get the raw confusion matrix for this scored dataset. Make sure you understand the output. In particular, do the rows represent the actual or predicted class? The columns?
+
+```{r}
+
+cm<- table(class_data$class, class_data$scored.class)
+kable(cm)
+
+```
+\
+
+Since we have given the table command as table(class_data$class, class_data$scored.class), in the output above:
+- Rows represent the Actual class
+- Columns represent predicted class
+
+\
+\
+
+3. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the accuracy of the predictions.
+
+```{r}
+
+accuracy <- function(ds, actual, predicted) {
+
+#   table(ds[actual], ds[predicted])
+    cm <- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP <- cm[1,1]
+    TN <- cm[2,2]
+    FN <- cm[1,2]
+    FP <- cm[2,1]
+    return ((TP + TN) / (TP + FP + TN + FN))
+} 
+
+```
+\
+The accuracy is `r accuracy` 
+
+4. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the classification error rate of the predictions.
+
+```{r}
+class_err_rate <- function(ds, actual, predicted) {
+
+#   table(ds[actual], ds[predicted])
+    cm <- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP <- cm[1,1]
+    TN <- cm[2,2]
+    FN <- cm[1,2]
+    FP <- cm[2,1]
+    return ((FP + FN) / (TP + FP + TN + FN))
+} 
+
+class_err_rate(class_data, "class", "scored.class")
+
+```
+
+Verify that you get an accuracy and an error rate that sums to one.
+5. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions.
+????????????????????????????????????= ????????????????+????????
+6. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall.
+????????????????????????????????????????????= ????????????????+????????
+7. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions.
+????????????????????????????????????????????= ????????????????+????????
+8. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions.
+????1 ????????????????????= 2×????????????????????????????????????×????????????????????????????????????????????????????????????????????????????????+????????????????????????????????????????????
+9. Before we move on, let's consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1. (Hint: If 0 < ???? < 1 and 0 < ???? < 1 then ???????? < ????.)
+10. Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.
+11. Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.
+```{r}
+accuracy(class_data, "class", "scored.class")
+
+
+```
+12. Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?
+13. Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?
