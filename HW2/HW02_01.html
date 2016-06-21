@@ -81,8 +81,14 @@ img {
 
 #summary(class_data)</code></pre>
 <ol start="2" style="list-style-type: decimal">
-<li>The data set has three key columns we will use: ??? class: the actual class for the observation ??? scored.class: the predicted class for the observation (based on a threshold of 0.5) ??? scored.probability: the predicted probability of success for the observation Use the table() function to get the raw confusion matrix for this scored dataset. Make sure you understand the output. In particular, do the rows represent the actual or predicted class? The columns?</li>
+<li>The data set has three key columns we will use:</li>
 </ol>
+<ul>
+<li>class: the actual class for the observation</li>
+<li>scored.class: the predicted class for the observation (based on a threshold of 0.5)</li>
+<li>scored.probability: the predicted probability of success for the observation</li>
+</ul>
+<p>Use the table() function to get the raw confusion matrix for this scored dataset. Make sure you understand the output. In particular, do the rows represent the actual or predicted class? The columns?</p>
 <pre class="r"><code>cm&lt;- table(class_data$class, class_data$scored.class)
 kable(cm)</code></pre>
 <table>
@@ -112,31 +118,110 @@ kable(cm)</code></pre>
 </tbody>
 </table>
 <p>Since we have given the table command as table(class_data<span class="math">\(class, class_data\)</span>scored.class), in the output above: - Rows represent the Actual class - Columns represent predicted class</p>
-<p><br /><br /></p>
-<ol start="3" style="list-style-type: decimal">
-<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the accuracy of the predictions.</li>
+<p><br /><br /> 3. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the accuracy of the predictions.</p>
+<pre class="r"><code>accuracy &lt;- function(ds, actual, predicted) {
+
+    cm &lt;- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP &lt;- cm[1,1]
+    TN &lt;- cm[2,2]
+    FN &lt;- cm[1,2]
+    FP &lt;- cm[2,1]
+    return ((TP + TN) / (TP + FP + TN + FN))
+} </code></pre>
+<p><br /> 4. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the classification error rate of the predictions.</p>
+<pre class="r"><code>class_err_rate &lt;- function(ds, actual, predicted) {
+
+    cm &lt;- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP &lt;- cm[1,1]
+    TN &lt;- cm[2,2]
+    FN &lt;- cm[1,2]
+    FP &lt;- cm[2,1]
+    return ((FP + FN) / (TP + FP + TN + FN))
+} </code></pre>
+<p>Verify that you get an accuracy and an error rate that sums to one.</p>
+<pre class="r"><code>accuracy(class_data, &quot;class&quot;, &quot;scored.class&quot;) + class_err_rate(class_data, &quot;class&quot;, &quot;scored.class&quot;)</code></pre>
+<pre><code>## [1] 1</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions.</li>
 </ol>
-<pre class="r"><code>TP &lt;- cm[1,1]
-TN &lt;- cm[2,2]
-FN &lt;- cm[1,2]
-FP &lt;- cm[2,1]
+<pre class="r"><code>precision &lt;- function(ds, actual, predicted) {
 
-accuracy &lt;- (TP + TN) / (TP + FP + TN + FN)
+    cm &lt;- table(select(class_data, get(actual), get(predicted)))
 
-accuracy</code></pre>
-<pre><code>## [1] 0.8066298</code></pre>
-<p><br />The accuracy is 0.8066298</p>
-<ol start="4" style="list-style-type: decimal">
-<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the classification error rate of the predictions. ???????????????????????????????????????????????????????? ???????????????????? ????????????????= ????????+????????????????+????????+????????+???????? Verify that you get an accuracy and an error rate that sums to one.</li>
-<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions. ????????????????????????????????????= ????????????????+????????</li>
-<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall. ????????????????????????????????????????????= ????????????????+????????</li>
-<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions. ????????????????????????????????????????????= ????????????????+????????</li>
-<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions. ????1 ????????????????????= 2×????????????????????????????????????×????????????????????????????????????????????????????????????????????????????????+????????????????????????????????????????????</li>
-<li>Before we move on, let’s consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1. (Hint: If 0 &lt; ???? &lt; 1 and 0 &lt; ???? &lt; 1 then ???????? &lt; ????.)</li>
-<li>Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.</li>
-<li>Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.</li>
-<li>Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?</li>
-<li>Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?</li>
+    kable(cm)
+    TP &lt;- cm[1,1]
+    TN &lt;- cm[2,2]
+    FN &lt;- cm[1,2]
+    FP &lt;- cm[2,1]
+    return (TP / (TP + FP))
+} </code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall.</li>
+</ol>
+<pre class="r"><code>sensitivity &lt;- function(ds, actual, predicted) {
+
+    cm &lt;- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP &lt;- cm[1,1]
+    TN &lt;- cm[2,2]
+    FN &lt;- cm[1,2]
+    FP &lt;- cm[2,1]
+    return (TP / (TP + FN))
+} </code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions.</li>
+</ol>
+<pre class="r"><code>specificity &lt;- function(ds, actual, predicted) {
+
+    cm &lt;- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP &lt;- cm[1,1]
+    TN &lt;- cm[2,2]
+    FN &lt;- cm[1,2]
+    FP &lt;- cm[2,1]
+    return (TN / (TN + FP))
+} </code></pre>
+<ol start="8" style="list-style-type: decimal">
+<li>Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions.</li>
+</ol>
+<pre class="r"><code>f1_score &lt;- function(ds, actual, predicted) {
+
+    cm &lt;- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP &lt;- cm[1,1]
+    TN &lt;- cm[2,2]
+    FN &lt;- cm[1,2]
+    FP &lt;- cm[2,1]
+    
+    pre &lt;- (TP / (TP + FP))
+    sen &lt;- (TP / (TP + FN))
+    
+    return ((2*pre*sen) / (pre+sen))
+} </code></pre>
+<ol start="9" style="list-style-type: decimal">
+<li><p>Before we move on, let’s consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1. (Hint: If 0 &lt; ???? &lt; 1 and 0 &lt; ???? &lt; 1 then ???????? &lt; ????.)</p></li>
+<li><p>Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.</p></li>
+<li><p>Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.<br /><br /></p></li>
+</ol>
+<ul>
+<li>The Accuracy of the provided dataset is : 0.8066298</li>
+<li>The Classification Error Rate of the provided dataset is : 0.1933702</li>
+<li>The precision of the provided dataset is : 0.7986577</li>
+<li>The Sensitivity of the provided dataset is : 0.9596774</li>
+<li>The Specificity of the provided dataset is : 0.4736842</li>
+<li>The F1 Score of the provided dataset is : 0.8717949</li>
+</ul>
+<p><br /></p>
+<ol start="12" style="list-style-type: decimal">
+<li><p>Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?</p></li>
+<li><p>Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?</p></li>
 </ol>
 
 

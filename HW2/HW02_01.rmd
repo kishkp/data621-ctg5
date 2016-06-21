@@ -75,7 +75,6 @@ Since we have given the table command as table(class_data$class, class_data$scor
 
 accuracy <- function(ds, actual, predicted) {
 
-#   table(ds[actual], ds[predicted])
     cm <- table(select(class_data, get(actual), get(predicted)))
 
     kable(cm)
@@ -88,14 +87,12 @@ accuracy <- function(ds, actual, predicted) {
 
 ```
 \
-The accuracy is `r accuracy` 
 
 4. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the classification error rate of the predictions.
 
 ```{r}
 class_err_rate <- function(ds, actual, predicted) {
 
-#   table(ds[actual], ds[predicted])
     cm <- table(select(class_data, get(actual), get(predicted)))
 
     kable(cm)
@@ -106,26 +103,127 @@ class_err_rate <- function(ds, actual, predicted) {
     return ((FP + FN) / (TP + FP + TN + FN))
 } 
 
-class_err_rate(class_data, "class", "scored.class")
-
 ```
 
 Verify that you get an accuracy and an error rate that sums to one.
-5. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions.
-????????????????????????????????????= ????????????????+????????
-6. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall.
-????????????????????????????????????????????= ????????????????+????????
-7. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions.
-????????????????????????????????????????????= ????????????????+????????
-8. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions.
-????1 ????????????????????= 2×????????????????????????????????????×????????????????????????????????????????????????????????????????????????????????+????????????????????????????????????????????
-9. Before we move on, let's consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1. (Hint: If 0 < ???? < 1 and 0 < ???? < 1 then ???????? < ????.)
-10. Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.
-11. Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.
+
 ```{r}
-accuracy(class_data, "class", "scored.class")
+
+accuracy(class_data, "class", "scored.class") + class_err_rate(class_data, "class", "scored.class")
+
+```
+
+5. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions.
+
+```{r}
+
+precision <- function(ds, actual, predicted) {
+
+    cm <- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP <- cm[1,1]
+    TN <- cm[2,2]
+    FN <- cm[1,2]
+    FP <- cm[2,1]
+    return (TP / (TP + FP))
+} 
 
 
 ```
+
+
+
+6. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall.
+
+```{r}
+
+sensitivity <- function(ds, actual, predicted) {
+
+    cm <- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP <- cm[1,1]
+    TN <- cm[2,2]
+    FN <- cm[1,2]
+    FP <- cm[2,1]
+    return (TP / (TP + FN))
+} 
+
+
+```
+
+
+7. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions.
+
+```{r}
+
+specificity <- function(ds, actual, predicted) {
+
+    cm <- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP <- cm[1,1]
+    TN <- cm[2,2]
+    FN <- cm[1,2]
+    FP <- cm[2,1]
+    return (TN / (TN + FP))
+} 
+
+
+```
+
+8. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions.
+
+```{r}
+
+f1_score <- function(ds, actual, predicted) {
+
+    cm <- table(select(class_data, get(actual), get(predicted)))
+
+    kable(cm)
+    TP <- cm[1,1]
+    TN <- cm[2,2]
+    FN <- cm[1,2]
+    FP <- cm[2,1]
+    
+    pre <- (TP / (TP + FP))
+    sen <- (TP / (TP + FN))
+    
+    return ((2*pre*sen) / (pre+sen))
+} 
+
+
+```
+
+
+
+
+9. Before we move on, let's consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1. (Hint: If 0 < ???? < 1 and 0 < ???? < 1 then ???????? < ????.)
+
+
+10. Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.
+
+
+
+11. Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.
+\
+\
+
+
+- The Accuracy of the provided dataset is : `r accuracy(class_data, "class", "scored.class")`
+- The Classification Error Rate of the provided dataset is : `r class_err_rate(class_data, "class", "scored.class")`
+- The precision of the provided dataset is : `r precision(class_data, "class", "scored.class")`
+- The Sensitivity of the provided dataset is : `r sensitivity(class_data, "class", "scored.class")`
+- The Specificity of the provided dataset is : `r specificity(class_data, "class", "scored.class")`
+- The F1 Score of the provided dataset is : `r f1_score(class_data, "class", "scored.class")`
+
+
+
+\
+
+
 12. Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?
+
+
 13. Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?
