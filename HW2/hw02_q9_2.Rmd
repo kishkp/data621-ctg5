@@ -1,0 +1,72 @@
+---
+title: "hw02_q9"
+output: pdf_document
+---
+
+
+We have:
+$$precision = \frac {TP } {TP + FP}  \qquad q.1 $$ \
+\
+$$sensitivity = \frac {TP } {TP + FN} \qquad Eq.2$$
+
+\
+
+
+From Eq.1, let's find the bounds of the precision relative to TP:
+
+$$\lim_{TP\to 0} \frac {TP } {TP + FP} = \frac {0} {0 + FP}$$ \
+$$\lim_{TP\to 0} \frac {TP } {TP + FP} = 0$$
+
+\
+
+$$\lim_{TP\to\infty} \frac {TP } {TP + FP} = \frac {\frac {TP} {TP}}  {\frac {TP} {TP} + \frac {FP} {TP}}$$ \
+$$\lim_{TP\to\infty} \frac {TP } {TP + FP} =  \frac {1}  {1 + \frac {FP} {TP}}$$ \
+$$\lim_{TP\to\infty} \frac {TP } {TP + FP} = \frac {1} {1 + 0}$$ \
+$$\lim_{TP\to\infty} \frac {TP } {TP + FP} = 1$$ \
+
+from Eq.1, let's find the bounds of the precision relative to FP:
+
+$$\lim_{FP\to 0} \frac {TP } {TP + FP} = \frac {TP} {0 + TP}$$ \
+$$\lim_{FP\to 0} \frac {TP } {TP + FP} = 1$$
+
+$$\lim_{FP\to\infty} \frac {TP } {TP + FP} = \frac {\frac {TP} {FP}}  {\frac {TP} {FP} + \frac {FP} {FP}}$$ \
+$$\lim_{FP\to\infty} \frac {TP } {TP + FP} =  \frac {0}  {0 + \frac {FP} {FP}}$$ \
+$$\lim_{FP\to\infty} \frac {TP } {TP + FP} = \frac {0} {0 + 1}$$ \
+$$\lim_{FP\to\infty} \frac {TP } {TP + FP} = 0$$ \
+
+
+Hence, the precision $\frac {TP } {TP + FP}$  has bounds of [0,1] 
+
+\
+\
+Hence, also following the same steps above, the sensitivity $\frac {TP } {TP + FN}$   has bounds of [0,1] 
+\
+\
+
+Therefore, we can state the following: 
+
+\
+
+   $$0 \le precision \le 1$$   
+
+   $$0 \le sensitivity \le 1$$ 
+
+   $$0 \le precision*sensitivity \le 1 * sensitivity$$ 
+
+   $$0 \le 2* precision * sensitivity \le 2 * sensitivity \qquad  Eq.3 $$ 
+
+Also, since the max sensitivity is 1 and max precision is 1 as shown above, we can state:  
+   $$0 \le precision +sensitivity \le 2  \quad Eq.4 $$
+
+Now divide Eq.3  by Eq.4 we get:
+
+  $$0\le (2* precision * sensitivity)/( precision +sensitivity ) \le 2* sensitivity /2$$
+  $$0\le(2* precision * sensitivity)/( precision +sensitivity ) \le  sensitivity \\qquad Eq.5$$  
+ 
+ 
+ We know that the sensitivity max value 1. Hence, Eq.5 has a lower bound of 0 and upper bound of 1.  
+ 
+ Therefore, F1 score will always be between 0 and 1.
+
+
+
