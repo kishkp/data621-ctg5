@@ -252,16 +252,17 @@ pred.prob   <- "scored.probability"
 threshold <- 0.5
 
 par(mfrow=c(2,1))
-a<-roc_curve(ds, actual, pred.prob, 0.5)
 
+# output from our function
+a<-roc_curve(ds, actual, pred.prob, 0.5)
 a[1]
 a[2]
 
+
+# output from built in functon
 plot(roc(class_data$class, class_data$scored.probability))
 
-
 auc(class_data$class, class_data$scored.probability)
-#auc(select(ds, get(actual)), select(ds, get(pred.prob)))
 
 ```
 
