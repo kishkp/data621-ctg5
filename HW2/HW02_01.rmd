@@ -287,4 +287,81 @@ auc(class_data$class, class_data$scored.probability)
 12. Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?
 
 
+The caret package (short for Classification And REgression Training) is a set of functions that attempt to streamline the process for creating predictive models. The package contains tools for:
+
+- data splitting
+- pre-processing
+- feature selection
+- model tuning using resampling
+- variable importance estimation
+- as well as other functionality.
+
+```{r}
+#Reference: http://topepo.github.io/caret/other.html
+
+library(caret)
+library(pROC)
+
+
+#Caret Confusion Matrix
+ccm <- confusionMatrix(class_data$scored.class, class_data$class, positive="1")
+
+#Information from Confusion matrix
+ccm
+
+#Confusion matrix table
+ccm$table
+
+#Caret Sensitivity
+ccm$byClass["Sensitivity"]
+#Result: Sensitivity 0.4736842
+
+#Caret Specificity
+ccm$byClass["Specificity"]
+#Result:Specificity 0.9596774
+
+#Sensitivity applied to data
+(class_sens <- sensitivity(as.factor(class_data$scored.class), as.factor(class_data$class), positive = "1"))
+#Result: [1] 0.4736842
+
+
+#Specificity applied to data
+(class_spec <- specificity(as.factor(class_data$scored.class), as.factor(class_data$class), negative = "0"))
+#Result: [1] 0.9596774
+
+#########  Other relevant information ###############
+
+#Accuracy
+ccm$overall["Accuracy"]
+#Results: Accuracy 0.8066298 
+
+#The lift function can be used to evaluate probabilities thresholds that can capture a certain percentage of hits. #The function requires a set of sample probability predictions and the true class labels.
+
+liftdata <- lift(factor(class)~scored.probability, class_data)
+plot(liftdata)
+
+
+
+```
+
+The results from caret package for sensitivity and specificity are ????? as compared to our own funtions.
+
+
+
 13. Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?
+
+```{r}
+
+#library(pROC)
+
+myRoc <- roc(class~scored.probability, class_data)
+
+#results of roc()
+myRoc
+
+#Area under the curve
+myRoc$auc
+
+#plot myRoc
+plot(myRoc, main="ROC Curve for Classification data") 
+
