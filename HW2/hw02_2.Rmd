@@ -7,9 +7,9 @@ author:
 - Shazia Khan
 - Kishore Prasad
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
@@ -142,7 +142,7 @@ accuracy <- function(ds, actual, predicted) {
     return("dataset is Empty")
   else
     #   table(ds[actual], ds[predicted])
-    cm<- with(class_data, table("Actual"=class, "Predicted"= scored.class))
+    cm<- with(ds, table("Actual"=actual, "Predicted"= predicted))
     #cm <- table(select(class_data, get(actual), get(predicted)))
     
     kable(cm)
