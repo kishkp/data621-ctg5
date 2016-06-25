@@ -1,0 +1,545 @@
+---
+title: "Home Work Assignment - 03"
+author: "Critical Thinking Group 5"
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+\newpage
+
+# Overview 
+  
+To attain our objective, we will be following the below best practice steps and guidelines: \
+
+1 -Data Exploration \
+2 -Data Preparation \
+3 -Build Models \
+4 -Select Models \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+#library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+
+
+city_crime_train <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
+
+str(city_crime_train)
+
+summary(city_crime_train)
+
+
+city_crime_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-evaluation-data.csv")
+
+str(city_crime_test)
+
+
+```
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1 and proportion of success and failure cases in target variable. \
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+summary(city_crime_train)
+
+# % of cities marked as crime prone
+
+
+prop.table(table(city_crime_train$target))
+
+```
+\
+\
+
+
+
+
+\
+
+
+\newpage
+
+##1.2 Data Summary Analysis
+
+
+In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+ds_stats <- psych::describe(city_crime_train, skew = TRUE, na.rm = TRUE)
+ds_stats
+
+
+x<-colnames(city_crime_train)
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(city_crime_train[x], FUN = fun) 
+Missing
+
+
+fun1 <- function(x, y) cor(y, x)
+Correlation <- sapply(city_crime_train[x], FUN = fun1, y=city_crime_train$target) 
+
+kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
+```
+
+It is clear from the table that most of the variables are having storng correlation with the target variable. \
+
+
+
+
+##1.3	Outliers and Missing Values Identification
+
+
+In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the outliers. 
+
+Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect outliers if any and treat it accordingly.\
+
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(3,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+    plot(x, target)
+}
+
+attach(city_crime_train)
+
+```
+
+Analysis of variable zn:proportion of residential land zoned for large lots 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.cap='zn Transformation'}
+show_charts(zn)
+
+```
+For zn, we can see that there are large number of values with 0. ninth transformation seem better for this variable..(1)
+
+\newpage
+***Please note that we have created similar figures to figure 1 above for each remaining variable. 
+However, we hid the remaining figures for ease of streamlining the report as they have similar shapes. However, we have drawn the below observations from each remaining figure. \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(indus)
+
+
+```
+
+For indus, we can see that there is a spike toward right side of he distribution. Looking at the sqrt transformation it appears that distribution is close to normal and having two peaks after transformation.  
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(nox)
+
+```
+\
+For nox, there is a long right tail.
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(rm)
+
+
+```
+
+\
+For rm, there are some outliers as we can see from box plot. This variable will need some transformation to handle the outliers.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,fig.show ='hide'}
+
+show_charts(age)
+```
+
+age of the building variable is skewed heavily towards right side. We will need some transformation for this variable and looks sin transformation is best option for this case  
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(dis)
+
+```
+
+For this variable dis, there are some outliers which needs transformation to handle those outliers. log transformation looks best suited for this scenario.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(rad)
+
+
+```
+
+For rad variable distribution is not uniform as seen from the chart and will need transformation.
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(tax)
+
+
+```
+
+For tax variable is not uniformly distributed but there is no outlier for this variable.
+\
+\
+
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(ptratio)
+
+```
+
+For pratio has right aligned peak but no outliers are there in data set.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(black)
+
+```
+
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(lstat)
+
+```
+The variable lstat has long right tail and lef skewed
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(medv)
+
+```
+
+
+
+
+
+#2. Data Preparation 
+
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+- Outliers treatment \
+- Missing values treatment \
+- Data transformation \
+
+
+
+##2.1 Outliers treatment
+
+For outliers, we will create 2 sets of variables. 
+
+The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables. 
+
+city_crime_train$tax\
+city_crime_train$medv\
+city_crime_train$lstat\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+city_crime_train$tax_new <- treat_outliers(city_crime_train$tax)
+city_crime_train$medv_new <- treat_outliers(city_crime_train$medv)
+city_crime_train$lstat_new <- treat_outliers(city_crime_train$lstat)
+
+```
+
+
+Lets see how the new variables look in boxplots.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,3))
+
+boxplot(city_crime_train$tax_new,main="tax_new")
+boxplot(city_crime_train$medv_new,main="medv_new")
+boxplot(city_crime_train$lstat_new,main="lstat_new")
+
+```
+
+
+In the second set, we will use the sin transformation and create the following variables:
+
+city_crime_train$rm_new\
+
+city_crime_train$dis_new\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+city_crime_train$rm_new<-sin(city_crime_train$rm)
+
+city_crime_train$dis_new<-sin(city_crime_train$dis)
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,2))
+
+boxplot(city_crime_train$rm_new,main="rm_new")
+boxplot(city_crime_train$dis_new,main="dis_new")
+
+
+```
+
+
+
+
+##2.3 Tranformation for Variables
+
+\
+
+Following variables will need some transformation:
+
+1. zn: proportion of residential land zoned for large lots (over 25000 square feet) (predictor variable) 
+2. chas: a dummy var. for whether the suburb borders the Charles River (1) or not (0) (predictor variable) 
+3. target: whether the crime rate is above the median crime rate (1) or not (0) (response variable) 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+ city_crime_train$zn_new<-city_crime_train$zn
+
+city_crime_train$zn_new [city_crime_train$zn_new > 0] <- 1
+city_crime_train$zn_new [city_crime_train$zn_new== 0] <- 0
+city_crime_train$zn_new<-factor(city_crime_train$zn_new)
+
+
+city_crime_train$chas <-factor(city_crime_train$chas)
+
+city_crime_train$target<-factor(city_crime_train$target)
+
+
+
+```
+
+##2.6 
+
+\
+
+Lets see how the new variables stack up against wins. 
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+Correlation <- cor(city_crime_train$rm_new,(as.numeric(city_crime_train$target)))
+
+Correlation <- cor(city_crime_train$dis_new,(as.numeric(city_crime_train$target)))
+
+
+
+```
+
+\
+All new variables seem to have a positive correlation with wins. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
+
+
+\newpage
+
+
+#3 Build Models
+
+
+
+
+\newpage
+
+Below is a summary table showing models and their respective variables. \
+
+ 
+ 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/ModelVars.csv")
+#kable(modelvars)
+
+```
+
+\newpage 
+
+##3.1 Model One
+In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
+
+First we will produce the summary model as per below: 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model1 <- glm(target ~ .-zn_new-rm_new-lstat_new-tax_new-medv_new, data = city_crime_train, family = "binomial")
+summary(model1)
+
+pre_train1<-predict(model1,type="response")
+
+table(target,pre_train1 >0.75)
+
+
+
+```
+
+###3.1 Model One with backward step function
+
+```{r step for model 1}
+
+stepmodel1<- step(model1, direction="backward")
+
+pre_train1_step<-predict(stepmodel1,type="response")
+
+table(target,pre_train1_step >0.75)
+
+```
+
+
+
+
+##3.2 Model two
+In this model, we will be using the some transformed variables.  
+
+
+First we will produce the summary model as per below: 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model2 <- glm(target ~ .-zn-rm-dis-tax-lstat-medv, data = city_crime_train, family = "binomial")
+summary(model2)
+
+pre_train2<-predict(model2,type="response")
+
+table(target,pre_train2 >0.75)
+
+# Accuracy
+
+
+```
+
+
+###3.1 Model two with backward step function
+
+```{r step for model 2}
+
+stepmodel2<- step(model2, direction="backward")
+
+pre_train2_step<-predict(stepmodel2,type="response")
+
+table(target,pre_train2_step >0.75)
+
+```
+
+##3.3 Model three with leap package
+```{r}
+# install.packages("ISLR")
+# install.packages("leaps")
+
+par(mfrow=c(1,1))
+library(ISLR)
+library(leaps)
+
+#We will now use the package leaps to evaluate all the best-subset models.
+#It gives by default best-subsets up to size 8; lets increase that to 18, i.e. all the variables
+regfit <- regsubsets(target~., data = city_crime_train, nvmax = 18)
+summary(regfit)
+
+reg_summ <- summary(regfit)
+names(reg_summ)
+
+#finding the lowest cp value
+#cp or adjr2 or r2 is the value of the chosen model selection statistic for each model
+plot(reg_summ$cp)
+which.min(reg_summ$cp)
+points(8, reg_summ$cp[8], pch=20,col="red")
+
+#There is a plot method for the regsubsets object
+plot(regfit, scale = "Cp")
+coef(regfit, 8)
+
+model3 <- glm(target ~ nox+rm+age+rad+black+medv+dis_new+zn_new, data = city_crime_train, family = "binomial")
+summary(model3)
+
+
+pre_train3 <-predict(model3,type="response")
+
+table(target,pre_train3 > 0.5)
+
+```
