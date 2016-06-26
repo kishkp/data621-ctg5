@@ -43,20 +43,43 @@ library(stringr)
 library(faraway)
 library(aod)
 library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
 
-city_crime_train <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
+city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
 
-str(city_crime_train)
 
-summary(city_crime_train)
+summary(city_crime_train_full)
 
 
 city_crime_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-evaluation-data.csv")
 
 str(city_crime_test)
 
+```
+
+
+
+Split the full train data set into train and test to validate the model performance\
+
+1. Split the data 80% train and 20% for model validation
+
+```{r split train data to train and validation, echo=FALSE, eval=TRUE}
+
+
+smp_size <- floor(0.80 * nrow(city_crime_train_full))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+
+train_ind <- sample(seq_len(nrow(city_crime_train_full)), size = smp_size)
+
+city_crime_train<- city_crime_train_full[train_ind, ]
+train_test <- city_crime_train_full[-train_ind, ]
 
 ```
+
 #1 Data Exploration Analysis
 
 In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
@@ -74,18 +97,15 @@ First let's display and examine the data dictionary or the data columns as shown
 
 summary(city_crime_train)
 
-# % of cities marked as crime prone
+par(mfrow=c(1,1))
 
+pairs(city_crime_train,col=city_crime_train$target)
+
+# % of cities marked as crime prone
 
 prop.table(table(city_crime_train$target))
 
 ```
-\
-\
-
-
-
-
 \
 
 
@@ -133,7 +153,7 @@ Lets do some univariate analysis. We will look at the Histogram and Boxplot for 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 show_charts <- function(x, ...) {
     
-    par(mfrow=c(3,3))
+    par(mfrow=c(2,3))
     
     xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
 #    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
@@ -149,7 +169,7 @@ show_charts <- function(x, ...) {
     boxplot(y,main='sin transform')
     y<-(x)^(1/9)
     boxplot(y,main='ninth transform')
-    plot(x, target)
+   # plot(x, target)
 }
 
 attach(city_crime_train)
@@ -320,9 +340,17 @@ x[x > (qnt[2] + H)] <- caps[2]
 return(x)
 }
 
-city_crime_train$tax_new <- treat_outliers(city_crime_train$tax)
-city_crime_train$medv_new <- treat_outliers(city_crime_train$medv)
-city_crime_train$lstat_new <- treat_outliers(city_crime_train$lstat)
+city_crime_train_mod<-city_crime_train
+train_test_mod<-train_test
+
+city_crime_train_mod$tax_new <- treat_outliers(city_crime_train$tax)
+city_crime_train_mod$medv_new <- treat_outliers(city_crime_train$medv)
+city_crime_train_mod$lstat_new <- treat_outliers(city_crime_train$lstat)
+
+
+train_test_mod$tax_new <- treat_outliers(train_test$tax)
+train_test_mod$medv_new <- treat_outliers(train_test$medv)
+train_test_mod$lstat_new <- treat_outliers(train_test$lstat)
 
 ```
 
@@ -333,25 +361,29 @@ Lets see how the new variables look in boxplots.
 
 par(mfrow=c(1,3))
 
-boxplot(city_crime_train$tax_new,main="tax_new")
-boxplot(city_crime_train$medv_new,main="medv_new")
-boxplot(city_crime_train$lstat_new,main="lstat_new")
+boxplot(city_crime_train_mod$tax_new,main="tax_new")
+boxplot(city_crime_train_mod$medv_new,main="medv_new")
+boxplot(city_crime_train_mod$lstat_new,main="lstat_new")
 
 ```
 
 
 In the second set, we will use the sin transformation and create the following variables:
 
-city_crime_train$rm_new\
+city_crime_train_mod$rm_new\
 
-city_crime_train$dis_new\
+city_crime_train_mod$dis_new\
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-city_crime_train$rm_new<-sin(city_crime_train$rm)
+city_crime_train_mod$rm_new<-sin(city_crime_train$rm)
 
-city_crime_train$dis_new<-sin(city_crime_train$dis)
+city_crime_train_mod$dis_new<-sin(city_crime_train$dis)
+
+train_test_mod$rm_new<-sin(train_test$rm)
+
+train_test_mod$dis_new<-sin(train_test$dis)
 
 ```
 
@@ -359,8 +391,8 @@ city_crime_train$dis_new<-sin(city_crime_train$dis)
 
 par(mfrow=c(1,2))
 
-boxplot(city_crime_train$rm_new,main="rm_new")
-boxplot(city_crime_train$dis_new,main="dis_new")
+#boxplot(city_crime_train_mod$rm_new,main="rm_new")
+#boxplot(city_crime_train_mod$dis_new,main="dis_new")
 
 
 ```
@@ -380,16 +412,27 @@ Following variables will need some transformation:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
- city_crime_train$zn_new<-city_crime_train$zn
+city_crime_train_mod$zn_new<-city_crime_train_mod$zn
 
-city_crime_train$zn_new [city_crime_train$zn_new > 0] <- 1
-city_crime_train$zn_new [city_crime_train$zn_new== 0] <- 0
-city_crime_train$zn_new<-factor(city_crime_train$zn_new)
+city_crime_train_mod$zn_new [city_crime_train_mod$zn_new > 0] <- 1
+city_crime_train_mod$zn_new [city_crime_train_mod$zn_new== 0] <- 0
+#city_crime_train_mod$zn_new<-factor(city_crime_train_mod$zn_new)
 
 
-city_crime_train$chas <-factor(city_crime_train$chas)
 
-city_crime_train$target<-factor(city_crime_train$target)
+train_test_mod$zn_new<-train_test$zn
+
+train_test_mod$zn_new [train_test_mod$zn_new > 0] <- 1
+train_test_mod$zn_new [train_test_mod$zn_new== 0] <- 0
+#city_crime_train_mod$zn_new<-factor(train_test_mod$zn_new)
+
+#city_crime_train$chas <-factor(city_crime_train$chas)
+
+#city_crime_train$target<-factor(city_crime_train$target)
+
+#city_crime_train_mod$chas <-factor(city_crime_train_mod$chas)
+
+#city_crime_train_mod$target<-factor(city_crime_train_mod$target)
 
 
 
@@ -405,9 +448,9 @@ Lets see how the new variables stack up against wins.
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 
-Correlation <- cor(city_crime_train$rm_new,(as.numeric(city_crime_train$target)))
+#Correlation <- cor(city_crime_train$rm_new,(as.numeric(city_crime_train$target)))
 
-Correlation <- cor(city_crime_train$dis_new,(as.numeric(city_crime_train$target)))
+#Correlation <- cor(city_crime_train$dis_new,(as.numeric(city_crime_train$target)))
 
 
 
@@ -447,29 +490,40 @@ First we will produce the summary model as per below:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model1 <- glm(target ~ .-zn_new-rm_new-lstat_new-tax_new-medv_new, data = city_crime_train, family = "binomial")
+model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
 summary(model1)
 
-pre_train1<-predict(model1,type="response")
+pre_train1<-predict(model1,type="response",newdata=train_test)
 
-table(target,pre_train1 >0.75)
 
+table(pre_train1>0.5,train_test$target)
+
+
+
+
+#test<-(train_test$target==1)
+
+#count(pre_train1>0.5==test)
 
 
 ```
 
-###3.1 Model One with backward step function
+Accuracy=0.9042553
+
+###3.1.1 Model One with backward step function
 
 ```{r step for model 1}
 
 stepmodel1<- step(model1, direction="backward")
 
-pre_train1_step<-predict(stepmodel1,type="response")
+pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
 
-table(target,pre_train1_step >0.75)
+table(pre_train1_step>0.5,train_test$target)
+
+
 
 ```
-
+Accuracy=0.8723404
 
 
 
@@ -481,29 +535,76 @@ First we will produce the summary model as per below:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model2 <- glm(target ~ .-zn-rm-dis-tax-lstat-medv, data = city_crime_train, family = "binomial")
+model2 <- glm(target ~ .-zn-rm-dis-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
 summary(model2)
 
-pre_train2<-predict(model2,type="response")
+pre_train2<-predict(model2,type="response",newdata=train_test_mod)
 
-table(target,pre_train2 >0.75)
+test<-predict(model2,type="response")
+
+table(pre_train2>0.5,train_test_mod$target)
+
+#roc(test,city_crime_train$target)
 
 # Accuracy
 
 
 ```
 
+Accuracy -0.9042553
 
-###3.1 Model two with backward step function
+
+###3.2.1 Model two with backward step function
 
 ```{r step for model 2}
 
 stepmodel2<- step(model2, direction="backward")
 
-pre_train2_step<-predict(stepmodel2,type="response")
+pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
 
-table(target,pre_train2_step >0.75)
+table(pre_train2_step>0.5,train_test_mod$target)
 
 ```
 
+Accuracy= 0.893617
+
+###3.3 Model three with Linear discrement analysis
+
+```{r model with Linear Discrement analysis, eval=TRUE,echo=FALSE}
+
+
+model3=lda(target~.,data=city_crime_train)
+
+
+model3_predict_test<-data.frame(predict(model3,newdata=train_test))
+
+model3_predict_test[1:5,]
+
+table(model3_predict_test$class,train_test$target)
+
+```
+
+Accuracy=0.8297872
+
+
+###3.3.1 Model three with Linear discrement analysis with transformed data
+
+```{r model with Linear Discrement analysis with modified data, eval=TRUE,echo=FALSE}
+
+
+model3_mod=lda(target~.-zn-rm-dis-tax-lstat-medv,data=city_crime_train_mod)
+
+
+model3_predict_test_mod<-data.frame(predict(model3,newdata=train_test_mod))
+
+
+
+
+
+
+table(model3_predict_test_mod$class,train_test_mod$target)
+
+```
+
+Accuracy=0.7978723
 
