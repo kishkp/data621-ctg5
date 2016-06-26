@@ -46,6 +46,7 @@ library(Rcpp)
 library(leaps)
 library(ISLR)
 library(AUC)
+library(ROCR)
 
 city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
 
@@ -483,7 +484,7 @@ Below is a summary table showing models and their respective variables. \
 
 \newpage 
 
-##3.1 Model One
+##3.1.1 Model One by using all given variable
 In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
 
 First we will produce the summary model as per below: 
@@ -491,12 +492,9 @@ First we will produce the summary model as per below:
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
+
 summary(model1)
 
-pre_train1<-predict(model1,type="response",newdata=train_test)
-
-
-table(pre_train1>0.5,train_test$target)
 
 
 
@@ -510,7 +508,7 @@ table(pre_train1>0.5,train_test$target)
 
 Accuracy=0.9042553
 
-###3.1.1 Model One with backward step function
+###3.1.2 Model two- with backward step function with all given variables
 
 ```{r step for model 1}
 
@@ -527,7 +525,7 @@ Accuracy=0.8723404
 
 
 
-##3.2 Model two
+##3.1.3 Model three- model with transformed variables
 In this model, we will be using the some transformed variables.  
 
 
@@ -551,10 +549,10 @@ table(pre_train2>0.5,train_test_mod$target)
 
 ```
 
-Accuracy -0.9042553
+Accuracy=0.9042553
 
 
-###3.2.1 Model two with backward step function
+###3.1.4 Model with transformed variable and with with backward step function
 
 ```{r step for model 2}
 
@@ -568,7 +566,7 @@ table(pre_train2_step>0.5,train_test_mod$target)
 
 Accuracy= 0.893617
 
-###3.3 Model three with Linear discrement analysis
+###3.1,5 Model three with Linear discrement analysis
 
 ```{r model with Linear Discrement analysis, eval=TRUE,echo=FALSE}
 
@@ -587,7 +585,7 @@ table(model3_predict_test$class,train_test$target)
 Accuracy=0.8297872
 
 
-###3.3.1 Model three with Linear discrement analysis with transformed data
+###3.1.6 Model with Linear discrement analysis with transformed data
 
 ```{r model with Linear Discrement analysis with modified data, eval=TRUE,echo=FALSE}
 
@@ -599,12 +597,55 @@ model3_predict_test_mod<-data.frame(predict(model3,newdata=train_test_mod))
 
 
 
-
-
-
 table(model3_predict_test_mod$class,train_test_mod$target)
 
 ```
 
 Accuracy=0.7978723
+
+
+
+
+
+#4 Model Selection 
+
+In section we will further examine all six models.  We will apply a model selection strategy defined below to compare the models.
+\
+
+
+##4.1 Model selection strategy:
+
+Following model selection strategy has been used for this assignment: 
+
+(1) Compare accuracy of the models & confusion matrix
+(2) Compare Precision,Sensitivity,Specificity,F1 score
+(3) Compare AUC curve for the models
+
+```{r model 1 performance,echo=FALSE}
+
+
+#confusion matrix
+pre_train1 <- predict(model1, newdata=train_test, type="response")
+table(pre_train1>0.5,train_test$target)
+
+
+
+#AUC
+pred <- prediction(pre_train1, train_test$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+# I know, the following code is bizarre. Just go with it.
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+
+
+```
 
