@@ -11,15 +11,23 @@ output:
 \newpage
 
 # Overview 
-  
-To attain our objective, we will be following the below best practice steps and guidelines: \
 
-1 -Data Exploration \
-2 -Data Preparation \
-3 -Build Models \
-4 -Select Models \
+The data set contains approximately 466 records and 14 variables. Each record has information on crime for various neighborhoods of a major city. Each record has a response variable indicating whether or not the crime rate is above the median crime rate (1) or not (0).
+
+The objective is to build a binary logistic regression model on the training data set to predict whether the neighborhood will be at risk for high crime levels. In addition, we will provide classifications and probabilities for the evaluation data set using the binary logistic regression model. 
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
 
 
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
@@ -47,9 +55,12 @@ library(leaps)
 library(ISLR)
 library(AUC)
 library(ROCR)
+library(Amelia)
 
 city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
 
+variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/variable.csv")
+kable(variables, caption = "Variable Description") 
 
 summary(city_crime_train_full)
 
@@ -60,13 +71,35 @@ str(city_crime_test)
 
 ```
 
+We notice that all variables are numeric except for two variables: 
+the response variable "target" which is binary and the  predictor variable "chas" which 
+is a dummy binary variable indicating whether the suburb borders the Charles River (1) or not (0).
 
+Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target.
+
+
+```{r Analysis of missing values,echo=FALSE}
+###finding missing values
+missings<- sapply(city_crime_train_full,function(x) sum(is.na(x)))
+kable(missings, caption = "Missing Values")
+
+missmap(city_crime_train_full, main = "Missing values vs observed")
+
+### finding unique values
+uniques<- sapply(city_crime_train_full, function(x) length(unique(x)))
+kable(uniques, caption = "Unique Values")
+
+```
 
 Split the full train data set into train and test to validate the model performance\
 
 1. Split the data 80% train and 20% for model validation
 
 ```{r split train data to train and validation, echo=FALSE, eval=TRUE}
+
+# % of cities marked as crime prone
+
+prop.table(table(city_crime_train_full$target))
 
 
 smp_size <- floor(0.80 * nrow(city_crime_train_full))
@@ -80,34 +113,25 @@ city_crime_train<- city_crime_train_full[train_ind, ]
 train_test <- city_crime_train_full[-train_ind, ]
 
 ```
+\
 
-#1 Data Exploration Analysis
-
-In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
--Variable identification \
--Variable Relationships \
--Data summary analysis \
--Outliers and Missing Values Identification
-
-##1.1	Variable identification
 
 First let's display and examine the data dictionary or the data columns as shown in table 1 and proportion of success and failure cases in target variable. \
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-summary(city_crime_train)
 
 par(mfrow=c(1,1))
 
-pairs(city_crime_train,col=city_crime_train$target)
+pairs(city_crime_train[,1:4],col=city_crime_train$target)
+pairs(city_crime_train[,5:8],col=city_crime_train$target)
+pairs(city_crime_train[,9:13],col=city_crime_train$target)
 
-# % of cities marked as crime prone
-
-prop.table(table(city_crime_train$target))
 
 ```
-\
+
+
 
 
 \newpage
@@ -123,22 +147,14 @@ In this section, we will create summary data to better understand the initial re
 ds_stats <- psych::describe(city_crime_train, skew = TRUE, na.rm = TRUE)
 ds_stats
 
+fun1 <- function(a, y) cor(y, a)
+x<-city_crime_train[,]
+Correlation <- sapply(x, FUN = fun1, y=city_crime_train$target) 
 
-x<-colnames(city_crime_train)
-fun <- function(x) sum(!complete.cases(x))
-Missing <- sapply(city_crime_train[x], FUN = fun) 
-Missing
-
-
-fun1 <- function(x, y) cor(y, x)
-Correlation <- sapply(city_crime_train[x], FUN = fun1, y=city_crime_train$target) 
-
-kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
+#kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
 ```
 
 It is clear from the table that most of the variables are having storng correlation with the target variable. \
-
-
 
 
 ##1.3	Outliers and Missing Values Identification
@@ -496,13 +512,18 @@ summary(model1)
 
 
 
-#test<-(train_test$target==1)
-
-#count(pre_train1>0.5==test)
 
 
 ```
 
+##### model interpretation
+
+Now we can analyze the fitting and interpret what the model is telling us.
+First of all, we can see that indus,chas,rm,age,black, and lstat are not statistically significant. 
+
+As for the statistically significant variables, nox has 
+the lowest p-value suggesting a strong association of the nox of 
+the person with the probability of being above target.
 
 
 ###3.1.2 Model two- with backward step function with all given variables
@@ -524,7 +545,7 @@ First we will produce the summary model as per below:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model2 <- glm(target ~ .-zn-rm-dis-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
+model2 <- glm(target ~ .-zn-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
 summary(model2)
 
 
@@ -540,9 +561,7 @@ summary(model2)
 
 stepmodel2<- step(model2, direction="backward")
 
-#pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
 
-#table(pre_train2_step>0.5,train_test_mod$target)
 
 ```
 
@@ -555,12 +574,6 @@ stepmodel2<- step(model2, direction="backward")
 
 model3=lda(target~.,data=city_crime_train)
 
-
-#model3_predict_test<-data.frame(predict(model3,newdata=train_test))
-
-#model3_predict_test[1:5,]
-
-#table(model3_predict_test$class,train_test$target)
 
 ```
 
@@ -575,11 +588,6 @@ model3=lda(target~.,data=city_crime_train)
 model3_mod=lda(target~.-zn-rm-dis-tax-lstat-medv,data=city_crime_train_mod)
 
 
-#model3_predict_test_mod<-data.frame(predict(model3,newdata=train_test_mod))
-
-
-
-#table(model3_predict_test_mod$class,train_test_mod$target)
 
 ```
 
@@ -608,8 +616,8 @@ Following model selection strategy has been used for this assignment:
 Eval<-function(x){
  TP<-x$Freq[x$metrics=="TRUE_1"]
  FP<-x$Freq[x$metrics=="FALSE_1"]
- TN<-x$Freq[x$metrics=="FALSE_0"]
- FN<-x$Freq[x$metrics=="TRUE_0"]
+ FN<-x$Freq[x$metrics=="FALSE_0"]
+ TN<-x$Freq[x$metrics=="TRUE_0"]
  Accuracy <-(TP+TN)/(TP+TN+FP+FN)
   Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
   Precision<-TP/(TP+FP)
@@ -662,19 +670,19 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ##4.1.2 Model2 Evaluation
 
-```{r model 2 performance,echo=FALSE,eval=FALSE}
+```{r model 2 performance,echo=FALSE,eval=TRUE}
 
 #confusion matrix
 
-#pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
+pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
 
-#df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
-#df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
-#Eval(df_pre_train1_step)
+df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
+df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
+Eval(df_pre_train1_step)
 
 
 #AUC
-#pred <- prediction(df_pre_train1_step, train_test$target)
+pred <- prediction(pre_train1_step, train_test$target)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 
 auc <- performance(pred, measure = "auc")
@@ -692,7 +700,7 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ##4.1.3 Model3 Evaluation
 
-```{r model 3 performance,echo=FALSE,eval=FALSE}
+```{r model 3 performance,echo=FALSE,eval=TRUE}
 
 
 #confusion matrix
@@ -705,7 +713,7 @@ Eval(df_pre_train2)
 
 
 #AUC
-pred <- prediction(df_pre_train2, train_test_mod$target)
+pred <- prediction(pre_train2, train_test_mod$target)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 
 auc <- performance(pred, measure = "auc")
@@ -720,3 +728,101 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
     ggtitle(paste0("ROC Curve w/ AUC=", auc))
 
 ```
+
+
+
+
+##4.1.4 Model4 Evaluation
+
+```{r model 4 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
+
+df_pre_train2_step<-as.data.frame(table(pre_train2_step>0.5,train_test_mod$target))
+df_pre_train2_step$metrics <- paste(df_pre_train2_step$Var1,df_pre_train2_step$Var2, sep = '_') 
+Eval(df_pre_train2_step)
+
+
+#AUC
+pred <- prediction(pre_train2_step, train_test_mod$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+
+
+
+##4.1.5 Model5 Evaluation
+
+```{r model 5 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train3<-data.frame(predict(model3,type="response",newdata=train_test))
+
+df_pre_train3<-as.data.frame(table(pre_train3$class,train_test$target))
+df_pre_train3$metrics <- paste(df_pre_train3$Var1,df_pre_train3$Var2, sep = '_') 
+
+df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"TRUE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"FALSE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
+
+
+Eval(df_pre_train3)
+
+
+
+#AUC
+#pred <- prediction(pre_train3$class, train_test$target)
+#perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+#auc <- performance(pred, measure = "auc")
+#auc <- auc@y.values[[1]]
+
+#roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       #tpr=unlist(perf@y.values),
+                       #model="GLM")
+#ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+   # geom_ribbon(alpha=0.2) +
+   # geom_line(aes(y=tpr)) +
+    # ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+##4.1.6 Model6 Evaluation
+
+```{r model 6 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+
+pre_train3_mod<-data.frame(predict(model3_mod,type="response",newdata=train_test_mod))
+
+df_pre_train3_mod<-data.frame(table(pre_train3_mod$class,train_test_mod$target))
+df_pre_train3_mod$metrics <- paste(df_pre_train3_mod$Var1,df_pre_train3_mod$Var2, sep = '_') 
+
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"TRUE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"FALSE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
+
+Eval(df_pre_train3_mod)
+
