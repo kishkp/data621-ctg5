@@ -8,11 +8,11 @@ balance,Numeric,Predictor,"client's average yearly balance, in euros"
 housing,Binary,Predictor,"client has housing loan?"
 loan,Binary,Predictor,"client has personal loan?"
 contact,Catagorical,Predictor,"client's contact communication type
-day,Numeric,Predictor,client last contact day of the month
+day,Numeric,Predictor,"client last contact day of the month"
 month,Catagorical,Predictor,"client last contact month of year "
 duration,Numeric,Predictor,"client last contact duration, in seconds"
 campaign,Numeric,Predictor,"client number of contacts performed during this campaign "
-pdays,Numeric,Predictor,"client number of days that passed by after the client was last contacted
+pdays,Numeric,Predictor,"client number of days that passed by after the client was last contacted"
 previous,Numeric,Predictor,"number of contacts performed before this campaign and for this client"
 poutcome,Catagorical,Predictor,"outcome of the previous marketing campaign"
 y,Binary,Response,"has the client subscribed a term deposit?"
