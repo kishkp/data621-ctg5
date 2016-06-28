@@ -7,7 +7,7 @@ default,Binary,Predictor,"credit in default? "
 balance,Numeric,Predictor,"client's average yearly balance, in euros"
 housing,Binary,Predictor,"client has housing loan?"
 loan,Binary,Predictor,"client has personal loan?"
-contact,Catagorical,Predictor,"client's contact communication type
+contact,Catagorical,Predictor,"client's contact communication type"
 day,Numeric,Predictor,"client last contact day of the month"
 month,Catagorical,Predictor,"client last contact month of year "
 duration,Numeric,Predictor,"client last contact duration, in seconds"
