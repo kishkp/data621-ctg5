@@ -75,7 +75,7 @@ We notice that all variables are numeric except for two variables:
 the response variable "target" which is binary and the  predictor variable "chas" which 
 is a dummy binary variable indicating whether the suburb borders the Charles River (1) or not (0).
 
-Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target.
+Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target. 
 
 
 ```{r Analysis of missing values,echo=FALSE}
@@ -89,17 +89,19 @@ missmap(city_crime_train_full, main = "Missing values vs observed")
 uniques<- sapply(city_crime_train_full, function(x) length(unique(x)))
 kable(uniques, caption = "Unique Values")
 
-```
-
-Split the full train data set into train and test to validate the model performance\
-
-1. Split the data 80% train and 20% for model validation
-
-```{r split train data to train and validation, echo=FALSE, eval=TRUE}
-
-# % of cities marked as crime prone
+### % break up of target variable 
 
 prop.table(table(city_crime_train_full$target))
+
+```
+
+Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above. Also % split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1.\
+
+
+Train data set will be Split into train data(80% of train set) and validation set (20% of train set)to evalute the perforamnce of the models on the validation set. Train subset will be used to build the models.\
+
+
+```{r split train data to train and validation, echo=FALSE, eval=TRUE}
 
 
 smp_size <- floor(0.80 * nrow(city_crime_train_full))
@@ -115,12 +117,12 @@ train_test <- city_crime_train_full[-train_ind, ]
 ```
 \
 
+Two data set has been created city_crime_train (80% of train data), and train_test (20% of train data).\
 
-First let's display and examine the data dictionary or the data columns as shown in table 1 and proportion of success and failure cases in target variable. \
+In next step below relationship between the target variable and dependent variables is shown in three charts.
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
 
 par(mfrow=c(1,1))
 
@@ -141,8 +143,6 @@ pairs(city_crime_train[,9:13],col=city_crime_train$target)
 
 In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
 
-
-
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 ds_stats <- psych::describe(city_crime_train, skew = TRUE, na.rm = TRUE)
 ds_stats
@@ -160,20 +160,17 @@ It is clear from the table that most of the variables are having storng correlat
 ##1.3	Outliers and Missing Values Identification
 
 
-In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the outliers. 
-
-Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect outliers if any and treat it accordingly.\
-
-
+In this section univariate analysis is being caarried out and boxplots diagrams are being used to determine the outliers in variables and decide on whether to act on the outliers. Along with boxplot, Histrogram, Sin, Log,Sqrt,nth transformation diagrams are used to evaluate best transformation to handle outliers.\
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
 show_charts <- function(x, ...) {
     
     par(mfrow=c(2,3))
     
     xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
-#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
     
     hist(x,main=xlabel)
     boxplot(x,main=xlabel)
@@ -186,8 +183,10 @@ show_charts <- function(x, ...) {
     boxplot(y,main='sin transform')
     y<-(x)^(1/9)
     boxplot(y,main='ninth transform')
-   # plot(x, target)
+   
 }
+
+# attach file to R so that only variable can be called
 
 attach(city_crime_train)
 
@@ -210,7 +209,6 @@ However, we hid the remaining figures for ease of streamlining the report as the
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
 show_charts(indus)
-
 
 ```
 
@@ -265,7 +263,6 @@ show_charts(rad)
 For rad variable distribution is not uniform as seen from the chart and will need transformation.
 
 \
-\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
@@ -276,11 +273,8 @@ show_charts(tax)
 
 For tax variable is not uniformly distributed but there is no outlier for this variable.
 \
-\
 
 
-\
-\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
@@ -300,7 +294,6 @@ show_charts(black)
 
 
 \
-\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
@@ -319,9 +312,6 @@ show_charts(medv)
 ```
 
 
-
-
-
 #2. Data Preparation 
 
 Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
@@ -331,7 +321,7 @@ Now that we have completed the preliminary analysis, we will be cleaning and con
 
 
 
-##2.1 Outliers treatment
+##2.1 Outliers treatment and transformation
 
 For outliers, we will create 2 sets of variables. 
 
@@ -372,7 +362,7 @@ train_test_mod$lstat_new <- treat_outliers(train_test$lstat)
 ```
 
 
-Lets see how the new variables look in boxplots.
+Below boxplots shows distribution of variables after outliers treatment.\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -404,28 +394,23 @@ train_test_mod$dis_new<-sin(train_test$dis)
 
 ```
 
+
+Below is the boxplot after sin transformation of above variable.\
+
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 par(mfrow=c(1,2))
 
-#boxplot(city_crime_train_mod$rm_new,main="rm_new")
-#boxplot(city_crime_train_mod$dis_new,main="dis_new")
-
+boxplot(city_crime_train_mod$rm_new,main="rm_new")
+boxplot(city_crime_train_mod$dis_new,main="dis_new")
 
 ```
-
-
-
-
-##2.3 Tranformation for Variables
-
 \
 
-Following variables will need some transformation:
-
-1. zn: proportion of residential land zoned for large lots (over 25000 square feet) (predictor variable) 
-2. chas: a dummy var. for whether the suburb borders the Charles River (1) or not (0) (predictor variable) 
-3. target: whether the crime rate is above the median crime rate (1) or not (0) (response variable) 
+Additional transformation was performed on following variables\
+1. using bucket for zn, with set of values 0 and 1\
+2. Converting chas to a factor variale of 0 and 1\
+3. Converting target to a factor variale of 0 and 1\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -455,12 +440,8 @@ train_test_mod$chas <-factor(train_test_mod$chas)
 
 ```
 
-##2.6 
 
-\
-
-Lets see how the new variables stack up against wins. 
-\
+below we evaluate correlation of target with new variables\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -474,7 +455,7 @@ Lets see how the new variables stack up against wins.
 ```
 
 \
-All new variables seem to have a positive correlation with wins. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
+All new variables seem to have a positive correlation with target. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
 
 
 \newpage
@@ -483,10 +464,8 @@ All new variables seem to have a positive correlation with wins. However, some o
 #3 Build Models
 
 
-
 Below is a summary table showing models and their respective variables. \
 
- 
  
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
