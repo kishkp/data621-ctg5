@@ -1,0 +1,18 @@
+Variable,Data Type,Type,Description
+age,Numeric,Predictor,client's age
+job,Catagorical,Predictor,"client's job: (""admin."",""unknown"",""unemployed"",""management"",""housemaid"",""entrepreneur"",""student"", blue-collar,""self-employed"",""retired"",""technician"",""services"")"
+marital,Catagorical,Predictor,"client's marital status:  (""married"",""divorced"",""single""; note: ""divorced"" means divorced or widowed)"
+education,Catagorical,Predictor,"client's education: (""unknown"",""secondary"",""primary"",""tertiary"")"
+default,Binary,Predictor,"credit in default? : (""yes"",""no"")"
+balance,Numeric,Predictor,"client's average yearly balance, in euros"
+housing,Binary,Predictor,"client has housing loan? : (""yes"",""no"")"
+loan,Binary,Predictor,"client has personal loan? (""yes"",""no"")"
+contact,Catagorical,Predictor,"client's contact communication type (""unknown"",""telephone"",""cellular"")"
+day,Numeric,Predictor,client last contact day of the month
+month,Catagorical,Predictor,"client last contact month of year (""jan"", ""feb"", ""mar"", ..., ""nov"", ""dec"")"
+duration,Numeric,Predictor,"client last contact duration, in seconds"
+campaign,Numeric,Predictor,client number of contacts performed during this campaign and for this client (includes last contact)
+pdays,Numeric,Predictor,client number of days that passed by after the client was last contacted from a previous campaign (-1 means client was not previously contacted)
+previous,Numeric,Predictor,number of contacts performed before this campaign and for this client
+poutcome,Catagorical,Predictor,"outcome of the previous marketing campaign (""unknown"",""other"",""failure"",""success"")"
+y,Binary,Response,"has the client subscribed a term deposit? (""yes"",""no"")"
