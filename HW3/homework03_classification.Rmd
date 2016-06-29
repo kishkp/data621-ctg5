@@ -173,21 +173,26 @@ In next step below relationship between the target variable and dependent variab
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-par(mfrow=c(1,1))
-pairs(city_crime_train[,1:4],col=city_crime_train$target)
+par(mfrow=c(2,3))
+
+plot(target ~ zn+indus +nox+ chas+nox+ rm, data=city_crime_train)
 
 
-```
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-pairs(city_crime_train[,5:8],col=city_crime_train$target)
 
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-pairs(city_crime_train[,9:13],col=city_crime_train$target)
+par(mfrow=c(2,3))
+plot(target ~ age+dis +rad+ tax+ptratio+ black, data=city_crime_train)
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,2))
+
+plot(target ~ lstat+medv, data=city_crime_train)
 
 ```
 \
@@ -994,8 +999,36 @@ confint.default(model1)
 wald.test(b = coef(model1), Sigma = vcov(model1), Terms = 9)
 
 exp(cbind(OR = coef(model1), confint.default(model1)))
+
+
+
 ```
 
 The chi-squared test statistic of 13.6 , with one degrees of freedom is associated with a p-value of 0.00023 indicating that the overall effect of tax is statistically significant.
 
 odds ratios and 95% CI
+\
+
+
+```{r  echo=FALSE}
+plot_pred_type_distribution <- function(df, threshold) {
+  v <- rep(NA, nrow(df))
+  v <- ifelse(df$pre_train1 >= threshold & df$target == 1, "TP", v)
+  v <- ifelse(df$pre_train1 >= threshold & df$target == 0, "FP", v)
+  v <- ifelse(df$pre_train1 < threshold & df$target == 1, "FN", v)
+  v <- ifelse(df$pre_train1 < threshold & df$target == 0, "TN", v)
+  
+  df$pred_type <- v
+  
+  ggplot(data=df, aes(x=target, y=pre_train1)) + 
+    geom_violin(fill=rgb(1,1,1,alpha=0.6), color=NA) + 
+    geom_jitter(aes(color=pred_type), alpha=0.6) +
+    geom_hline(yintercept=threshold, color="red", alpha=0.6) +
+    scale_color_discrete(name = "type") +
+    labs(title=sprintf("Threshold at %.2f", threshold))
+}
+
+train_test$pre_train1 <- predict(model1, newdata=train_test, type="response")
+
+plot_pred_type_distribution (train_test,0.5)
+```
