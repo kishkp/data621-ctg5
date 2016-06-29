@@ -62,12 +62,7 @@ city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data
 variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/variable.csv")
 kable(variables, caption = "Variable Description") 
 
-summary(city_crime_train_full)
-
-
 city_crime_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-evaluation-data.csv")
-
-str(city_crime_test)
 
 ```
 
@@ -76,8 +71,19 @@ the response variable "target" which is binary and the  predictor variable "chas
 is a dummy binary variable indicating whether the suburb borders the Charles River (1) or not (0).
 
 Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target. 
+\
+\
+Following is the summary of the train data set
+\
+```{r train data summary, echo=FALSE}
 
+summary(city_crime_train_full)
 
+```
+\
+
+Following is the analysis on missing values in data set\
+\
 ```{r Analysis of missing values,echo=FALSE}
 ###finding missing values
 missings<- sapply(city_crime_train_full,function(x) sum(is.na(x)))
@@ -88,14 +94,18 @@ missmap(city_crime_train_full, main = "Missing values vs observed")
 ### finding unique values
 uniques<- sapply(city_crime_train_full, function(x) length(unique(x)))
 kable(uniques, caption = "Unique Values")
+```
+Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above.\ 
 
-### % break up of target variable 
 
+### % break up of target variable in train data set
+
+```{r % target variable, echo=FALSE}
 prop.table(table(city_crime_train_full$target))
 
 ```
 
-Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above. Also % split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1.\
+% split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1.\
 
 
 Train data set will be Split into train data(80% of train set) and validation set (20% of train set)to evalute the perforamnce of the models on the validation set. Train subset will be used to build the models.\
@@ -134,8 +144,6 @@ pairs(city_crime_train[,9:13],col=city_crime_train$target)
 ```
 
 
-
-
 \newpage
 
 ##1.2 Data Summary Analysis
@@ -144,7 +152,7 @@ pairs(city_crime_train[,9:13],col=city_crime_train$target)
 In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-ds_stats <- psych::describe(city_crime_train, skew = TRUE, na.rm = TRUE)
+ds_stats <- psych::describe(city_crime_train, skew = FALSE, na.rm = TRUE)
 ds_stats
 
 fun1 <- function(a, y) cor(y, a)
@@ -463,8 +471,17 @@ All new variables seem to have a positive correlation with target. However, some
 
 #3 Build Models
 
+Following strategy has been adoped to build models for this scenario:
 
-Below is a summary table showing models and their respective variables. \
+(i) Building model 1 using given variables by using logit function.\
+(ii) Using step function to enhance model 1 and create model 2.\
+(iii) Building model 3 using tranformed variables also by using logit function.\
+(iv) Using step function to enhance model 3 and create model 4.\
+(v) Using Linear discrement analysis model create model 5 with given variables.\
+(vi) Using Linear discrement analysis model create model 6 with transformed variables.\
+
+
+Below is a summary table showing models and their respective variables.\
 
  
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -487,19 +504,17 @@ model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
 
 summary(model1)
 
-exp(coef(model1))
-
 ```
 
 ##### model interpretation for model 1
 
 Below we  analyze and the fitting and interpret what the model is telling us.
 
-i.First of all, we can see that indus,chas,rm,age,black, and lstat are not statistically significant. 
+(i) First of all, we can see that indus,chas,rm,age,black, and lstat are not statistically significant. 
 
-ii.As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
 
-iii. The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
   a. For every one unit change in nox, the log odds of crime rate above median value incremases by 53.41.\
   b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.80.\
@@ -511,7 +526,7 @@ iii. The logistic regression coefficients give the change in the log odds of the
 
 ###3.1.2 Model two- with backward step function with all given variables
 
-```{r step for model 1}
+```{r step for model 1,echo=FALSE}
 
 stepmodel1<- step(model1, direction="backward")
 
@@ -523,11 +538,11 @@ summary(stepmodel1)
 
 Below we  analyze and the fitting and interpret what the model is telling us.
 
-i.First of all, we can see that zn,age,black are not statistically significant. 
+(i)First of all, we can see that zn,age,black are not statistically significant. 
 
-ii.As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
 
-iii. The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
   a. For every one unit change in nox, the log odds of crime rate above median value incremases by 46.61.\
   b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.71.\
@@ -536,7 +551,7 @@ iii. The logistic regression coefficients give the change in the log odds of the
   e. For a one unit increase in ptratio, the log odds of crime rate above median value incremases by 0.35.\
   f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.18\
 
-iv. there were 9 ierations in backward steps before final model was selected
+(iv) there were 9 ierations in backward steps before final model was selected
 
 ##3.1.3 Model three- model with transformed variables
 In this model, we will be using the some transformed variables.  
@@ -549,21 +564,28 @@ First we will produce the summary model as per below:
 model2 <- glm(target ~ .-zn-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
 summary(model2)
 
-
-
 ```
 
+(i)From this model it can be seen following variables are relevant for this model-nox, dis, rad, ptratio , tax_new, medv_new,lstat_new\
 
+(ii) number of integration is 9 and AIC value =169.71.
+
+#### Notes: Similar explanation of model co efficient will be applicable here as described for model 1 & 2 and is not repreated here.
 
 
 ###3.1.4 Model with transformed variable and with with backward step function
 
-```{r step for model 2}
+```{r step for model 2,echo=FALSE}
 
 stepmodel2<- step(model2, direction="backward")
 
+summary(stepmodel2)
+
 ```
 
+(i)From this model it can be seen following variables are relevant for this model-nox, dis, rad, ptratio , tax_new, medv_new,lstat_new\
+
+(ii) number of integration is 9 and AIC value =165.8.
 
 
 ###3.1,5 Model three with Linear discrement analysis
@@ -572,6 +594,8 @@ stepmodel2<- step(model2, direction="backward")
 
 
 model3=lda(target~.,data=city_crime_train)
+
+model3
 
 
 ```
@@ -586,12 +610,9 @@ model3=lda(target~.,data=city_crime_train)
 
 model3_mod=lda(target~.-zn-rm-dis-tax-lstat-medv,data=city_crime_train_mod)
 
-
+model3_mod
 
 ```
-
-
-
 
 
 
@@ -606,11 +627,12 @@ In section we will further examine all six models.  We will apply a model select
 
 Following model selection strategy has been used for this assignment: 
 
-(1) Compare accuracy of the models & confusion matrix
-(2) Compare Precision,Sensitivity,Specificity,F1 score
-(3) Compare AUC curve for the models
+(i) Compare accuracy of the models & confusion matrix
+(ii) Compare Precision,Sensitivity,Specificity,F1 score
+(iii) Compare AUC curve for the models
 
 
+Following function Eval() will be used to calculate various metrics related to the model like Accuracy, Sensitivity, Precision , Specificity and F1 score
 ```{r function to calculate model performance,echo=FALSE }
 Eval<-function(x){
  TP<-x$Freq[x$metrics=="TRUE_1"]
@@ -638,6 +660,7 @@ Eval<-function(x){
 
 ```
 
+
 ##4.1.1 Model1 Evaluation
 
 ```{r model 1 performance,echo=FALSE}
@@ -649,11 +672,10 @@ df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_')
 
 Eval(df_pre_train1)
 
-
-
 model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
  
  model_comparison[1,]<-Eval(df_pre_train1)
+ #row.names(model_comparison[1,])<-"model 1"
  
 
 #AUC
@@ -673,6 +695,9 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ```
 
+Looking at the key metrics this can be concluded this model has high accuracy  0.9042553 and low error rate 0.09574468.AUC curve for this model is 0.9549 which is very good.\
+
+
 
 ##4.1.2 Model2 Evaluation
 
@@ -686,6 +711,7 @@ df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
 df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
 Eval(df_pre_train1_step)
 model_comparison[2,]<-Eval(df_pre_train1_step)
+
 
 #AUC
 pred <- prediction(pre_train1_step, train_test$target)
@@ -704,10 +730,12 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ```
 
+Looking at the key metrics this can be concluded this model has high accuracy  0.8723404 and low error rate 0.12765957.AUC curve for this model is 0.9553 which is very good.\
+
+
 ##4.1.3 Model3 Evaluation
 
 ```{r model 3 performance,echo=FALSE,eval=TRUE}
-
 
 #confusion matrix
 
@@ -735,7 +763,7 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ```
 
-
+Looking at the key metrics this can be concluded this model has high accuracy  0.8936170and low error rate 0.10638298.AUC curve for this model is 0.9558 which is very good.\
 
 
 ##4.1.4 Model4 Evaluation
@@ -771,7 +799,7 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ```
 
-
+Looking at the key metrics this can be concluded this model has high accuracy 0.8829787 and low error rate 0.11702128.AUC curve for this model is 0.9549 which is very good.\
 
 
 ##4.1.5 Model5 Evaluation
@@ -818,6 +846,10 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ```
 
+Looking at the key metrics this can be concluded this model has relatively low accuracy0.8297872  and higher error rate 0.1702127 compared to other models.AUC curve for this model is 0.9263.\
+
+
+
 ##4.1.6 Model6 Evaluation
 
 ```{r model 6 performance,echo=FALSE,eval=TRUE}
@@ -855,6 +887,9 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
     ggtitle(paste0("ROC Curve w/ AUC=", auc))
 
 ```
+
+Looking at the key metrics this can be concluded this model has relatively low accuracy 0.8297872 and higher error rate 0.17021277 compared to other models.AUC curve for this model is 0.930.\
+
 
 ##4.2 Final Model Seletion
 
