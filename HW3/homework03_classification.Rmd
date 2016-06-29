@@ -14,20 +14,9 @@ output:
 
 The data set contains approximately 466 records and 14 variables. Each record has information on crime for various neighborhoods of a major city. Each record has a response variable indicating whether or not the crime rate is above the median crime rate (1) or not (0).
 
-The objective is to build a binary logistic regression model on the training data set to predict whether the neighborhood will be at risk for high crime levels. In addition, we will provide classifications and probabilities for the evaluation data set using the binary logistic regression model. 
-
-#1 Data Exploration Analysis
-
-In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
--Variable identification \
--Variable Relationships \
--Data summary analysis \
--Outliers and Missing Values Identification
+The objective is to build a binary logistic regression model on the training data set to predict whether the neighborhood will be at risk for high crime levels. In addition, we will provide classifications and probabilities for the evaluation data set using the binary logistic regression model. \
 
 
-##1.1	Variable identification
-
-First let's display and examine the data dictionary or the data columns as shown in table 1
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
@@ -59,31 +48,79 @@ library(Amelia)
 
 city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
 
-variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/variable.csv")
-kable(variables, caption = "Variable Description") 
-
 city_crime_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-evaluation-data.csv")
 
 ```
 
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1 \
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/variable.csv")
+
+kable(variables, caption = "Variable Description") 
+
+
+```
+\
+\
+
 We notice that all variables are numeric except for two variables: 
 the response variable "target" which is binary and the  predictor variable "chas" which 
 is a dummy binary variable indicating whether the suburb borders the Charles River (1) or not (0).
-
+\
 Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target. 
 \
+Following is the summary of the train data set variable 1-5
 \
-###Following is the summary of the train data set
-\
-```{r train data summary, echo=FALSE}
+```{r train data summary 1-6, echo=FALSE}
 
-summary(city_crime_train_full)
+kable(summary(city_crime_train_full[,1:5]),caption = "Summary of Variables 1 to 5",align = "l")
+
+
+```
+\
+\
+
+
+Following is the summary of the train data set variable 7-12\
+\
+```{r train data summary 7-12, echo=FALSE}
+
+
+kable(summary(city_crime_train_full[,6:11]),caption = "Summary of Variables 6-11",align = "l")
+
+```
+\
+\
+
+Following is the summary of the train data set variable 12-14\
+\
+```{r train data summary 12-14, echo=FALSE}
+
+
+kable(summary(city_crime_train_full[,12:14]),caption = "Summary of Variables 12-14",align = "l")
 
 ```
 \
 
-###Following is the analysis on missing values in data set\
 \
+\
+
+Following is the analysis on missing values in data set
+\
+
 ```{r Analysis of missing values,echo=FALSE}
 ###finding missing values
 missings<- sapply(city_crime_train_full,function(x) sum(is.na(x)))
@@ -95,21 +132,23 @@ missmap(city_crime_train_full, main = "Missing values vs observed")
 uniques<- sapply(city_crime_train_full, function(x) length(unique(x)))
 kable(uniques, caption = "Unique Values")
 ```
-Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above.\ 
-
-
-### % break up of target variable in train data set
-
+\
+\
+Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above\ 
+\
+\
+Break up of target variable count in train data set
+\
 ```{r % target variable, echo=FALSE}
-prop.table(table(city_crime_train_full$target))
+data.frame(table(city_crime_train_full$target))
 
 ```
-
-% split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1.\
-
-
+\
+\
+% split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1
+\
 Train data set will be Split into train data(80% of train set) and validation set (20% of train set)to evalute the perforamnce of the models on the validation set. Train subset will be used to build the models.\
-
+\
 
 ```{r split train data to train and validation, echo=FALSE, eval=TRUE}
 
@@ -126,34 +165,43 @@ train_test <- city_crime_train_full[-train_ind, ]
 
 ```
 \
-
-Two data set has been created city_crime_train (80% of train data), and train_test (20% of train data).\
+\
+Two data set has been created city_crime_train (80% of train data), and train_test (20% of train data).
+\
 
 In next step below relationship between the target variable and dependent variables is shown in three charts.
-
-
+\
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 par(mfrow=c(1,1))
-
 pairs(city_crime_train[,1:4],col=city_crime_train$target)
-pairs(city_crime_train[,5:8],col=city_crime_train$target)
-pairs(city_crime_train[,9:13],col=city_crime_train$target)
 
 
 ```
 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+pairs(city_crime_train[,5:8],col=city_crime_train$target)
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+pairs(city_crime_train[,9:13],col=city_crime_train$target)
+
+```
+\
 
 \newpage
 
-##1.2 Data Summary Analysis
+##1.2 Data Analysis
 
 
-In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
+In this section, relationship between target variable with our dependent variables has been explored using correlation, central tendency, and dispersion As shown in table 2.  
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-ds_stats <- psych::describe(city_crime_train, skew = FALSE, na.rm = TRUE)
-ds_stats
+#ds_stats <- psych::describe(city_crime_train[,1:7], skew = FALSE, na.rm = TRUE)
+#ds_stats
 
 fun1 <- function(a, y) cor(y, a)
 x<-city_crime_train[,]
@@ -283,7 +331,6 @@ For tax variable is not uniformly distributed but there is no outlier for this v
 \
 
 
-
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
 show_charts(ptratio)
@@ -368,7 +415,7 @@ train_test_mod$medv_new <- treat_outliers(train_test$medv)
 train_test_mod$lstat_new <- treat_outliers(train_test$lstat)
 
 ```
-
+\
 
 Below boxplots shows distribution of variables after outliers treatment.\
 
@@ -416,40 +463,49 @@ boxplot(city_crime_train_mod$dis_new,main="dis_new")
 \
 
 Additional transformation was performed on following variables\
-1. using bucket for zn, with set of values 0 and 1\
-2. Converting chas to a factor variale of 0 and 1\
-3. Converting target to a factor variale of 0 and 1\
+1. using bucket for zn, with set of values 0 and 1
+2. Converting chas to a factor variale of 0 and 1
+3. Converting target to a factor variale of 0 and 1
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
+# Add new bucket for variable zn to train set
 city_crime_train_mod$zn_new<-city_crime_train_mod$zn
-
 city_crime_train_mod$zn_new [city_crime_train_mod$zn_new > 0] <- 1
 city_crime_train_mod$zn_new [city_crime_train_mod$zn_new== 0] <- 0
-#city_crime_train_mod$zn_new<-factor(city_crime_train_mod$zn_new)
+city_crime_train_mod$zn_new<-factor(city_crime_train_mod$zn_new)
 
-
-
+# Add new bucket for variable zn to validation set
 train_test_mod$zn_new<-train_test$zn
-
 train_test_mod$zn_new [train_test_mod$zn_new > 0] <- 1
 train_test_mod$zn_new [train_test_mod$zn_new== 0] <- 0
-#city_crime_train_mod$zn_new<-factor(train_test_mod$zn_new)
+train_test_mod$zn_new<-factor(train_test_mod$zn_new)
 
+
+#change chas variable to factor in train data
+city_crime_train$chas <-factor(city_crime_train$chas)
+train_test$chas <-factor(train_test$chas)
+
+#change chas variable to factor in transformed data
 city_crime_train_mod$chas <-factor(city_crime_train_mod$chas)
 train_test_mod$chas <-factor(train_test_mod$chas)
-#city_crime_train$target<-factor(city_crime_train$target)
 
-#city_crime_train_mod$chas <-factor(city_crime_train_mod$chas)
 
-#city_crime_train_mod$target<-factor(city_crime_train_mod$target)
+
+# change target variable to factor in train data
+city_crime_train$target<-factor(city_crime_train$target)
+train_test$target<-factor(train_test$target)
+
+# change target variable to factor in validation data
+city_crime_train_mod$target<-factor(city_crime_train_mod$target)
+train_test_mod$target<-factor(train_test_mod$target)
 
 
 
 ```
+\
 
-
-below we evaluate correlation of target with new variables\
+Below we evaluate correlation of target with new variables
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -493,10 +549,11 @@ Below is a summary table showing models and their respective variables.\
 
 
 
-##3.1.1 Model One by using all given variable
-In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
+##3.1.1 Model One by using all given variables
 
-First we will produce the summary model as per below: 
+In this model, we will be using all the given variables in train data set.  We will create model using logic function and we will highlight the summary of the model. \
+ 
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -506,11 +563,10 @@ summary(model1)
 
 ```
 
-##### model interpretation for model 1
+##### Interpretation for model 1
 
-Below we  analyze and the fitting and interpret what the model is telling us.
 
-(i) First of all, we can see that indus,chas,rm,age,black, and lstat are not statistically significant. 
+(i) Based on the outcome it can be seen that indus,chas,rm,age,black and lstat are not statistically significant. 
 
 (ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
 
@@ -524,21 +580,26 @@ Below we  analyze and the fitting and interpret what the model is telling us.
   f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.23.\
   
 
-###3.1.2 Model two- with backward step function with all given variables
+###3.1.2 Model two with step function (backward process) with all given variables
 
-```{r step for model 1,echo=FALSE}
+```{r step for model 1 creation,echo=FALSE,results="hide"}
 
 stepmodel1<- step(model1, direction="backward")
+
+```
+\
+
+```{r step for model 1,echo=FALSE}
 
 summary(stepmodel1)
 
 ```
 
-##### model interpretation for model 2
+#####  Interpretation for model 2
 
-Below we  analyze and the fitting and interpret what the model is telling us.
 
-(i)First of all, we can see that zn,age,black are not statistically significant. 
+
+(i)It can be seen that zn,age,black are not statistically significant. 
 
 (ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
 
@@ -553,11 +614,10 @@ Below we  analyze and the fitting and interpret what the model is telling us.
 
 (iv) there were 9 ierations in backward steps before final model was selected
 
-##3.1.3 Model three- model with transformed variables
-In this model, we will be using the some transformed variables.  
+##3.1.3 Model three with transformed variables
 
+In this model, transformed variables are being used with the logic function.  
 
-First we will produce the summary model as per below: 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -566,22 +626,37 @@ summary(model2)
 
 ```
 
+#####  Interpretation for model 3
+
 (i)From this model it can be seen following variables are relevant for this model-nox, dis, rad, ptratio , tax_new, medv_new,lstat_new\
 
 (ii) number of integration is 9 and AIC value =169.71.
 
-#### Notes: Similar explanation of model co efficient will be applicable here as described for model 1 & 2 and is not repreated here.
+
+#### Notes: Similar explanation of model coefficient will be applicable here as described for model 1 & 2 and is not repreated here.
 
 
 ###3.1.4 Model with transformed variable and with with backward step function
 
-```{r step for model 2,echo=FALSE}
+In this model, transformed variables are being used with the step function and backward process.  
+
+```{r step for model 2 creation,echo=FALSE,results="hide"}
 
 stepmodel2<- step(model2, direction="backward")
+
+```
+
+\
+
+
+```{r step for model 2,echo=FALSE}
 
 summary(stepmodel2)
 
 ```
+
+#####  Interpretation for model 4
+
 
 (i)From this model it can be seen following variables are relevant for this model-nox, dis, rad, ptratio , tax_new, medv_new,lstat_new\
 
@@ -589,6 +664,8 @@ summary(stepmodel2)
 
 
 ###3.1,5 Model three with Linear discrement analysis
+
+In this model Linear discrement analysis function has been used with given set of variables in traning data.
 
 ```{r model with Linear Discrement analysis, eval=TRUE,echo=FALSE}
 
@@ -600,10 +677,13 @@ model3
 
 ```
 
+#####  Interpretation for model 5
 
 
 
 ###3.1.6 Model with Linear discrement analysis with transformed data
+
+In this model Linear discrement analysis function has been used with transformed set of variables in traning data.\
 
 ```{r model with Linear Discrement analysis with modified data, eval=TRUE,echo=FALSE}
 
@@ -614,7 +694,7 @@ model3_mod
 
 ```
 
-
+#####  Interpretation for model 6
 
 
 #4 Model Selection 
