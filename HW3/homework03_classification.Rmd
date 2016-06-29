@@ -73,7 +73,7 @@ is a dummy binary variable indicating whether the suburb borders the Charles Riv
 Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target. 
 \
 \
-Following is the summary of the train data set
+###Following is the summary of the train data set
 \
 ```{r train data summary, echo=FALSE}
 
@@ -82,7 +82,7 @@ summary(city_crime_train_full)
 ```
 \
 
-Following is the analysis on missing values in data set\
+###Following is the analysis on missing values in data set\
 \
 ```{r Analysis of missing values,echo=FALSE}
 ###finding missing values
@@ -901,3 +901,21 @@ model_comparison
 
 ```
 
+From the comparison table it can be concluded model 1 is the best model with very high accuracy rate of 90.42%. Further analysis has been carried out on this model below-\
+
+(i) Estimate confidence interval for coefficient
+(ii) wald test to understand effect of variable in the model
+(iii) odds ratios and 95% CI
+
+```{r best model analysis,echo=FALSE}
+
+confint.default(model1)
+
+wald.test(b = coef(model1), Sigma = vcov(model1), Terms = 9)
+
+exp(cbind(OR = coef(model1), confint.default(model1)))
+```
+
+The chi-squared test statistic of 13.6 , with one degrees of freedom is associated with a p-value of 0.00023 indicating that the overall effect of tax is statistically significant.
+
+odds ratios and 95% CI
