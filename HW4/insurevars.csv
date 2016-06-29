@@ -1,0 +1,27 @@
+VARIABLE_NAME,DEFINITION,THEORETICAL_EFFECT
+INDEX ,Identification Variable (do not use) ,None
+TARGET_FLAG ,Was Car in a crash? 1=YES 0=NO ,None
+TARGET_AMT ,"If car was in a crash, what was the cost ",None
+AGE ,Age of Driver ,Very young people tend to be risky. Maybe very old people also.
+BLUEBOOK ,Value of Vehicle ,"Unknown effect on probability of collision, but probably effect the payout if there is a crash"
+CAR_AGE ,Vehicle Age ,"Unknown effect on probability of collision, but probably effect the payout if there is a crash"
+CAR_TYPE ,Type of Car ,"Unknown effect on probability of collision, but probably effect the payout if there is a crash"
+CAR_USE ,Vehicle Use ,"Commercial vehicles are driven more, so might increase probability of collision"
+CLM_FREQ ,# Claims (Past 5 Years) ,"The more claims you filed in the past, the more you are likely to file in the future"
+EDUCATION ,Max Education Level ,"Unknown effect, but in theory more educated people tend to drive more safely"
+HOMEKIDS ,# Children at Home ,Unknown effect
+HOME_VAL ,Home Value ,"In theory, home owners tend to drive more responsibly"
+INCOME ,Income ,"In theory, rich people tend to get into fewer crashes"
+JOB ,Job Category ,"In theory, white collar jobs tend to be safer"
+KIDSDRIV ,# Driving Children ,"When teenagers drive your car, you are more likely to get into crashes"
+MSTATUS ,Marital Status ,"In theory, married people drive more safely"
+MVR_PTS ,Motor Vehicle Record Points ,"If you get lots of traffic tickets, you tend to get into more crashes"
+OLDCLAIM ,Total Claims (Past 5 Years) ,"If your total payout over the past five years was high, this suggests future payouts will be high"
+PARENT1 ,Single Parent ,Unknown effect
+RED_CAR ,A Red Car ,Urban legend says that red cars (especially red sports cars) are more risky. Is that true?
+REVOKED ,License Revoked (Past 7 Years) ,"If your license was revoked in the past 7 years, you probably are a more risky driver."
+SEX ,Gender ,Urban legend says that women have less crashes then men. Is that true?
+TIF ,Time in Force ,People who have been customers for a long time are usually more safe.
+TRAVTIME ,Distance to Work ,Long drives to work usually suggest greater risk
+URBANICITY ,Home/Work Area ,Unknown
+YOJ ,Years on Job ,People who stay at a job for a long time are usually more safe
