@@ -797,20 +797,24 @@ Eval(df_pre_train3)
 
 model_comparison[5,]<-Eval(df_pre_train3)
 
+
+
+
+
 #AUC
-#pred <- prediction(pre_train3$class, train_test$target)
-#perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+pred <- prediction(pre_train3$posterior.1, train_test$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 
-#auc <- performance(pred, measure = "auc")
-#auc <- auc@y.values[[1]]
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
 
-#roc.data <- data.frame(fpr=unlist(perf@x.values),
-                       #tpr=unlist(perf@y.values),
-                       #model="GLM")
-#ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
-   # geom_ribbon(alpha=0.2) +
-   # geom_line(aes(y=tpr)) +
-    # ggtitle(paste0("ROC Curve w/ AUC=", auc))
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+   geom_ribbon(alpha=0.2) +
+   geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
 
 ```
 
@@ -835,7 +839,20 @@ Eval(df_pre_train3_mod)
 
 model_comparison[6,]<-Eval(df_pre_train3_mod)
 
+#AUC
+pred <- prediction(pre_train3_mod$posterior.1, train_test_mod$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+   geom_ribbon(alpha=0.2) +
+   geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
 
 ```
 
