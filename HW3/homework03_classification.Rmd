@@ -615,8 +615,8 @@ Following model selection strategy has been used for this assignment:
 Eval<-function(x){
  TP<-x$Freq[x$metrics=="TRUE_1"]
  FP<-x$Freq[x$metrics=="FALSE_1"]
- FN<-x$Freq[x$metrics=="FALSE_0"]
- TN<-x$Freq[x$metrics=="TRUE_0"]
+ TN<-x$Freq[x$metrics=="FALSE_0"]
+ FN<-x$Freq[x$metrics=="TRUE_0"]
  Accuracy <-(TP+TN)/(TP+TN+FP+FN)
   Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
   Precision<-TP/(TP+FP)
@@ -787,8 +787,8 @@ pre_train3<-data.frame(predict(model3,type="response",newdata=train_test))
 df_pre_train3<-as.data.frame(table(pre_train3$class,train_test$target))
 df_pre_train3$metrics <- paste(df_pre_train3$Var1,df_pre_train3$Var2, sep = '_') 
 
-df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"TRUE_0"
-df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"FALSE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"FALSE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"TRUE_0"
 df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
 df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
 
@@ -830,8 +830,8 @@ pre_train3_mod<-data.frame(predict(model3_mod,type="response",newdata=train_test
 df_pre_train3_mod<-data.frame(table(pre_train3_mod$class,train_test_mod$target))
 df_pre_train3_mod$metrics <- paste(df_pre_train3_mod$Var1,df_pre_train3_mod$Var2, sep = '_') 
 
-df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"TRUE_0"
-df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"FALSE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"FALSE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"TRUE_0"
 df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
 df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
 
