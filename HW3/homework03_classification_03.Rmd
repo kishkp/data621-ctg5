@@ -1,0 +1,908 @@
+---
+title: "Home Work Assignment - 03"
+author: "Critical Thinking Group 5"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+\newpage
+
+# Overview 
+
+The data set contains approximately 466 records and 14 variables. Each record has information on crime for various neighborhoods of a major city. Each record has a response variable indicating whether or not the crime rate is above the median crime rate (1) or not (0).
+
+The objective is to build a binary logistic regression model on the training data set to predict whether the neighborhood will be at risk for high crime levels. In addition, we will provide classifications and probabilities for the evaluation data set using the binary logistic regression model. 
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+#library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(Amelia)
+
+city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
+
+variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/variables2.csv")
+kable(variables, caption = "Variable Description") 
+
+
+
+
+city_crime_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-evaluation-data.csv")
+
+#str(city_crime_test)
+
+
+```
+
+We notice that all variables are numeric except for two variables: 
+the response variable "target" which is binary and the  predictor variable "chas" which 
+is a dummy binary variable indicating whether the suburb borders the Charles River (1) or not (0).
+
+Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target. 
+
+
+##1.2 Variable Relationships \
+
+The variables seem to not have any arithmetic relations.  In other words, there are no symmetricity or transitivity relationships between any two variable in the independent variable set.  
+In addition, since this is Logistic Regression, we will be making the below assumptions on the variables:\newline
+-The dependent variable need not to be normally distributed \
+-Errors need to be independent but not normally distributed. \
+- We will be using GLM and GLM does not assume a linear relationship between dependent and independent variables. However, it assumes a linear relationship between link function and independent variables in logit model. \
+- Also does not use OLS (Ordinary Least Square) for parameter estimation. Instead, it uses maximum likelihood estimation (MLE) 
+
+##1.3 Data summary analysis \
+
+```{r}
+
+summary(city_crime_train_full)
+
+```
+
+
+```{r Analysis of missing values,echo=FALSE}
+###finding missing values
+missings<- sapply(city_crime_train_full,function(x) sum(is.na(x)))
+kable(missings, caption = "Missing Values")
+
+missmap(city_crime_train_full, main = "Missing values vs observed")
+
+### finding unique values
+uniques<- sapply(city_crime_train_full, function(x) length(unique(x)))
+kable(uniques, caption = "Unique Values")
+
+### % break up of target variable 
+
+prop.table(table(city_crime_train_full$target))
+
+```
+
+Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above. Also % split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1.\
+
+
+Train data set will be Split into train data(80% of train set) and validation set (20% of train set)to evalute the perforamnce of the models on the validation set. Train subset will be used to build the models.\
+
+
+```{r split train data to train and validation, echo=FALSE, eval=TRUE}
+
+
+smp_size <- floor(0.80 * nrow(city_crime_train_full))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+
+train_ind <- sample(seq_len(nrow(city_crime_train_full)), size = smp_size)
+
+city_crime_train<- city_crime_train_full[train_ind, ]
+train_test <- city_crime_train_full[-train_ind, ]
+
+```
+\
+
+Two data set has been created city_crime_train (80% of train data), and train_test (20% of train data).\
+
+In next step below relationship between the target variable and dependent variables is shown in three charts.
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,1))
+
+pairs(city_crime_train[,1:4],col=city_crime_train$target)
+pairs(city_crime_train[,5:8],col=city_crime_train$target)
+pairs(city_crime_train[,9:13],col=city_crime_train$target)
+
+
+```
+
+
+
+
+\newpage
+
+##1.2 Data Summary Analysis
+
+
+In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+ds_stats <- psych::describe(city_crime_train, skew = TRUE, na.rm = TRUE)
+#ds_stats
+kable(ds_stats[1:7], caption= "Data Summary")
+kable(ds_stats[8:13], caption= "Data Summary (Cont)")
+
+fun1 <- function(a, y) cor(y, a)
+x<-city_crime_train[,]
+Correlation <- sapply(x, FUN = fun1, y=city_crime_train$target) 
+
+#kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
+```
+
+\newpage
+
+Now we will produce the correlation table between the independent variables and the dependent variable
+
+```{r}
+Correlation <- sort(Correlation, decreasing = TRUE)
+kable(Correlation, caption = "Variable Correlation")
+
+```
+
+
+*** Curious It is clear from the table that most of the variables are having storng correlation with the target variable. \
+
+
+Correlation analysis suggests that there are strong positive and negative between the independent variables and the dependent variable.  For instance, we notice that there is a strong correlation of .73 between the concentration of nitrogen oxides and crime rate being above average.  We will need to perform more investigations about this correlation as it is not obvious the concentration of nitrogen oxides would results in high crime rate; perhaps it impacts the crime rate indirectly by impacting other independent variables that we may or may not have in our data set.  
+In addition, we noticed that accessibility to radial highways also has a strong correlation with the crime rate being average average.  Again we will investigate such correlation. 
+We also noticed that unit or house age, property tax, and non-retail businesses having a positive impact on the crime rate being above average.
+
+It is also worth noting that that distances to five Boston employment centers, large residential lots, the proportion of blacks by town, median value of owner-occupied homes, and the average number of rooms per dwelling, all have negative correlation to the crime rate being above crime rate average. In other words, the closer people are to the five Boston employment centers, the more likely the crime rate will be below the crime average. 
+
+
+
+##1.3	Outliers and Missing Values Identification
+
+
+In this section univariate analysis is being caarried out and boxplots diagrams are being used to determine the outliers in variables and decide on whether to act on the outliers. Along with boxplot, Histrogram, Sin, Log,Sqrt,nth transformation diagrams are used to evaluate best transformation to handle outliers.\
+
+
+```{r}
+
+library(ggplot2)
+library(reshape2)
+#create a new data frame with two columns only (variable, value) for all three predictors
+mdata <- melt(city_crime_train_full)
+# Output the boxplot
+p <- ggplot(data = mdata, aes(x=variable, y=value)) + 
+  geom_boxplot()
+p + facet_wrap( ~ variable, scales="free", ncol=3)
+
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+   
+}
+
+# attach file to R so that only variable can be called
+
+attach(city_crime_train)
+
+```
+
+Analysis of variable zn:proportion of residential land zoned for large lots 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.cap='zn Transformation'}
+show_charts(zn)
+
+```
+For zn, we can see that there are large number of values with 0. ninth transformation seem better for this variable..(1)
+
+\newpage
+***Please note that we have created similar figures to figure 1 above for each remaining variable. 
+However, we hid the remaining figures for ease of streamlining the report as they have similar shapes. However, we have drawn the below observations from each remaining figure. \
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(indus)
+
+```
+
+For indus, we can see that there is a spike toward right side of he distribution. Looking at the sqrt transformation it appears that distribution is close to normal and having two peaks after transformation.  
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(nox)
+
+```
+\
+For nox, there is a long right tail.
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(rm)
+
+
+```
+
+\
+For rm, there are some outliers as we can see from box plot. This variable will need some transformation to handle the outliers.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,fig.show ='hide'}
+
+show_charts(age)
+```
+
+age of the building variable is skewed heavily towards right side. We will need some transformation for this variable and looks sin transformation is best option for this case  
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(dis)
+
+```
+
+For this variable dis, there are some outliers which needs transformation to handle those outliers. log transformation looks best suited for this scenario.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(rad)
+
+
+```
+
+For rad variable distribution is not uniform as seen from the chart and will need transformation.
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(tax)
+
+
+```
+
+For tax variable is not uniformly distributed but there is no outlier for this variable.
+\
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(ptratio)
+
+```
+
+For pratio has right aligned peak but no outliers are there in data set.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(black)
+
+```
+
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(lstat)
+
+```
+The variable lstat has long right tail and lef skewed
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(medv)
+
+```
+
+
+#2. Data Preparation 
+
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+- Outliers treatment \
+- Missing values treatment \
+- Data transformation \
+
+
+
+##2.1 Outliers treatment and transformation
+
+For outliers, we will create 2 sets of variables. 
+
+The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables. 
+
+city_crime_train$tax\
+city_crime_train$medv\
+city_crime_train$lstat\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+city_crime_train_mod<-city_crime_train
+train_test_mod<-train_test
+
+city_crime_train_mod$tax_new <- treat_outliers(city_crime_train$tax)
+city_crime_train_mod$medv_new <- treat_outliers(city_crime_train$medv)
+city_crime_train_mod$lstat_new <- treat_outliers(city_crime_train$lstat)
+
+
+train_test_mod$tax_new <- treat_outliers(train_test$tax)
+train_test_mod$medv_new <- treat_outliers(train_test$medv)
+train_test_mod$lstat_new <- treat_outliers(train_test$lstat)
+
+```
+
+
+Below boxplots shows distribution of variables after outliers treatment.\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,3))
+
+boxplot(city_crime_train_mod$tax_new,main="tax_new")
+boxplot(city_crime_train_mod$medv_new,main="medv_new")
+boxplot(city_crime_train_mod$lstat_new,main="lstat_new")
+
+```
+
+
+In the second set, we will use the sin transformation and create the following variables:
+
+city_crime_train_mod$rm_new\
+
+city_crime_train_mod$dis_new\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+city_crime_train_mod$rm_new<-sin(city_crime_train$rm)
+
+city_crime_train_mod$dis_new<-sin(city_crime_train$dis)
+
+train_test_mod$rm_new<-sin(train_test$rm)
+
+train_test_mod$dis_new<-sin(train_test$dis)
+
+```
+
+
+Below is the boxplot after sin transformation of above variable.\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,2))
+
+boxplot(city_crime_train_mod$rm_new,main="rm_new")
+boxplot(city_crime_train_mod$dis_new,main="dis_new")
+
+```
+\
+
+Additional transformation was performed on following variables\
+1. using bucket for zn, with set of values 0 and 1\
+2. Converting chas to a factor variale of 0 and 1\
+3. Converting target to a factor variale of 0 and 1\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+city_crime_train_mod$zn_new<-city_crime_train_mod$zn
+
+city_crime_train_mod$zn_new [city_crime_train_mod$zn_new > 0] <- 1
+city_crime_train_mod$zn_new [city_crime_train_mod$zn_new== 0] <- 0
+#city_crime_train_mod$zn_new<-factor(city_crime_train_mod$zn_new)
+
+
+
+train_test_mod$zn_new<-train_test$zn
+
+train_test_mod$zn_new [train_test_mod$zn_new > 0] <- 1
+train_test_mod$zn_new [train_test_mod$zn_new== 0] <- 0
+#city_crime_train_mod$zn_new<-factor(train_test_mod$zn_new)
+
+city_crime_train_mod$chas <-factor(city_crime_train_mod$chas)
+train_test_mod$chas <-factor(train_test_mod$chas)
+#city_crime_train$target<-factor(city_crime_train$target)
+
+#city_crime_train_mod$chas <-factor(city_crime_train_mod$chas)
+
+#city_crime_train_mod$target<-factor(city_crime_train_mod$target)
+
+
+
+```
+
+
+below we evaluate correlation of target with new variables\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+#Correlation <- cor(city_crime_train$rm_new,(as.numeric(city_crime_train$target)))
+
+#Correlation <- cor(city_crime_train$dis_new,(as.numeric(city_crime_train$target)))
+
+
+
+```
+
+\
+All new variables seem to have a positive correlation with target. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
+
+
+\newpage
+
+
+#3 Build Models
+
+
+Below is a summary table showing models and their respective variables. \
+
+ 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/ModelVars.csv")
+#kable(modelvars)
+
+```
+
+*****For every variable the  the model model 
+
+```{r}
+x = city_crime_train_full
+plot(x$dis,x$target,xlab="distances to five Boston employment centers ",ylab="Probability of crime below average") 
+g=glm(target~dis,family=binomial,x) # run a logistic regression model (in this case, generalized linear model with logit link). 
+curve(predict(g,data.frame(dis=x),type="resp"),add=TRUE) # draws a curve based on prediction from logistic regression model
+points(x$dis,fitted(g),pch=20) 
+
+
+x = city_crime_train_full
+plot(x$nox,x$target,xlab="nitrogen oxides concentration",ylab="Probability of crime below average") #
+g=glm(target~nox,family=binomial,x) # run a logistic regression model (in this case, generalized linear model with logit link). see ?glm
+curve(predict(g,data.frame(nox=x),type="resp"),add=TRUE) # draws a curve based on prediction from logistic regression model
+points(x$nox,fitted(g),pch=20) 
+
+
+library(popbio)
+logi.hist.plot(x$nox,x$target,boxp=FALSE,type="hist",col="gray")
+
+library(popbio)
+logi.hist.plot(x$dis, x$target,boxp=FALSE,type="hist",col="gray")
+
+```
+
+
+##3.1.1 Model One by using all given variable
+In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
+
+First we will produce the summary model as per below: 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
+
+summary(model1)
+
+exp(coef(model1))
+
+```
+
+##### model interpretation for model 1
+
+Below we  analyze and the fitting and interpret what the model is telling us.
+
+i.First of all, we can see that indus,chas,rm,age,black, and lstat are not statistically significant. 
+
+ii.As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
+
+iii. The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+
+  a. For every one unit change in nox, the log odds of crime rate above median value incremases by 53.41.\
+  b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.80.\
+  c. For a one unit increase in rad, the log odds of crime rate above median value incremases by 0.72.\
+  d. For a one unit increase in tax, the log odds of crime rate above median value incremases by -0.007.\
+  e. For a one unit increase in ptratio, the log odds of crime rate above median value incremases by 0.44.\
+  f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.23.\
+  
+
+###3.1.2 Model two- with backward step function with all given variables
+
+```{r step for model 1}
+
+stepmodel1<- step(model1, direction="backward")
+
+summary(stepmodel1)
+
+```
+
+##### model interpretation for model 2
+
+Below we  analyze and the fitting and interpret what the model is telling us.
+
+i.First of all, we can see that zn,age,black are not statistically significant. 
+
+ii.As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
+
+iii. The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+
+  a. For every one unit change in nox, the log odds of crime rate above median value incremases by 46.61.\
+  b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.71.\
+  c. For a one unit increase in rad, the log odds of crime rate above median value incremases by 0.77.\
+  d. For a one unit increase in tax, the log odds of crime rate above median value incremases by -0.009.\
+  e. For a one unit increase in ptratio, the log odds of crime rate above median value incremases by 0.35.\
+  f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.18\
+
+iv. there were 9 ierations in backward steps before final model was selected
+
+##3.1.3 Model three- model with transformed variables
+In this model, we will be using the some transformed variables.  
+
+
+First we will produce the summary model as per below: 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model2 <- glm(target ~ .-zn-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
+summary(model2)
+
+
+
+```
+
+
+
+
+###3.1.4 Model with transformed variable and with with backward step function
+
+```{r step for model 2}
+
+stepmodel2<- step(model2, direction="backward")
+
+
+
+```
+
+
+
+###3.1,5 Model three with Linear discrement analysis
+
+```{r model with Linear Discrement analysis, eval=TRUE,echo=FALSE}
+
+
+model3=lda(target~.,data=city_crime_train)
+
+
+```
+
+
+
+
+###3.1.6 Model with Linear discrement analysis with transformed data
+
+```{r model with Linear Discrement analysis with modified data, eval=TRUE,echo=FALSE}
+
+
+model3_mod=lda(target~.-zn-rm-dis-tax-lstat-medv,data=city_crime_train_mod)
+
+
+
+```
+
+
+
+
+
+
+
+#4 Model Selection 
+
+In section we will further examine all six models.  We will apply a model selection strategy defined below to compare the models.
+\
+
+
+##4.1 Model selection strategy:
+
+Following model selection strategy has been used for this assignment: 
+
+(1) Compare accuracy of the models & confusion matrix
+(2) Compare Precision,Sensitivity,Specificity,F1 score
+(3) Compare AUC curve for the models
+
+
+```{r function to calculate model performance,echo=FALSE }
+Eval<-function(x){
+ TP<-x$Freq[x$metrics=="TRUE_1"]
+ FP<-x$Freq[x$metrics=="FALSE_1"]
+ FN<-x$Freq[x$metrics=="FALSE_0"]
+ TN<-x$Freq[x$metrics=="TRUE_0"]
+ Accuracy <-(TP+TN)/(TP+TN+FP+FN)
+  Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
+  Precision<-TP/(TP+FP)
+  sensitivity<-TP/(TP+FN)
+  specificity<-TN/(TN+FP)
+  F1_Score=2*Precision*sensitivity/(sensitivity+specificity)
+ eval_result<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+ 
+ eval_result[1,1]<-Accuracy
+ eval_result[1,2]<-Error_Rate
+ eval_result[1,3]<- Precision
+ eval_result[1,4]<-sensitivity
+ eval_result[1,5]<-specificity
+ eval_result[1,6]<-F1_Score
+ 
+ eval_result
+ 
+}
+
+```
+
+##4.1.1 Model1 Evaluation
+
+```{r model 1 performance,echo=FALSE}
+
+#confusion matrix
+pre_train1 <- predict(model1, newdata=train_test, type="response")
+df_pre_train1<-as.data.frame(table(pre_train1>0.5,train_test$target))
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+Eval(df_pre_train1)
+
+
+#AUC
+pred <- prediction(pre_train1, train_test$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+
+##4.1.2 Model2 Evaluation
+
+```{r model 2 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
+
+df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
+df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
+Eval(df_pre_train1_step)
+
+
+#AUC
+pred <- prediction(pre_train1_step, train_test$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+##4.1.3 Model3 Evaluation
+
+```{r model 3 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+pre_train2<-predict(model2,type="response",newdata=train_test_mod)
+
+df_pre_train2<-as.data.frame(table(pre_train2>0.5,train_test_mod$target))
+df_pre_train2$metrics <- paste(df_pre_train2$Var1,df_pre_train2$Var2, sep = '_') 
+Eval(df_pre_train2)
+
+
+#AUC
+pred <- prediction(pre_train2, train_test_mod$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+
+
+
+##4.1.4 Model4 Evaluation
+
+```{r model 4 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
+
+df_pre_train2_step<-as.data.frame(table(pre_train2_step>0.5,train_test_mod$target))
+df_pre_train2_step$metrics <- paste(df_pre_train2_step$Var1,df_pre_train2_step$Var2, sep = '_') 
+Eval(df_pre_train2_step)
+
+
+#AUC
+pred <- prediction(pre_train2_step, train_test_mod$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+
+
+
+##4.1.5 Model5 Evaluation
+
+```{r model 5 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train3<-data.frame(predict(model3,type="response",newdata=train_test))
+
+df_pre_train3<-as.data.frame(table(pre_train3$class,train_test$target))
+df_pre_train3$metrics <- paste(df_pre_train3$Var1,df_pre_train3$Var2, sep = '_') 
+
+df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"TRUE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"FALSE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
+
+
+Eval(df_pre_train3)
+
+
+
+#AUC
+#pred <- prediction(pre_train3$class, train_test$target)
+#perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+#auc <- performance(pred, measure = "auc")
+#auc <- auc@y.values[[1]]
+
+#roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       #tpr=unlist(perf@y.values),
+                       #model="GLM")
+#ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+   # geom_ribbon(alpha=0.2) +
+   # geom_line(aes(y=tpr)) +
+    # ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+##4.1.6 Model6 Evaluation
+
+```{r model 6 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+
+pre_train3_mod<-data.frame(predict(model3_mod,type="response",newdata=train_test_mod))
+
+df_pre_train3_mod<-data.frame(table(pre_train3_mod$class,train_test_mod$target))
+df_pre_train3_mod$metrics <- paste(df_pre_train3_mod$Var1,df_pre_train3_mod$Var2, sep = '_') 
+
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"TRUE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"FALSE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
+
+Eval(df_pre_train3_mod)
+
