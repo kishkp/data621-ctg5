@@ -1,5 +1,5 @@
 ---
-title: "Home Work Assignment - 01"
+title: "Home Work Assignment - 04"
 author:
 - Critical Thinking Group 5
 - Arindam Barman
@@ -16,8 +16,12 @@ output:
 \newpage
 
 # Overview 
-The data set contains approximately 2200 records. Each record represents a professional baseball team from the years 1871 to 2006 inclusive. Each record has the performance of the team for the given year, with all of the statistics adjusted to match the performance of a 162 game season.
-We will be exploring, analyzing, and modeling the data set to predict a number of wins for a team using Ordinary Least Square (OLS).  
+The data set contains approximately 8161 records. Each record represents a customer profile at an auto insurance company. Each record has two response variables. The first response variable, TARGET_FLAG, is a 1 or a 0. A "1" means that the person was in a car crash. A zero means that the person was not in a car crash. The second response variable is TARGET_AMT. This value is zero
+if the person did not crash their car. But if they did crash their car, this number will be a value greater than zero.
+\
+We will be exploring, analyzing, and modeling the data build multiple linear regression and binary logistic regression models on the training data to predict the probability that a person will crash their car and also the amount of money it will cost if the person does crash their car.
+\
+
 To attain our objective, we will be following the below best practice steps and guidelines: \
 
 1 -Data Exploration \
@@ -48,14 +52,15 @@ library(stringr)
 library(car)
 library(faraway)
 
-moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
+insurevars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv")
 
-moneyballvars <- moneyballvars[moneyballvars[,1]!="INDEX",] 
+insurevars <- insurevars[insurevars[,1]!="INDEX",] 
 
-moneyball<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-training-data.csv")
+insure_data<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurance_training_data.csv")
 
-moneyball2<- select(moneyball, -(INDEX))
+insure_data2<- select(insure_data, -(INDEX))
 ```
+
 #1 Data Exploration Analysis
 
 In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
@@ -70,9 +75,11 @@ First let's display and examine the data dictionary or the data columns as shown
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-moneyballvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyballvars.csv")
+insurevars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv")
 
-kable(moneyballvars, caption = "Variable Definition")
+insurevars <- insurevars[insurevars[,1]!="INDEX",] 
+
+kable(insurevars, caption = "Variable Definition")
 
 ```
 \
