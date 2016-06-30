@@ -1,0 +1,18 @@
+Variables,Model 1,Model 2,Model 3,Model 4,Model 5,Model 6
+zn,y,y,,,y,y
+indus,y,y,y,y,y,y
+chas,y,y,y,y,y,y
+nox,y,y,y,y,y,y
+rm,y,y,y,y,y,y
+age,y,y,y,y,y,y
+dis,y,y,y,y,y,y
+rad,y,y,y,y,y,y
+tax,y,y,,,y,y
+ptratio,y,y,y,y,y,y
+black,y,y,y,y,y,y
+lstat,y,y,,,y,y
+medv,y,y,,,y,y
+tax_new,,,y,y,,y
+medv_new,,,y,y,,y
+lstat_new,,,y,y,,y
+zn_new ,,,y,y,,y
