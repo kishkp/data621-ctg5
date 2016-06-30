@@ -141,17 +141,6 @@ Two data set has been created city_crime_train (80% of train data), and train_te
 In next step below relationship between the target variable and dependent variables is shown in three charts.
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-par(mfrow=c(1,1))
-
-pairs(city_crime_train[,1:4],col=city_crime_train$target)
-pairs(city_crime_train[,5:8],col=city_crime_train$target)
-pairs(city_crime_train[,9:13],col=city_crime_train$target)
-
-
-```
-
 
 
 
@@ -555,30 +544,30 @@ logi.hist.plot(x$dis, x$target,boxp=FALSE,type="hist",col="gray")
 ```
 
 
-##3.1.1 Model One by using all given variable
-In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
 
-First we will produce the summary model as per below: 
+
+##3.1.1 Model One by using all given variables
+
+In this model, we will be using all the given variables in train data set.  We will create model using logic function and we will highlight the summary of the model. \
+ 
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
+model1 <- glm(target ~ .-tax, data = city_crime_train, family = "binomial")
 
 summary(model1)
 
-exp(coef(model1))
-
 ```
 
-##### model interpretation for model 1
+##### Interpretation for model 1
 
-Below we  analyze and the fitting and interpret what the model is telling us.
 
-i.First of all, we can see that indus,chas,rm,age,black, and lstat are not statistically significant. 
+(i) Based on the outcome it can be seen that indus,chas,rm,age,black and lstat are not statistically significant. 
 
-ii.As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
 
-iii. The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
   a. For every one unit change in nox, the log odds of crime rate above median value incremases by 53.41.\
   b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.80.\
@@ -588,25 +577,30 @@ iii. The logistic regression coefficients give the change in the log odds of the
   f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.23.\
   
 
-###3.1.2 Model two- with backward step function with all given variables
+###3.1.2 Model two with step function (backward process) with all given variables
 
-```{r step for model 1}
+```{r step for model 1 creation,echo=FALSE,results="hide"}
 
 stepmodel1<- step(model1, direction="backward")
+
+```
+\
+
+```{r step for model 1,echo=FALSE}
 
 summary(stepmodel1)
 
 ```
 
-##### model interpretation for model 2
+#####  Interpretation for model 2
 
-Below we  analyze and the fitting and interpret what the model is telling us.
 
-i.First of all, we can see that zn,age,black are not statistically significant. 
 
-ii.As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
+(i)It can be seen that zn,age,black are not statistically significant. 
 
-iii. The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
+
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
   a. For every one unit change in nox, the log odds of crime rate above median value incremases by 46.61.\
   b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.71.\
@@ -615,66 +609,89 @@ iii. The logistic regression coefficients give the change in the log odds of the
   e. For a one unit increase in ptratio, the log odds of crime rate above median value incremases by 0.35.\
   f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.18\
 
-iv. there were 9 ierations in backward steps before final model was selected
+(iv) there were 9 ierations in backward steps before final model was selected
 
-##3.1.3 Model three- model with transformed variables
-In this model, we will be using the some transformed variables.  
+##3.1.3 Model three with transformed variables
 
+In this model, transformed variables are being used with the logic function.  
 
-First we will produce the summary model as per below: 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 model2 <- glm(target ~ .-zn-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
 summary(model2)
 
-
-
 ```
 
+#####  Interpretation for model 3
 
+(i)From this model it can be seen following variables are relevant for this model-nox, dis, rad, ptratio , tax_new, medv_new,lstat_new\
+
+(ii) number of integration is 9 and AIC value =169.71.
+
+
+#### Notes: Similar explanation of model coefficient will be applicable here as described for model 1 & 2 and is not repreated here.
 
 
 ###3.1.4 Model with transformed variable and with with backward step function
 
-```{r step for model 2}
+In this model, transformed variables are being used with the step function and backward process.  
+
+```{r step for model 2 creation,echo=FALSE,results="hide"}
 
 stepmodel2<- step(model2, direction="backward")
 
+```
 
+\
+
+
+```{r step for model 2,echo=FALSE}
+
+summary(stepmodel2)
 
 ```
 
+#####  Interpretation for model 4
+
+
+(i)From this model it can be seen following variables are relevant for this model-nox, dis, rad, ptratio , tax_new, medv_new,lstat_new\
+
+(ii) number of integration is 9 and AIC value =165.8.
 
 
 ###3.1,5 Model three with Linear discrement analysis
+
+In this model Linear discrement analysis function has been used with given set of variables in traning data.
 
 ```{r model with Linear Discrement analysis, eval=TRUE,echo=FALSE}
 
 
 model3=lda(target~.,data=city_crime_train)
 
+model3
+
 
 ```
 
+#####  Interpretation for model 5
 
 
 
 ###3.1.6 Model with Linear discrement analysis with transformed data
+
+In this model Linear discrement analysis function has been used with transformed set of variables in traning data.\
 
 ```{r model with Linear Discrement analysis with modified data, eval=TRUE,echo=FALSE}
 
 
 model3_mod=lda(target~.-zn-rm-dis-tax-lstat-medv,data=city_crime_train_mod)
 
-
+model3_mod
 
 ```
 
-
-
-
-
+#####  Interpretation for model 6
 
 
 #4 Model Selection 
@@ -687,17 +704,18 @@ In section we will further examine all six models.  We will apply a model select
 
 Following model selection strategy has been used for this assignment: 
 
-(1) Compare accuracy of the models & confusion matrix
-(2) Compare Precision,Sensitivity,Specificity,F1 score
-(3) Compare AUC curve for the models
+(i) Compare accuracy of the models & confusion matrix
+(ii) Compare Precision,Sensitivity,Specificity,F1 score
+(iii) Compare AUC curve for the models
 
 
+Following function Eval() will be used to calculate various metrics related to the model like Accuracy, Sensitivity, Precision , Specificity and F1 score
 ```{r function to calculate model performance,echo=FALSE }
 Eval<-function(x){
  TP<-x$Freq[x$metrics=="TRUE_1"]
  FP<-x$Freq[x$metrics=="FALSE_1"]
- FN<-x$Freq[x$metrics=="FALSE_0"]
- TN<-x$Freq[x$metrics=="TRUE_0"]
+ TN<-x$Freq[x$metrics=="FALSE_0"]
+ FN<-x$Freq[x$metrics=="TRUE_0"]
  Accuracy <-(TP+TN)/(TP+TN+FP+FN)
   Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
   Precision<-TP/(TP+FP)
@@ -714,10 +732,11 @@ Eval<-function(x){
  eval_result[1,6]<-F1_Score
  
  eval_result
- 
-}
+
+ }
 
 ```
+
 
 ##4.1.1 Model1 Evaluation
 
@@ -727,9 +746,202 @@ Eval<-function(x){
 pre_train1 <- predict(model1, newdata=train_test, type="response")
 df_pre_train1<-as.data.frame(table(pre_train1>0.5,train_test$target))
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
 Eval(df_pre_train1)
 
+model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+ 
+ model_comparison[1,]<-Eval(df_pre_train1)
+ 
+ #row.names(model_comparison[1,])<-"model 1"
 
+ #AUC 
+
+library(pROC)
+train_test$pre_train1<-c(pre_train1)
+#x<-data.frame(auc(train_test$target, train_test$pre_train1))
+model_comparison$AUC<-c(0)
+model_comparison[1,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy  0.9042553 and low error rate 0.09574468. AUC for this model is 0.9549 which is very good. the optimal value for AUC is (0,1) closer) it goes to 1 values better the model outcome is.\
+
+
+
+##4.1.2 Model2 Evaluation
+
+```{r model 2 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
+
+df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
+df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
+Eval(df_pre_train1_step)
+model_comparison[2,]<-Eval(df_pre_train1_step)
+
+#AUC
+
+train_test$pre_train1<-c(pre_train1_step)
+model_comparison[2,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy  0.8723404 and low error rate 0.12765957.AUC curve for this model is 0.9553 which is very good.\
+
+
+##4.1.3 Model3 Evaluation
+
+```{r model 3 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+pre_train2<-predict(model2,type="response",newdata=train_test_mod)
+
+df_pre_train2<-as.data.frame(table(pre_train2>0.5,train_test_mod$target))
+df_pre_train2$metrics <- paste(df_pre_train2$Var1,df_pre_train2$Var2, sep = '_') 
+Eval(df_pre_train2)
+model_comparison[3,]<-Eval(df_pre_train2)
+
+#AUC
+
+train_test_mod$pre_train1<-c(pre_train2)
+model_comparison[3,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy  0.8936170and low error rate 0.10638298.AUC curve for this model is 0.9558 which is very good.\
+
+
+##4.1.4 Model4 Evaluation
+
+```{r model 4 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
+
+df_pre_train2_step<-as.data.frame(table(pre_train2_step>0.5,train_test_mod$target))
+df_pre_train2_step$metrics <- paste(df_pre_train2_step$Var1,df_pre_train2_step$Var2, sep = '_') 
+Eval(df_pre_train2_step)
+
+model_comparison[4,]<-Eval(df_pre_train2_step)
+
+#AUC
+
+train_test_mod$pre_train1<-c(pre_train2_step)
+model_comparison[4,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy 0.8829787 and low error rate 0.11702128.AUC curve for this model is 0.9549 which is very good.\
+
+
+##4.1.5 Model5 Evaluation
+
+```{r model 5 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train3<-data.frame(predict(model3,type="response",newdata=train_test))
+
+df_pre_train3<-as.data.frame(table(pre_train3$class,train_test$target))
+df_pre_train3$metrics <- paste(df_pre_train3$Var1,df_pre_train3$Var2, sep = '_') 
+
+df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"FALSE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"TRUE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
+
+
+Eval(df_pre_train3)
+
+model_comparison[5,]<-Eval(df_pre_train3)
+
+#AUC
+train_test$pre_train1<-c(pre_train3$posterior.1)
+model_comparison[5,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+
+```
+
+Looking at the key metrics this can be concluded this model has relatively low accuracy0.8297872  and higher error rate 0.1702127 compared to other models.AUC curve for this model is 0.9263.\
+
+
+
+##4.1.6 Model6 Evaluation
+
+```{r model 6 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+
+pre_train3_mod<-data.frame(predict(model3_mod,type="response",newdata=train_test_mod))
+
+df_pre_train3_mod<-data.frame(table(pre_train3_mod$class,train_test_mod$target))
+df_pre_train3_mod$metrics <- paste(df_pre_train3_mod$Var1,df_pre_train3_mod$Var2, sep = '_') 
+
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"FALSE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"TRUE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
+
+Eval(df_pre_train3_mod)
+
+model_comparison[6,]<-Eval(df_pre_train3_mod)
+
+#AUC
+
+train_test_mod$pre_train1<-c(pre_train3_mod$posterior.1)
+model_comparison[6,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+
+```
+
+Looking at the key metrics this can be concluded this model has relatively low accuracy 0.8297872 and higher error rate 0.17021277 compared to other models.AUC curve for this model is 0.930.\
+
+
+##4.2 Final Model Seletion
+
+Following is the comparison of various metrics for above 6 models
+
+```{r final model selection, echo=FALSE}
+
+model_comparison
+
+```
+
+From the comparison table it can be concluded model 1 is the best model with very high accuracy rate of 90.42%. Further analysis has been carried out on this model below-\
+
+(i) Estimate confidence interval for coefficient
+(ii) odds ratios and 95% CI
+(iii) AUC curve
+ (iv) Distribution of prediction
+ 
+ 
+## Estimate confidence interval for coefficient
+```{r best model analysis 1,echo=FALSE}
+
+confint.default(model1)
+
+```
+\
+\
+```{r best model analysis 2,echo=FALSE}
+
+exp(cbind(OR = coef(model1), confint.default(model1)))
+```
+
+odds ratios and 95% CI
+
+## AUC curve for the selected model
+```{r best model analysis 3,echo=FALSE}
 #AUC
 pred <- prediction(pre_train1, train_test$target)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
@@ -747,162 +959,31 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 ```
 
+\
 
-##4.1.2 Model2 Evaluation
+# Distribution of the Predictions
 
-```{r model 2 performance,echo=FALSE,eval=TRUE}
+```{r distribution of prediction, echo=FALSE}
+plot_pred_type_distribution <- function(df, threshold) {
+  v <- rep(NA, nrow(df))
+  v <- ifelse(df$pre_train1 >= threshold & df$target == 1, "TP", v)
+  v <- ifelse(df$pre_train1 >= threshold & df$target == 0, "FP", v)
+  v <- ifelse(df$pre_train1 < threshold & df$target == 1, "FN", v)
+  v <- ifelse(df$pre_train1 < threshold & df$target == 0, "TN", v)
+  
+  df$pred_type <- v
+  
+  ggplot(data=df, aes(x=target, y=pre_train1)) + 
+    geom_violin(fill=rgb(1,1,1,alpha=0.6), color=NA) + 
+    geom_jitter(aes(color=pred_type), alpha=0.6) +
+    geom_hline(yintercept=threshold, color="red", alpha=0.6) +
+    scale_color_discrete(name = "type") +
+    labs(title=sprintf("Threshold at %.2f", threshold))
+}
 
-#confusion matrix
+train_test$pre_train1 <- predict(model1, newdata=train_test, type="response")
 
-pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
-
-df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
-df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
-Eval(df_pre_train1_step)
-
-
-#AUC
-pred <- prediction(pre_train1_step, train_test$target)
-perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-
-auc <- performance(pred, measure = "auc")
-auc <- auc@y.values[[1]]
-
-roc.data <- data.frame(fpr=unlist(perf@x.values),
-                       tpr=unlist(perf@y.values),
-                       model="GLM")
-ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
-    geom_ribbon(alpha=0.2) +
-    geom_line(aes(y=tpr)) +
-    ggtitle(paste0("ROC Curve w/ AUC=", auc))
-
+plot_pred_type_distribution (train_test,0.5)
 ```
-
-##4.1.3 Model3 Evaluation
-
-```{r model 3 performance,echo=FALSE,eval=TRUE}
-
-
-#confusion matrix
-
-pre_train2<-predict(model2,type="response",newdata=train_test_mod)
-
-df_pre_train2<-as.data.frame(table(pre_train2>0.5,train_test_mod$target))
-df_pre_train2$metrics <- paste(df_pre_train2$Var1,df_pre_train2$Var2, sep = '_') 
-Eval(df_pre_train2)
-
-
-#AUC
-pred <- prediction(pre_train2, train_test_mod$target)
-perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-
-auc <- performance(pred, measure = "auc")
-auc <- auc@y.values[[1]]
-
-roc.data <- data.frame(fpr=unlist(perf@x.values),
-                       tpr=unlist(perf@y.values),
-                       model="GLM")
-ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
-    geom_ribbon(alpha=0.2) +
-    geom_line(aes(y=tpr)) +
-    ggtitle(paste0("ROC Curve w/ AUC=", auc))
-
-```
-
-
-
-
-##4.1.4 Model4 Evaluation
-
-```{r model 4 performance,echo=FALSE,eval=TRUE}
-
-
-#confusion matrix
-
-
-pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
-
-df_pre_train2_step<-as.data.frame(table(pre_train2_step>0.5,train_test_mod$target))
-df_pre_train2_step$metrics <- paste(df_pre_train2_step$Var1,df_pre_train2_step$Var2, sep = '_') 
-Eval(df_pre_train2_step)
-
-
-#AUC
-pred <- prediction(pre_train2_step, train_test_mod$target)
-perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-
-auc <- performance(pred, measure = "auc")
-auc <- auc@y.values[[1]]
-
-roc.data <- data.frame(fpr=unlist(perf@x.values),
-                       tpr=unlist(perf@y.values),
-                       model="GLM")
-ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
-    geom_ribbon(alpha=0.2) +
-    geom_line(aes(y=tpr)) +
-    ggtitle(paste0("ROC Curve w/ AUC=", auc))
-
-```
-
-
-
-
-##4.1.5 Model5 Evaluation
-
-```{r model 5 performance,echo=FALSE,eval=TRUE}
-
-
-#confusion matrix
-
-
-pre_train3<-data.frame(predict(model3,type="response",newdata=train_test))
-
-df_pre_train3<-as.data.frame(table(pre_train3$class,train_test$target))
-df_pre_train3$metrics <- paste(df_pre_train3$Var1,df_pre_train3$Var2, sep = '_') 
-
-df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"TRUE_0"
-df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"FALSE_0"
-df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
-df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
-
-
-Eval(df_pre_train3)
-
-
-
-#AUC
-#pred <- prediction(pre_train3$class, train_test$target)
-#perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-
-#auc <- performance(pred, measure = "auc")
-#auc <- auc@y.values[[1]]
-
-#roc.data <- data.frame(fpr=unlist(perf@x.values),
-                       #tpr=unlist(perf@y.values),
-                       #model="GLM")
-#ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
-   # geom_ribbon(alpha=0.2) +
-   # geom_line(aes(y=tpr)) +
-    # ggtitle(paste0("ROC Curve w/ AUC=", auc))
-
-```
-
-##4.1.6 Model6 Evaluation
-
-```{r model 6 performance,echo=FALSE,eval=TRUE}
-
-#confusion matrix
-
-
-pre_train3_mod<-data.frame(predict(model3_mod,type="response",newdata=train_test_mod))
-
-df_pre_train3_mod<-data.frame(table(pre_train3_mod$class,train_test_mod$target))
-df_pre_train3_mod$metrics <- paste(df_pre_train3_mod$Var1,df_pre_train3_mod$Var2, sep = '_') 
-
-df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"TRUE_0"
-df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"FALSE_0"
-df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
-df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
-
-Eval(df_pre_train3_mod)
-
+\
+Cconsidering the target has value 1 (crime above median) and 0 when crime is below median, then the above plot illustrates the tradeoff that to be made upon choosing a reasonable threshold. If treshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
