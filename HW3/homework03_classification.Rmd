@@ -778,9 +778,12 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
     geom_line(aes(y=tpr)) +
     ggtitle(paste0("ROC Curve w/ AUC=", auc))
 
+#library(pROC)
+#auc(train_test$target, train_test$pre_train1)
+
 ```
 
-Looking at the key metrics this can be concluded this model has high accuracy  0.9042553 and low error rate 0.09574468.AUC curve for this model is 0.9549 which is very good.\
+Looking at the key metrics this can be concluded this model has high accuracy  0.9042553 and low error rate 0.09574468. AUC for this model is 0.9549 which is very good. the optimal value for AUC is (0,1) closer) it goes to 1 values better the model outcome is.\
 
 
 
@@ -1009,6 +1012,7 @@ The chi-squared test statistic of 13.6 , with one degrees of freedom is associat
 odds ratios and 95% CI
 \
 
+# Distribution of the Predictions
 
 ```{r  echo=FALSE}
 plot_pred_type_distribution <- function(df, threshold) {
@@ -1032,3 +1036,5 @@ train_test$pre_train1 <- predict(model1, newdata=train_test, type="response")
 
 plot_pred_type_distribution (train_test,0.5)
 ```
+\
+Cconsidering the target has value 1 (crime above median) and 0 when crime is below median, then the above plot illustrates the tradeoff that to be made upon choosing a reasonable threshold. If treshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
