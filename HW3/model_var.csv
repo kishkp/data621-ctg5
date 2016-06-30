@@ -1,4 +1,4 @@
-Variables,Model 1,Model 2,Model 3,Model 4,Model 5,Model 6
+Variables,Model 1(Logit Fn),Model 2 (Step Fn),Model 3 (Logit Fn),Model 4 (Step Fn),Model 5 (Lenear Discrement Analysis),Model 6 (Lenear Discrement Analysis)
 zn,y,y,,,y,y
 indus,y,y,y,y,y,y
 chas,y,y,y,y,y,y
