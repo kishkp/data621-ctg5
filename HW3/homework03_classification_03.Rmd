@@ -513,8 +513,9 @@ Below is a summary table showing models and their respective variables. \
  
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-#modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/ModelVars.csv")
-#kable(modelvars)
+model_var <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/model_var.csv")
+
+kable(model_var,caption="Variables used in different models")
 
 ```
 
@@ -542,8 +543,6 @@ library(popbio)
 logi.hist.plot(x$dis, x$target,boxp=FALSE,type="hist",col="gray")
 
 ```
-
-
 
 
 ##3.1.1 Model One by using all given variables
@@ -913,34 +912,47 @@ Following is the comparison of various metrics for above 6 models
 
 ```{r final model selection, echo=FALSE}
 
-model_comparison
+kable(model_comparison,Caption = "Consolidated Model Performance Metrics")
 
 ```
 
-From the comparison table it can be concluded model 1 is the best model with very high accuracy rate of 90.42%. Further analysis has been carried out on this model below-\
+From the comparison table it can be seen model 1 is the best model with very high accuracy rate of 91.48%.But Model 2 is the best in terms of AUC value which is .9567 and Accuracy 90.42%. Model 1 also has close value of AUC socre of 95.44. But Model2 has lower AIC value of 164.85 where as the other one has AIC value 170.93.
+Both model has same no of coefficient.  Based on the above data poiints model 1 is selected for slighly better acuracy. For final model following analysis has been carried out\
 
-(i) Estimate confidence interval for coefficient
-(ii) odds ratios and 95% CI
-(iii) AUC curve
- (iv) Distribution of prediction
+ (i) Relevant variables in the model
+(ii)  Estimate confidence interval for coefficient
+(iii) odds ratios and 95% CI
+(iv) AUC curve
+ (v) Distribution of prediction 
  
  
-## Estimate confidence interval for coefficient
+### Most important variables in the model
 ```{r best model analysis 1,echo=FALSE}
 
-confint.default(model1)
+summary(model1)
 
 ```
+
+Following are the most relevant variables for the model- indus,nox,dis,rad,ptratio,medv
 \
 \
+
+### Analysis of odds ratios of variables 95% CI
 ```{r best model analysis 2,echo=FALSE}
 
 exp(cbind(OR = coef(model1), confint.default(model1)))
+
 ```
+\
+Following points can be interpreted for the above mentioned variables-
 
-odds ratios and 95% CI
+(i) nox variable has the most impact in odd ratio, keeping all other variables constant, odds of increase in crime rate above median increases 6.177550e+23 times with per unit change in nox variable. 
+(ii)Keeping all other variables same odds of havin crime rate above median value increases following way-0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv.
 
-## AUC curve for the selected model
+
+
+
+### AUC curve for the selected model
 ```{r best model analysis 3,echo=FALSE}
 #AUC
 pred <- prediction(pre_train1, train_test$target)
@@ -961,7 +973,7 @@ ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
 
 \
 
-# Distribution of the Predictions
+### Distribution of the Predictions
 
 ```{r distribution of prediction, echo=FALSE}
 plot_pred_type_distribution <- function(df, threshold) {
@@ -987,3 +999,15 @@ plot_pred_type_distribution (train_test,0.5)
 ```
 \
 Cconsidering the target has value 1 (crime above median) and 0 when crime is below median, then the above plot illustrates the tradeoff that to be made upon choosing a reasonable threshold. If treshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
+
+
+# 5 Prediction on test data
+
+```{r transformation of variables,echo=FALSE}
+
+#city_crime_test$chas<-factor(city_crime_test$chas)
+
+Predict_final<-predict(model1,type="response", newdata=city_crime_test)
+
+table(Predict_final>0.5)
+
