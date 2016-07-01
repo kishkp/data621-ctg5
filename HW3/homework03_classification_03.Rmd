@@ -502,23 +502,6 @@ below we evaluate correlation of target with new variables\
 All new variables seem to have a positive correlation with target. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
 
 
-\newpage
-
-
-#3 Build Models
-
-
-Below is a summary table showing models and their respective variables. \
-
- 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-model_var <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/model_var.csv")
-
-kable(model_var,caption="Variables used in different models")
-
-```
-
 *****For every variable the  the model model 
 
 ```{r}
@@ -545,6 +528,36 @@ logi.hist.plot(x$dis, x$target,boxp=FALSE,type="hist",col="gray")
 ```
 
 
+\newpage
+
+
+#3 Build Models
+
+Following strategy has been adoped to build models for this scenario:
+
+(i) Building model 1 using given variables by using logit function.\
+(ii) Using step function to enhance model 1 and create model 2.\
+(iii) Building model 3 using tranformed variables also by using logit function.\
+(iv) Using step function to enhance model 3 and create model 4.\
+(v) Using Linear discrement analysis model create model 5 with given variables.\
+(vi) Using Linear discrement analysis model create model 6 with transformed variables.\
+
+
+
+
+Below is a summary table showing models and their respective variables. \
+
+ 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model_var <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/model_var.csv")
+
+kable(model_var,caption="Variables used in different models")
+
+```
+
+
+
 ##3.1.1 Model One by using all given variables
 
 In this model, we will be using all the given variables in train data set.  We will create model using logic function and we will highlight the summary of the model. \
@@ -553,7 +566,7 @@ In this model, we will be using all the given variables in train data set.  We w
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-model1 <- glm(target ~ .-tax, data = city_crime_train, family = "binomial")
+model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
 
 summary(model1)
 
@@ -568,15 +581,16 @@ summary(model1)
 
 (iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
-  a. For every one unit change in nox, the log odds of crime rate above median value incremases by 53.41.\
-  b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.80.\
-  c. For a one unit increase in rad, the log odds of crime rate above median value incremases by 0.72.\
-  d. For a one unit increase in tax, the log odds of crime rate above median value incremases by -0.007.\
-  e. For a one unit increase in ptratio, the log odds of crime rate above median value incremases by 0.44.\
-  f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.23.\
-  
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 53.41.\
+  b. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.80.\
+  c. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.72.\
+  d. For a one unit increase in tax, the log odds of crime rate above median value increases by -0.007.\
+  e. For a one unit increase in ptratio, the log odds of crime rate above median value increases by 0.44.\
+  f. For a one unit increase in medv , the log odds of crime rate above median value increases by 0.23.\
+ 
+ (iv) No of iterations are 9 before lowest value of AIC was derived for this model.
 
-###3.1.2 Model two with step function (backward process) with all given variables
+###3.1.2 Model 2 with step function (backward process) with all given variables
 
 ```{r step for model 1 creation,echo=FALSE,results="hide"}
 
@@ -609,6 +623,8 @@ summary(stepmodel1)
   f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.18\
 
 (iv) there were 9 ierations in backward steps before final model was selected
+
+
 
 ##3.1.3 Model three with transformed variables
 
