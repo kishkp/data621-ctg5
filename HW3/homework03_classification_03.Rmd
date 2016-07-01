@@ -114,10 +114,10 @@ prop.table(table(city_crime_train_full$target))
 
 ```
 
-Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unqiue values for each variable is shown above. Also % split of target variable is given above table which shows data is almost evanly split between binary outcome 0 and 1.\
+Based on the analysis above it can be seen that there is no missing value in the data set. Also count of unique values for each variable is shown above. Also % split of target variable is given above table which shows data is almost evenly split between binary outcome 0 and 1.\
 
 
-Train data set will be Split into train data(80% of train set) and validation set (20% of train set)to evalute the perforamnce of the models on the validation set. Train subset will be used to build the models.\
+Train data set will be Split into train data(80% of train set) and validation set (20% of train set)to evaluate the performance of the models on the validation set. Train subset will be used to build the models.\
 
 
 ```{r split train data to train and validation, echo=FALSE, eval=TRUE}
@@ -175,7 +175,7 @@ kable(Correlation, caption = "Variable Correlation")
 ```
 
 
-*** Curious It is clear from the table that most of the variables are having storng correlation with the target variable. \
+*** Curious It is clear from the table that most of the variables are having strong correlation with the target variable. \
 
 
 Correlation analysis suggests that there are strong positive and negative between the independent variables and the dependent variable.  For instance, we notice that there is a strong correlation of .73 between the concentration of nitrogen oxides and crime rate being above average.  We will need to perform more investigations about this correlation as it is not obvious the concentration of nitrogen oxides would results in high crime rate; perhaps it impacts the crime rate indirectly by impacting other independent variables that we may or may not have in our data set.  
@@ -189,7 +189,7 @@ It is also worth noting that that distances to five Boston employment centers, l
 ##1.3	Outliers and Missing Values Identification
 
 
-In this section univariate analysis is being caarried out and boxplots diagrams are being used to determine the outliers in variables and decide on whether to act on the outliers. Along with boxplot, Histrogram, Sin, Log,Sqrt,nth transformation diagrams are used to evaluate best transformation to handle outliers.\
+In this section uni variate analysis is being carried out and boxplots diagrams are being used to determine the outliers in variables and decide on whether to act on the outliers. Along with boxplot, Histrogram, Sin, Log,Sqrt,nth transformation diagrams are used to evaluate best transformation to handle outliers.\
 
 
 ```{r}
@@ -358,7 +358,7 @@ show_charts(medv)
 
 #2. Data Preparation 
 
-Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be pursing the below steps as guidelines: \
 - Outliers treatment \
 - Missing values treatment \
 - Data transformation \
@@ -453,8 +453,8 @@ boxplot(city_crime_train_mod$dis_new,main="dis_new")
 
 Additional transformation was performed on following variables\
 1. using bucket for zn, with set of values 0 and 1\
-2. Converting chas to a factor variale of 0 and 1\
-3. Converting target to a factor variale of 0 and 1\
+2. Converting chas to a factor variable of 0 and 1\
+3. Converting target to a factor variable of 0 and 1\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -544,11 +544,11 @@ kable(model_var,caption="Variables used in different models")
 
 ```
 
-Following strategy has been adoped to build models for this scenario:
+Following strategy has been adopted to build models for this scenario:
 
-Model 1- This model has been created using the availble variables in train data set with logit function GLM.\
+Model 1- This model has been created using the available variables in train data set with logit function GLM.\
 Model 2- In this model step function is being used to enhance model 1 using train data.\
-Model 3- Here , a new model has been created using GLM function and with tranformed variables.\
+Model 3- Here , a new model has been created using GLM function and with transformed variables.\
 Model 4- In this model model 3 has been enhanced  by using step function on the transformed data .\
 Model 5  Linear Discriminant Analysis function lda in ISLR package has been used to create model 5 with given variables.\
 Model 6- Here Linear Discriminant Analysis model is used on transformed variables.\
@@ -573,7 +573,7 @@ summary(model1)
 
 (i) Based on the outcome it can be seen that indus,chas,rm,age,black and lstat are not statistically significant. 
 
-(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target variable. other important variables are dis,rad,tax,ptratio,medv. AIC value for the model1 =168.71.
 
 (iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
@@ -609,18 +609,18 @@ summary(stepmodel1)
 
 (i)It can be seen that zn,age,black are not statistically significant. 
 
-(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target varible. other important varibles are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target variable. other important variables are dis,rad,tax,ptratio,medv,lstat. AIC value for the model1 =164.85
 
 (iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
-  a. For every one unit change in nox, the log odds of crime rate above median value incremases by 46.61.\
-  b. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.71.\
-  c. For a one unit increase in rad, the log odds of crime rate above median value incremases by 0.77.\
-  d. For a one unit increase in tax, the log odds of crime rate above median value incremases by -0.009.\
-  e. For a one unit increase in ptratio, the log odds of crime rate above median value incremases by 0.35.\
-  f. For a one unit increase in medv , the log odds of crime rate above median value incremases by 0.18\
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 46.61.\
+  b. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.71.\
+  c. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.77.\
+  d. For a one unit increase in tax, the log odds of crime rate above median value increases by -0.009.\
+  e. For a one unit increase in ptratio, the log odds of crime rate above median value increases by 0.35.\
+  f. For a one unit increase in medv , the log odds of crime rate above median value increases by 0.18\
 
-(iv) there were 9 ierations in backward steps before final model was selected
+(iv) there were 9 iterations in backward steps before final model was selected
 
 
 
@@ -647,9 +647,9 @@ summary(model2)
 
 (iv) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
-  a. For every one unit change in nox, the log odds of crime rate above median value incremases by 56.02.\
-  b. For a one unit increase in rad, the log odds of crime rate above median value incremases by 0.72.\
-  c. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.82.\
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 56.02.\
+  b. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.72.\
+  c. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.82.\
 
 
 ###3.1.4 Model with transformed variable and with with backward step function
@@ -680,15 +680,15 @@ summary(stepmodel2)
 
 (iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
 
-  a. For every one unit change in nox, the log odds of crime rate above median value incremases by 48.61.\
-  b. For a one unit increase in rad, the log odds of crime rate above median value incremases by 0.79.\
-  c. For a one unit increase in dis, the log odds of crime rate above median value incremases by 0.74.\
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 48.61.\
+  b. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.79.\
+  c. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.74.\
 
 (iv) same variables as model3 are being marked as relevant for model 4 after backward elimination process.\
 
 ###3.1,5 Model three with Linear Discriminant Analysis
 
-In this model Linear Discriminant Analysis function has been used with given set of variables in traning data.
+In this model Linear Discriminant Analysis function has been used with given set of variables in training data.
 
 ```{r model with Linear Discriminant Analysis, eval=TRUE,echo=FALSE}
 
@@ -711,7 +711,7 @@ model3
 
 ###3.1.6 Model with Linear Discriminant Analysis with transformed data
 
-In this model Linear Discriminant Analysis function has been used with transformed set of variables in traning data.\
+In this model Linear Discriminant Analysis function has been used with transformed set of variables in training data.\
 
 ```{r model with Linear Discriminant Analysis with modified data, eval=TRUE,echo=FALSE}
 
@@ -728,7 +728,7 @@ model3_mod
 
 (ii) Group means provides mean values for variables with respect to target variable values 0 and 1 here
 
-(iii) One point to note here this model performs better than the previous one as outliers were taken care of in transformed set bringing more nomality to the model. But overall this model also perform less than logistics model. 
+(iii) One point to note here this model performs better than the previous one as outliers were taken care of in transformed set bringing more normality to the model. But overall this model also perform less than logistics model. 
 
 
 
@@ -956,8 +956,8 @@ kable(model_comparison,Caption = "Consolidated Model Performance Metrics")
 
 ```
 
-From the comparison table it can be seen model 1 is the best model with very high accuracy rate of 91.48%.But Model 2 is the best in terms of AUC value which is .9567 and Accuracy 90.42%. Model 1 also has close value of AUC socre of 95.44. But Model2 has lower AIC value of 164.85 where as the other one has AIC value 170.93.
-Both model has same no of coefficient.  Based on the above data poiints model 1 is selected for slighly better acuracy. For final model following analysis has been carried out\
+From the comparison table it can be seen model 1 is the best model with very high accuracy rate of 91.48%.But Model 2 is the best in terms of AUC value which is .9567 and Accuracy 90.42%. Model 1 also has close value of AUC score of 95.44. But Model2 has lower AIC value of 164.85 where as the other one has AIC value 170.93.
+Both model has same no of coefficient.  Based on the above data points model 1 is selected for slightly better curacy. For final model following analysis has been carried out\
 
  (i) Relevant variables in the model
 (ii)  Estimate confidence interval for coefficient
@@ -987,7 +987,7 @@ exp(cbind(OR = coef(model1), confint.default(model1)))
 Following points can be interpreted for the above mentioned variables-
 
 (i) nox variable has the most impact in odd ratio, keeping all other variables constant, odds of increase in crime rate above median increases 6.177550e+23 times with per unit change in nox variable. 
-(ii)Keeping all other variables same odds of havin crime rate above median value increases following way-0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv.
+(ii)Keeping all other variables same odds of having crime rate above median value increases following way-0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv.
 
 
 
@@ -1038,7 +1038,7 @@ train_test$pre_train1 <- predict(model1, newdata=train_test, type="response")
 plot_pred_type_distribution (train_test,0.5)
 ```
 \
-Cconsidering the target has value 1 (crime above median) and 0 when crime is below median, then the above plot illustrates the tradeoff that to be made upon choosing a reasonable threshold. If treshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
+Considering the target has value 1 (crime above median) and 0 when crime is below median, then the above plot illustrates the trade off that to be made upon choosing a reasonable threshold. If threshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
 
 
 # 5 Prediction on test data
