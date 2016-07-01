@@ -3,6 +3,7 @@ title: "Home Work Assignment - 03"
 author: "Critical Thinking Group 5"
 output:
   pdf_document:
+    fig_width: 7
     toc: yes
   html_document:
     toc: yes
@@ -785,7 +786,7 @@ pre_train1 <- predict(model1, newdata=train_test, type="response")
 df_pre_train1<-as.data.frame(table(pre_train1>0.5,train_test$target))
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 
-Eval(df_pre_train1)
+#Eval(df_pre_train1)
 
 model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
  
@@ -801,6 +802,7 @@ train_test$pre_train1<-c(pre_train1)
 model_comparison$AUC<-c(0)
 model_comparison[1,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
 
+kable(model_comparison[1,],caption = " Model 1 evaluation KPIs")
 
 ```
 
@@ -818,13 +820,15 @@ pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
 
 df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
 df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
-Eval(df_pre_train1_step)
+#Eval(df_pre_train1_step)
 model_comparison[2,]<-Eval(df_pre_train1_step)
 
 #AUC
 
 train_test$pre_train1<-c(pre_train1_step)
 model_comparison[2,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+
+kable(model_comparison[2,],caption = "Model 2 evaluation KPIs")
 
 ```
 
@@ -841,13 +845,15 @@ pre_train2<-predict(model2,type="response",newdata=train_test_mod)
 
 df_pre_train2<-as.data.frame(table(pre_train2>0.5,train_test_mod$target))
 df_pre_train2$metrics <- paste(df_pre_train2$Var1,df_pre_train2$Var2, sep = '_') 
-Eval(df_pre_train2)
+#Eval(df_pre_train2)
 model_comparison[3,]<-Eval(df_pre_train2)
 
 #AUC
 
 train_test_mod$pre_train1<-c(pre_train2)
 model_comparison[3,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+
+kable(model_comparison[3,],caption = " Model 3 evaluation KPIs")
 
 ```
 
@@ -866,7 +872,7 @@ pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
 
 df_pre_train2_step<-as.data.frame(table(pre_train2_step>0.5,train_test_mod$target))
 df_pre_train2_step$metrics <- paste(df_pre_train2_step$Var1,df_pre_train2_step$Var2, sep = '_') 
-Eval(df_pre_train2_step)
+#Eval(df_pre_train2_step)
 
 model_comparison[4,]<-Eval(df_pre_train2_step)
 
@@ -874,7 +880,7 @@ model_comparison[4,]<-Eval(df_pre_train2_step)
 
 train_test_mod$pre_train1<-c(pre_train2_step)
 model_comparison[4,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
-
+kable(model_comparison[4,],caption = " Model 4 evaluation KPIs")
 
 ```
 
@@ -900,13 +906,14 @@ df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
 df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
 
 
-Eval(df_pre_train3)
+#Eval(df_pre_train3)
 
 model_comparison[5,]<-Eval(df_pre_train3)
 
 #AUC
 train_test$pre_train1<-c(pre_train3$posterior.1)
 model_comparison[5,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+kable(model_comparison[5,],caption = " Model 5 evaluation KPIs")
 
 ```
 
@@ -931,7 +938,7 @@ df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"TRUE_0"
 df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
 df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
 
-Eval(df_pre_train3_mod)
+#Eval(df_pre_train3_mod)
 
 model_comparison[6,]<-Eval(df_pre_train3_mod)
 
@@ -939,7 +946,9 @@ model_comparison[6,]<-Eval(df_pre_train3_mod)
 
 train_test_mod$pre_train1<-c(pre_train3_mod$posterior.1)
 model_comparison[6,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
-#roc(train_test_mod$target,train_test_mod$pre_train1)
+
+
+kable(model_comparison[6,],caption = " Model 6 evaluation KPIs")
 
 ```
 
@@ -1041,7 +1050,9 @@ plot_pred_type_distribution (train_test,0.5)
 Considering the target has value 1 (crime above median) and 0 when crime is below median, then the above plot illustrates the trade off that to be made upon choosing a reasonable threshold. If threshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
 
 
-# 5 Prediction on test data
+#5 Prediction on test data
+
+
 
 ```{r transformation of variables,echo=FALSE}
 
@@ -1049,5 +1060,5 @@ Considering the target has value 1 (crime above median) and 0 when crime is belo
 
 Predict_final<-predict(model1,type="response", newdata=city_crime_test)
 
-table(Predict_final>0.5)
+kable(data.frame(table(Predict_final>0.5)),,caption="Outcome on evaluation data set")
 
