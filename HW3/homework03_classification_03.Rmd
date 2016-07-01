@@ -982,7 +982,11 @@ summary(model1)
 
 ```
 
-Following are the most relevant variables for the model- indus,nox,dis,rad,ptratio,medv
+Following are the most relevant variables for the model- indus,nox,dis,rad,ptratio,medv \
+we can write the equation as:\
+
+log(y)=-41.426+53.41 x nox + 0.80 x dis + 0.721 x rad -0.007 x tax + 0.44 x Ptratio + 0.23 x medv
+
 \
 \
 
@@ -996,7 +1000,7 @@ exp(cbind(OR = coef(model1), confint.default(model1)))
 Following points can be interpreted for the above mentioned variables-
 
 (i) nox variable has the most impact in odd ratio, keeping all other variables constant, odds of increase in crime rate above median increases 6.177550e+23 times with per unit change in nox variable. 
-(ii)Keeping all other variables same odds of having crime rate above median value increases following way-0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv.
+(ii)Keeping all other variables same odds of having crime rate above median value increases following way-0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv. Any value which is less than 1 means less chance of an event with the per unit increase of the variable.  
 
 
 
