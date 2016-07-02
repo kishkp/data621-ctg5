@@ -1,0 +1,1134 @@
+---
+title: "Homework Assignment - 03"
+author:
+- Critical Thinking Group 5
+- Arindam Barman
+- Mohamed Elmoudni
+- Shazia Khan
+- Kishore Prasad
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+\newpage
+
+# Overview 
+
+The data set contains approximately 466 records and 14 variables. Each record has information on crime for various neighborhoods of a major city. Each record has a response variable indicating whether or not the crime rate is above the median crime rate (1) or not (0).
+
+The objective is to build a binary logistic regression model on the training data set to predict whether the neighborhood will be at risk for high crime levels. In addition, we will provide classifications and probabilities for the evaluation data set using the binary logistic regression model. 
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+#library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(Amelia)
+library(pROC)
+
+city_crime_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-training-data.csv")
+
+variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/variables2.csv")
+kable(variables, caption = "Variable Description") 
+
+
+
+
+city_crime_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/crime-evaluation-data.csv")
+
+#str(city_crime_test)
+
+
+```
+
+We notice that all variables are numeric except for two variables: 
+the response variable "target" which is binary and the  predictor variable "chas" which 
+is a dummy binary variable indicating whether the suburb borders the Charles River (1) or not (0).
+
+Based on the original dataset, our predictor input is made of 13 variables. And our response variable is one variable called target. 
+
+
+##1.2 Variable Relationships
+
+The variables seem to not have any arithmetic relations.  In other words, there are no symmetricity or transitivity relationships between any two variable in the independent variable set.  
+In addition, since this is Logistic Regression, we will be making the below assumptions on the variables:\newline
+-The dependent variable need not to be normally distributed \
+-Errors need to be independent but not normally distributed. \
+- We will be using GLM and GLM does not assume a linear relationship between dependent and independent variables. However, it assumes a linear relationship between link function and independent variables in logit model. \
+- Also does not use OLS (Ordinary Least Square) for parameter estimation. Instead, it uses maximum likelihood estimation (MLE) 
+
+
+
+
+
+```{r split train data to train and validation, echo=FALSE, eval=TRUE}
+
+
+smp_size <- floor(0.80 * nrow(city_crime_train_full))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+
+train_ind <- sample(seq_len(nrow(city_crime_train_full)), size = smp_size)
+
+city_crime_train<- city_crime_train_full[train_ind, ]
+train_test <- city_crime_train_full[-train_ind, ]
+
+```
+\
+
+Two data set has been created city_crime_train (80% of train data), and train_test (20% of train data).\
+
+In next step below relationship between the target variable and dependent variables is shown in three charts.
+
+
+##1.3 Data Summary Analysis
+
+
+In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+ds_stats <- psych::describe(city_crime_train, skew = TRUE, na.rm = TRUE)
+#ds_stats
+kable(ds_stats[1:7], caption= "Data Summary")
+kable(ds_stats[8:13], caption= "Data Summary (Cont)")
+
+fun1 <- function(a, y) cor(y, a)
+x<-city_crime_train[,]
+Correlation <- sapply(x, FUN = fun1, y=city_crime_train$target) 
+
+#kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
+```
+
+
+Now we will produce the correlation table between the independent variables and the dependent variable
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+Correlation <- sort(Correlation, decreasing = TRUE)
+kable(Correlation, caption = "Variable Correlation")
+
+```
+
+
+Correlation analysis suggests that there are strong positive and negative between the independent variables and the dependent variable.  For instance, we notice that there is a strong correlation of .73 between the concentration of nitrogen oxides and crime rate being above average.  We will need to perform more investigations about this correlation as it is not obvious the concentration of nitrogen oxides would results in high crime rate; perhaps it impacts the crime rate indirectly by impacting other independent variables that we may or may not have in our data set.  
+In addition, we noticed that accessibility to radial highways also has a strong correlation with the crime rate being average average.  Again we will investigate such correlation. 
+We also noticed that unit or house age, property tax, and non-retail businesses having a positive impact on the crime rate being above average.
+
+It is also worth noting that that distances to five Boston employment centers, large residential lots, the proportion of blacks by town, median value of owner-occupied homes, and the average number of rooms per dwelling, all have negative correlation to the crime rate being above crime rate average. In other words, the closer people are to the five Boston employment centers, the more likely the crime rate will be below the crime average. 
+
+
+##1.4	Outliers and Missing Values Identification
+
+##1.4.1 Missing Values 
+As per Table .3 below, we see that we have no missing values which is good thing as we don't have to carry out any imputation tasks.  
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+missings<- sapply(city_crime_train_full,function(x) sum(is.na(x)))
+kable(missings, caption = "Missing Values")
+
+#missmap(city_crime_train_full, main = "Missing values vs observed")
+
+### finding unique values
+
+
+### % break up of target variable 
+
+#prop.table(table(city_crime_train_full$target))
+
+```
+
+Also, as per Table .4 below, we can confirm that our target variable is binary as expected.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+uniques<- sapply(city_crime_train_full, function(x) length(unique(x)))
+kable(uniques, caption = "Unique Values")
+
+```
+
+
+##1.4.2 Outliers identification 
+
+In this section univariate analysis is being carried out and boxplots diagrams are being used to determine the outliers in variables and decide on whether to act on the outliers
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+library(ggplot2)
+library(reshape2)
+#
+mdata<- select(city_crime_train, -(target))
+mdata2 <- melt(mdata)
+# Output the boxplot
+p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
+  geom_boxplot() + ggtitle("Outliers identification")
+p + facet_wrap( ~ variable, scales="free", ncol=5)
+
+```
+
+From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. 
+We see that: zn (residential land zoned), rm (average number of rooms per dwelling), dis(weighted mean of distances to five Boston employment centers), black (the proportion of blacks by town),lstat (lower status of the population), and medv median value of owner-occupied homes in $1000s  all need to be trated
+
+\newpage
+
+##1.4.3 Analysis the link function 
+
+In this section, we will investigate how our initial data aligns with a typical logistic model plot. 
+
+Recall the Logistic Regression is part of a larger class of algorithms known as Generalized Linear Model (glm).  The fundamental equation of generalized linear model is:
+$g(E(y)) = a+ Bx_1+B_2x_2+ B_3x_3+...$   
+where, g() is the link function, E(y) is the expectation of target variable and $B_0 + B_1x_1 + B_2x_2+B_3x_3$ is the linear predictor ( $B_0,B_1,B_2, B_3$ to be predicted). The role of link function is to 'link' the expectation of y to linear predictor.
+
+In logistic regression, we are only concerned about the probability of outcome dependent variable ( success or failure). As described above, g() is the link function. This function is established using two things: Probability of Success (p) and Probability of Failure (1-p).  p should meet following criteria:
+It must always be positive (since p >= 0)
+It must always be less than equals to 1 (since p <= 1).
+
+Now let's investigate how our initial data model aligns with the above criteria. In other words, we will plot regression model plots for each variable and compare it to a typical logistic model plot:
+
+
+```{r,  echo = FALSE, warning=FALSE, message=FALSE}
+library(popbio)
+par(mfrow=c(2,3))
+logi.hist.plot(x$zn,x$target,logi.mod = 1, type="hist", boxp=FALSE,col="gray", mainlabel = "zn")
+logi.hist.plot(x$indus, x$target,logi.mod = 1, type="hist",boxp=FALSE,col="gray", mainlabel = "indus")
+logi.hist.plot(x$chas,x$target,logi.mod = 1,boxp=FALSE,type="hist",col="gray", mainlabel = "chas")
+logi.hist.plot(x$nox, x$target,logi.mod = 1,type="hist",boxp=FALSE,col="gray", mainlabel = "nox")
+logi.hist.plot(x$rm,x$target,logi.mod = 1,boxp=FALSE,type="hist",col="gray", mainlabel = "rm")
+logi.hist.plot(x$age, x$target,logi.mod = 1,type="hist",boxp=FALSE,col="gray", mainlabel = "age")
+logi.hist.plot(x$dis,x$target,logi.mod = 1,boxp=FALSE,type="hist",col="gray", mainlabel = "dis")
+logi.hist.plot(x$rad, x$target,logi.mod = 1,type="hist",boxp=FALSE,col="gray", mainlabel = "rad")
+logi.hist.plot(x$tax,x$target,logi.mod = 1,boxp=FALSE,type="hist",col="gray", mainlabel = "tax")
+logi.hist.plot(x$ptratio, x$target,logi.mod = 1,type="hist",boxp=FALSE,col="gray", mainlabel = "ptratio")
+logi.hist.plot(x$black,x$target,logi.mod = 1,boxp=FALSE,type="hist",col="gray", mainlabel = "black")
+logi.hist.plot(x$lstat, x$target,logi.mod = 1,type="hist",boxp=FALSE,col="gray", mainlabel = "lstat")
+logi.hist.plot(x$medv, x$target,logi.mod = 1,type="hist",boxp=FALSE,col="gray", mainlabel = "medv")
+
+```
+
+- Interpretation \
+
+You can see clearly that the probability of crime being above average increases as we get closer to the "1" classification for the indus,nox,age,rad,tax,and lstat  variables. In the middle, the probability changes at the highest rate, while it tails off at each end in order to bound it between 0 and 1. \
+
+You can see clearly that the probability of crime being above average decreases as we get closer to the "1" classification for the zn, dis,black, and mdev  variables. In the middle, the probability changes at the lowest rate. However, it does not tails off at each end for all of the variables.
+
+
+
+#2. Data Preparation 
+
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be following the below steps as guidelines: \
+- Outliers treatment \
+- Missing values treatment \
+- Data transformation \
+
+
+
+##2.1 Outliers treatment
+
+For outliers, we will create 2 sets of variables. 
+
+The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables. 
+
+city_crime_train$tax\
+city_crime_train$medv\
+city_crime_train$lstat\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+city_crime_train_mod<-city_crime_train
+train_test_mod<-train_test
+
+city_crime_train_mod$tax_new <- treat_outliers(city_crime_train$tax)
+city_crime_train_mod$medv_new <- treat_outliers(city_crime_train$medv)
+city_crime_train_mod$lstat_new <- treat_outliers(city_crime_train$lstat)
+
+
+train_test_mod$tax_new <- treat_outliers(train_test$tax)
+train_test_mod$medv_new <- treat_outliers(train_test$medv)
+train_test_mod$lstat_new <- treat_outliers(train_test$lstat)
+
+```
+
+
+Lets see how the new variables look in boxplots.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,3))
+
+boxplot(city_crime_train_mod$tax_new,main="tax_new")
+boxplot(city_crime_train_mod$medv_new,main="medv_new")
+boxplot(city_crime_train_mod$lstat_new,main="lstat_new")
+
+```
+
+
+In the second set, we will use the sin transformation and create the following variables:
+
+city_crime_train_mod$rm_new\
+
+city_crime_train_mod$dis_new\
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+city_crime_train_mod$rm_new<-sin(city_crime_train$rm)
+
+city_crime_train_mod$dis_new<-sin(city_crime_train$dis)
+
+train_test_mod$rm_new<-sin(train_test$rm)
+
+train_test_mod$dis_new<-sin(train_test$dis)
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,2))
+
+#boxplot(city_crime_train_mod$rm_new,main="rm_new")
+#boxplot(city_crime_train_mod$dis_new,main="dis_new")
+
+
+```
+
+
+
+
+##2.3 Tranformation for Variables
+
+In this section, we will analyze few transformation options using Sin, Log, Sqrt, nth transformations.
+Using histogram and boxplots to evaluate best transformation to handle outliers. \
+
+First we will start with variable, zn (proportion of residential land zoned for large lots) as per below 
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+   
+}
+
+# attach file to R so that only variable can be called
+
+attach(city_crime_train)
+
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.cap='zn Transformation'}
+show_charts(zn)
+
+```
+
+
+
+
+\newpage
+
+###### Please note that we have created similar figures to figure 1 above for each remaining variable. However, we hid the remaining figures for ease of streamlining the report as they have similar shapes. However, we have  drawn the below observations from each remaining figure. 
+
+##2.3.1 Variable Transformation Interpretation 
+
+For zn, we can see that there are large number of values with 0. ninth transformation seem better for this variable..(1)
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(indus)
+
+```
+
+For indus, we can see that there is a spike toward right side of he distribution. Looking at the sqrt transformation it appears that distribution is close to normal and having two peaks after transformation.  
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(nox)
+
+```
+\
+For nox, there is a long right tail.
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(rm)
+
+
+```
+
+\
+For rm, there are some outliers as we can see from box plot. This variable will need some transformation to handle the outliers.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,fig.show ='hide'}
+
+show_charts(age)
+```
+
+age of the building variable is skewed heavily towards right side. We will need some transformation for this variable and looks sin transformation is best option for this case  
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(dis)
+
+```
+
+For this variable dis, there are some outliers which needs transformation to handle those outliers. log transformation looks best suited for this scenario.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(rad)
+
+
+```
+
+For rad variable distribution is not uniform as seen from the chart and will need transformation.
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(tax)
+
+
+```
+
+For tax variable is not uniformly distributed but there is no outlier for this variable.
+\
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(ptratio)
+
+```
+
+For pratio has right aligned peak but no outliers are there in data set.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(black)
+
+```
+
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(lstat)
+
+```
+The variable lstat has long right tail and lef skewed
+
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+
+show_charts(medv)
+
+```
+
+
+
+
+\\\\
+Following variables will need some transformation:
+
+1. zn: proportion of residential land zoned for large lots (over 25000 square feet) (predictor variable) 
+2. chas: a dummy var. for whether the suburb borders the Charles River (1) or not (0) (predictor variable) 
+3. target: whether the crime rate is above the median crime rate (1) or not (0) (response variable) 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+city_crime_train_mod$zn_new<-city_crime_train_mod$zn
+
+city_crime_train_mod$zn_new [city_crime_train_mod$zn_new > 0] <- 1
+city_crime_train_mod$zn_new [city_crime_train_mod$zn_new== 0] <- 0
+#city_crime_train_mod$zn_new<-factor(city_crime_train_mod$zn_new)
+
+
+
+train_test_mod$zn_new<-train_test$zn
+
+train_test_mod$zn_new [train_test_mod$zn_new > 0] <- 1
+train_test_mod$zn_new [train_test_mod$zn_new== 0] <- 0
+#city_crime_train_mod$zn_new<-factor(train_test_mod$zn_new)
+
+#city_crime_train$chas <-factor(city_crime_train$chas)
+
+#city_crime_train$target<-factor(city_crime_train$target)
+
+#city_crime_train_mod$chas <-factor(city_crime_train_mod$chas)
+
+#city_crime_train_mod$target<-factor(city_crime_train_mod$target)
+
+
+
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+#Correlation <- cor(city_crime_train$rm_new,(as.numeric(city_crime_train$target)))
+
+#Correlation <- cor(city_crime_train$dis_new,(as.numeric(city_crime_train$target)))
+
+
+
+```
+
+\
+All new variables seem to have a positive correlation with wins. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
+
+
+\newpage
+
+
+#3 Build Models
+
+In this section, we will create six models. Aside from using original and transformed data, we will also using different methods and functions such as Linear Discriminant Analysis, step function, and logit function to enhance our models. 
+\newline
+\newline
+Below is our model definition: \
+-Model 1- This model will be created using the original variables in train data set with logit function GLM. \
+-Model 2- This model will be created using original variables; however using step function instead of GLM. \
+-Model 3- This model will be created using transformed variables using GLM function. \
+-Model 4- This model will be created using transformed variables using step function instead of GLM. \
+-Model 5: this model will be created using original variables using Linear Discriminant Analysis function lda in ISLR  package.\
+-Model 6- This model will be created using transformed variables using Linear Discriminant Analysis \
+
+
+
+Below is a summary table showing models and their respective variables. \
+
+ 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model_var <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW3/model_var.csv")
+
+kable(model_var,caption="Variables used in different models")
+
+```
+
+
+
+##3.1.1 Model One 
+
+In this model, we will be using all the given variables in train data set.  We will create model using logit function and we will highlight the summary of the model. \
+ 
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model1 <- glm(target ~ ., data = city_crime_train, family = "binomial")
+
+summary(model1)
+
+```
+
+##### Interpretation for model 1  \
+
+$\newline$
+(i) Based on the outcome, it can be seen that indus, chas, rm, age, black, and lstat are not statistically significant. 
+
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox to the target variable. Other important variables are dis, rad, tax, ptratio, and medv. The AIC value for the model1 =168.71.
+
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 53.41.\
+  b. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.80.\
+  c. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.72.\
+  d. For a one unit increase in tax, the log odds of crime rate above median value increases by -0.007. Tax has a negative impact on crime rate.\
+  e. For a one unit increase in ptratio, the log odds of crime rate above median value increases by 0.44.\
+  f. For a one unit increase in medv , the log odds of crime rate above median value increases by 0.23.\
+ 
+ (iv) No. of iterations are 9 before lowest value of AIC was derived for this model.
+
+###3.1.2 Model Two 
+
+This model, we will be using original variables; however using step function (backward process) instead of GLM.
+
+
+```{r step for model 1 creation,echo=FALSE,results="hide"}
+
+stepmodel1<- step(model1, direction="backward")
+
+```
+\
+
+```{r step for model 1,echo=FALSE}
+
+summary(stepmodel1)
+
+```
+
+#####  Interpretation for model 2  \
+
+$\newline$
+(i)It can be seen that zn, age, and black are not statistically significant. 
+
+(ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target variable. other important variables are dis, rad, tax, ptratio, medv, and lstat. 
+The AIC value for the model1 =164.85.
+
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 46.61.\
+  b. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.71.\
+  c. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.77.\
+  d. For a one unit increase in tax, the log odds of crime rate above median value increases by -0.009.\
+  e. For a one unit increase in ptratio, the log odds of crime rate above median value increases by 0.35.\
+  f. For a one unit increase in medv , the log odds of crime rate above median value increases by 0.18\
+
+(iv) there were 9 iterations in backward steps before final model was selected
+
+
+
+##3.1.3 Model Three 
+
+In this model, we will be using transformed variables with the logit function GLM.  
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+model2 <- glm(target ~ .-zn-tax-lstat-medv, data = city_crime_train_mod, family = "binomial")
+summary(model2)
+
+```
+
+#####  Interpretation for model 3 \
+
+$\newline$
+(i)From this model it can be seen that the following variables are relevant for this model: nox, dis, rad, ptratio, 
+tax_new, medv_new, and lstat_new. 
+
+(ii) The number of integration is 9 and AIC value =169.71.\
+
+(iii) nox and rad are the two most important variables. The new variables tax_new, medv_new, lstat_new are having minor impact on the model.\
+
+
+(iv) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 56.02.\
+  b. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.72.\
+  c. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.82.\
+
+
+###3.1.4 Model Four 
+
+In this model we will be using transformed variables using backward step function instead of GLM
+
+```{r step for model 2 creation,echo=FALSE,results="hide"}
+
+stepmodel2<- step(model2, direction="backward")
+
+```
+
+
+```{r step for model 2,echo=FALSE}
+
+summary(stepmodel2)
+
+```
+
+#####  Interpretation for model 4 \
+
+$\newline$
+ (i)From this model it can be seen that the following variables are relevant for this model: nox, dis, rad, ptratio , tax_new, medv_new,and lstat_new\
+
+(ii) The number of integration is 9 and AIC value =165.8.
+
+(iii) The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables.
+
+  a. For every one unit change in nox, the log odds of crime rate above median value increases by 48.61.\
+  b. For a one unit increase in rad, the log odds of crime rate above median value increases by 0.79.\
+  c. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.74.\
+
+(iv) same variables as model3 are being marked as relevant for model 4 after backward elimination process.\
+
+###3.1,5 Model Five 
+
+In this model we will be using original variables; however the Linear Discriminant Analysis function lda in ISLR package.
+
+```{r model with Linear Discriminant Analysis, eval=TRUE,echo=FALSE}
+
+
+model3=lda(target~.,data=city_crime_train)
+
+model3
+
+
+```
+
+#####  Interpretation for model 5  \
+
+###??
+$\newline$
+(i) summary provides prior probability of outcome before star of model
+
+(ii) Group means provides mean values for variables with respect to target variable values 0 and 1 here
+
+(iii) One point to note here this model performs less accurately compared to earlier logistics models.LDA models assumes normality of its variable and hence the outliers than we have seen in actual model is impacting the result out of this model.
+
+
+###3.1.6 Model six
+
+In this model we be using transformed variables using Linear Discriminant Analysis 
+
+```{r model with Linear Discriminant Analysis with modified data, eval=TRUE,echo=FALSE}
+
+
+model3_mod=lda(target~.-zn-rm-dis-tax-lstat-medv,data=city_crime_train_mod)
+
+model3_mod
+
+```
+
+#####  Interpretation for model 6 \
+
+###??
+$\newline$
+(i) summary provides prior probability of outcome before star of model
+(ii) Group means provides mean values for variables with respect to target variable values 0 and 1 here
+(iii) One point to note here this model performs better than the previous one as outliers were taken care of in transformed set bringing more normality to the model. But overall this model also perform less than logistics model. 
+
+
+
+#4 Model Selection 
+
+In section we will further examine all six models. We will also follow the below steps to select our final model: \
+
+-Model selection strategy \
+-Model1 Evaluation \
+-Final Model Selection \
+-Inference of Final Model 
+
+##4.1 Model selection strategy:
+
+The following model selection strategy has been used for this assignment: 
+
+(i) Compare accuracy & confusion matrix of the models.
+(ii) Compare Precision, Sensitivity, Specificity, and F1 score.
+(iii) Compare AUC curve for the models.
+
+
+Following function Eval() will be used to calculate various metrics related to the model like Accuracy, Sensitivity, Precision , Specificity, and F1 score
+```{r function to calculate model performance,echo=FALSE }
+Eval<-function(x){
+ TP<-x$Freq[x$metrics=="TRUE_1"]
+ FP<-x$Freq[x$metrics=="FALSE_1"]
+ TN<-x$Freq[x$metrics=="FALSE_0"]
+ FN<-x$Freq[x$metrics=="TRUE_0"]
+ Accuracy <-(TP+TN)/(TP+TN+FP+FN)
+  Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
+  Precision<-TP/(TP+FP)
+  sensitivity<-TP/(TP+FN)
+  specificity<-TN/(TN+FP)
+  F1_Score=2*Precision*sensitivity/(sensitivity+specificity)
+ eval_result<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+ 
+ eval_result[1,1]<-Accuracy
+ eval_result[1,2]<-Error_Rate
+ eval_result[1,3]<- Precision
+ eval_result[1,4]<-sensitivity
+ eval_result[1,5]<-specificity
+ eval_result[1,6]<-F1_Score
+ 
+ eval_result
+
+ }
+
+```
+
+
+##4.1.1 Model One Evaluation
+
+```{r model 1 performance,echo=FALSE,warning=FALSE}
+
+#confusion matrix
+pre_train1 <- predict(model1, newdata=train_test, type="response")
+df_pre_train1<-as.data.frame(table(pre_train1>0.5,train_test$target))
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
+#Eval(df_pre_train1)
+
+model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+ 
+ model_comparison[1,]<-Eval(df_pre_train1)
+ 
+ #row.names(model_comparison[1,])<-"model 1"
+
+ #AUC 
+
+
+train_test$pre_train1<-c(pre_train1)
+#x<-data.frame(auc(train_test$target, train_test$pre_train1))
+model_comparison$AUC<-c(0)
+model_comparison[1,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+
+kable(model_comparison[1,],caption = " Model 1 evaluation KPIs")
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy  0.9042553 rate. AUC for this model is 0.9549 which is very good. Always the optimal value for AUC is (0,1) and closer it goes to 1 values better the model outcome is.\
+
+
+
+##4.1.2 Model Two Evaluation
+
+```{r model 2 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+pre_train1_step<-predict(stepmodel1,type="response",newdata=train_test)
+
+df_pre_train1_step<-as.data.frame(table(pre_train1_step>0.5,train_test$target))
+df_pre_train1_step$metrics <- paste(df_pre_train1_step$Var1,df_pre_train1_step$Var2, sep = '_') 
+#Eval(df_pre_train1_step)
+model_comparison[2,]<-Eval(df_pre_train1_step)
+
+#AUC
+
+train_test$pre_train1<-c(pre_train1_step)
+model_comparison[2,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+
+kable(model_comparison[2,],caption = "Model 2 evaluation KPIs")
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy  0.8723404 and low error rate 0.12765957.AUC curve for this model is 0.9553 which is very good.
+
+
+##4.1.3 Model Three Evaluation
+
+```{r model 3 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+pre_train2<-predict(model2,type="response",newdata=train_test_mod)
+
+df_pre_train2<-as.data.frame(table(pre_train2>0.5,train_test_mod$target))
+df_pre_train2$metrics <- paste(df_pre_train2$Var1,df_pre_train2$Var2, sep = '_') 
+#Eval(df_pre_train2)
+model_comparison[3,]<-Eval(df_pre_train2)
+
+#AUC
+
+train_test_mod$pre_train1<-c(pre_train2)
+model_comparison[3,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+
+kable(model_comparison[3,],caption = " Model 3 evaluation KPIs")
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy  0.8936170and low error rate 0.10638298.AUC curve for this model is 0.9558 which is very good.\
+
+
+##4.1.4 Model Four Evaluation
+
+```{r model 4 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train2_step<-predict(stepmodel2,type="response",newdata=train_test_mod)
+
+df_pre_train2_step<-as.data.frame(table(pre_train2_step>0.5,train_test_mod$target))
+df_pre_train2_step$metrics <- paste(df_pre_train2_step$Var1,df_pre_train2_step$Var2, sep = '_') 
+#Eval(df_pre_train2_step)
+
+model_comparison[4,]<-Eval(df_pre_train2_step)
+
+#AUC
+
+train_test_mod$pre_train1<-c(pre_train2_step)
+model_comparison[4,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+kable(model_comparison[4,],caption = " Model 4 evaluation KPIs")
+
+```
+
+Looking at the key metrics this can be concluded this model has high accuracy 0.8829787 and low error rate 0.11702128.AUC curve for this model is 0.9549 which is very good.\
+
+
+##4.1.5 Model Five Evaluation
+
+```{r model 5 performance,echo=FALSE,eval=TRUE}
+
+
+#confusion matrix
+
+
+pre_train3<-data.frame(predict(model3,type="response",newdata=train_test))
+
+df_pre_train3<-as.data.frame(table(pre_train3$class,train_test$target))
+df_pre_train3$metrics <- paste(df_pre_train3$Var1,df_pre_train3$Var2, sep = '_') 
+
+df_pre_train3$metrics[df_pre_train3$metrics=="0_0"]<-"FALSE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_0"]<-"TRUE_0"
+df_pre_train3$metrics[df_pre_train3$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3$metrics[df_pre_train3$metrics=="1_1"]<-"TRUE_1"
+
+
+#Eval(df_pre_train3)
+
+model_comparison[5,]<-Eval(df_pre_train3)
+
+#AUC
+train_test$pre_train1<-c(pre_train3$posterior.1)
+model_comparison[5,c("AUC")]<-c(auc(train_test$target, train_test$pre_train1))
+kable(model_comparison[5,],caption = " Model 5 evaluation KPIs")
+
+```
+
+Looking at the key metrics this can be concluded this model has relatively low accuracy0.8297872  and higher error rate 0.1702127 compared to other models.AUC curve for this model is 0.9263.\
+
+
+##4.1.6 Model Six Evaluation
+
+```{r model 6 performance,echo=FALSE,eval=TRUE}
+
+#confusion matrix
+
+
+pre_train3_mod<-data.frame(predict(model3_mod,type="response",newdata=train_test_mod))
+
+df_pre_train3_mod<-data.frame(table(pre_train3_mod$class,train_test_mod$target))
+df_pre_train3_mod$metrics <- paste(df_pre_train3_mod$Var1,df_pre_train3_mod$Var2, sep = '_') 
+
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_0"]<-"FALSE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_0"]<-"TRUE_0"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="0_1"]<-"FALSE_1"
+df_pre_train3_mod$metrics[df_pre_train3_mod$metrics=="1_1"]<-"TRUE_1"
+
+#Eval(df_pre_train3_mod)
+
+model_comparison[6,]<-Eval(df_pre_train3_mod)
+
+#AUC
+
+train_test_mod$pre_train1<-c(pre_train3_mod$posterior.1)
+model_comparison[6,c("AUC")]<-c(auc(train_test_mod$target, train_test_mod$pre_train1))
+
+
+kable(model_comparison[6,],caption = " Model 6 evaluation KPIs")
+
+```
+
+Looking at the key metrics this can be concluded this model has relatively low accuracy 0.8297872 and higher error rate 0.17021277 compared to other models.AUC curve for this model is 0.930.\
+
+
+##4.2 Final Model Seletion
+
+Following is the comparison of various metrics for above 6 models
+
+```{r final model selection, echo=FALSE}
+model_comparison$Model_No<-c(1:6)
+kable(model_comparison[,c("Model_No","Accuracy","Error_Rate","AUC","Precision","sensitivity","specificity","F1_Score")],Caption = "Consolidated Model Performance Metrics")
+
+```
+
+
+From the comparison table it can be seen model 1 and mode 3 are very close. Model 1 has slightly better accuracy rate 90.42% compare to 89.36%.But Model 3 is the best in terms of AUC value which is .9677 but close to model 1 value. AUC provides the score best on probability correctly identifying the patterns at various cut off values and Accuracy on the other hand calculated as specific cut off value. For this assignment we will go with cut off value of 0.5 and choose the Model 1 based on Accuracy value for further prediction on evaluation data set.
+
+
+##4.2.1 Inference for Final Model
+
+For final model following analysis has been carried out-\
+
+ (i) Relevant variables in the model
+(ii)  Estimate confidence interval for coefficient
+(iii) odds ratios and 95% CI
+(iv) AUC curve
+ (v) Distribution of prediction 
+ 
+ 
+##4.2.2 Most important variables in the model
+```{r best model analysis 1,echo=FALSE}
+
+summary(model1)
+
+```
+
+Following are the most relevant variables for the model- indus,nox,dis,rad,ptratio,medv \
+we can write the equation of the Model 1 as:\
+
+log(y)=-41.426+53.41 x nox + 0.80 x dis + 0.721 x rad -0.007 x tax + 0.44 x Ptratio + 0.23 x medv
+
+
+
+##4.2.3 Analysis of odds ratios of variables 95% CI
+```{r best model analysis 2,echo=FALSE}
+
+exp(cbind(OR = coef(model1), confint.default(model1)))
+
+```
+
+Following points can be interpreted for the important variables in the model-
+
+
+(i)Keeping all other variables same odds of having crime rate above median value increases following way -0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv. Any value which is less than 1 means less chance of an event with the per unit increase of the variable.\
+\
+(ii) nox variable has very high oddd ratio and reason is, in given data set there are records where for range of nox values there is only one outcome of target (either 0 or 1) as shown in the chrt below. That makes easy for prediction of target variable and increases the accuracy of the model. Outlier treatment for this variable will result in 50% reduction on train data set. For this assignment we have kept this variable.\
+\
+Note: There are approaches to handle such scenario like form of penalized regression. For this assignment purpose we have not perused further into any other model.  
+
+```{r Nox variable plot with target,echo=FALSE}
+
+plot (city_crime_train$nox,city_crime_train$target, main="nox vs target")
+
+```
+
+##4.2.4 AUC curve for the selected model
+```{r best model analysis 3,echo=FALSE}
+#AUC
+pred <- prediction(pre_train1, train_test$target)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+
+roc.data <- data.frame(fpr=unlist(perf@x.values),
+                       tpr=unlist(perf@y.values),
+                       model="GLM")
+ggplot(roc.data, aes(x=fpr, ymin=0, ymax=tpr)) +
+    geom_ribbon(alpha=0.2) +
+    geom_line(aes(y=tpr)) +
+    ggtitle(paste0("ROC Curve w/ AUC=", auc))
+
+```
+
+
+##4.2.5 Distribution of the Predictions
+
+```{r distribution of prediction, echo=FALSE}
+plot_pred_type_distribution <- function(df, threshold) {
+  v <- rep(NA, nrow(df))
+  v <- ifelse(df$pre_train1 >= threshold & df$target == 1, "TP", v)
+  v <- ifelse(df$pre_train1 >= threshold & df$target == 0, "FP", v)
+  v <- ifelse(df$pre_train1 < threshold & df$target == 1, "FN", v)
+  v <- ifelse(df$pre_train1 < threshold & df$target == 0, "TN", v)
+  
+  df$pred_type <- v
+  
+  ggplot(data=df, aes(x=target, y=pre_train1)) + 
+    geom_violin(fill=rgb(1,1,1,alpha=0.6), color=NA) + 
+    geom_jitter(aes(color=pred_type), alpha=0.6) +
+    geom_hline(yintercept=threshold, color="red", alpha=0.6) +
+    scale_color_discrete(name = "type") +
+    labs(title=sprintf("Threshold at %.2f", threshold))
+}
+
+train_test$pre_train1 <- predict(model1, newdata=train_test, type="response")
+
+plot_pred_type_distribution (train_test,0.5)
+```
+
+Considering the target has value 1 (crime above median) and 0 when crime rate is below median, then the above plot illustrates the trade off that to be made upon choosing a reasonable threshold. If threshold is increased the the number of false positive (FP) results is lowered, while the number of false negative (FN) results increases.
+
+
+#5 Prediction using final model on evaluation data set
+
+
+In this section Model 1 has been used predict the outcome on evaluation dataset. 
+
+```{r transformation of variables,echo=FALSE}
+
+#city_crime_test$chas<-factor(city_crime_test$chas)
+
+Predict_final<-predict(model1,type="response", newdata=city_crime_test)
+
+kable(data.frame(table(Predict_final>0.5)),,caption="Outcome on evaluation data set")
+
+```
+
+Based on the outcome we can conclude in evaluation data set of 40, around 21 records are there where crime rate is above median and 19 records where crime rate is below median.
+
+
+\newpage
+
+#Appendix A: DATA621 Homework 03 R Code 
+\
+```{r}
+#code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/HW3_Final_03.Rmd', #documentation = 0)), eval = FALSE}
+```
+
