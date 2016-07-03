@@ -1,11 +1,6 @@
 ---
 title: "Home Work Assignment - 04"
-author:
-- Critical Thinking Group 5
-- Arindam Barman
-- Mohamed Elmoudni
-- Shazia Khan
-- Kishore Prasad
+author: "Critical Thinking Group 5"
 output:
   html_document:
     toc: yes
@@ -19,7 +14,10 @@ output:
 The data set contains approximately 8161 records. Each record represents a customer profile at an auto insurance company. Each record has two response variables. The first response variable, TARGET_FLAG, is a 1 or a 0. A "1" means that the person was in a car crash. A zero means that the person was not in a car crash. The second response variable is TARGET_AMT. This value is zero
 if the person did not crash their car. But if they did crash their car, this number will be a value greater than zero.
 \
-We will be exploring, analyzing, and modeling the data build multiple linear regression and binary logistic regression models on the training data to predict the probability that a person will crash their car and also the amount of money it will cost if the person does crash their car.
+
+\
+We will be exploring, analyzing, and modeling the training data to build many binary logistic regression models (to predict if a person will crash the car) and also some linear regression models (to predict the amount of money it will take to fix the car after crashing). Out of the many models for each task, we will go ahead and shortlist one model that works the best. We will then use these models (one for each task) on the test / evaluation data.
+
 \
 
 To attain our objective, we will be following the below best practice steps and guidelines: \
@@ -29,9 +27,42 @@ To attain our objective, we will be following the below best practice steps and 
 3 -Build Models \
 4 -Select Models \
 
+\
+\
 
+As a strategy, we will split the train dataset into 2 parts - TRAIN and VALID. In the VALID dataset, we will hold out some values to validate how well the model is trained using the TRAIN dataset.
+\
+\
+We will do this once all the data transformations are complete and we are ready to build the models.
+\
+\
+
+While building and selecting models, We will deal with the problem in 2 parts: \
+
+- Part 1 - Here we build and select Binary Logistic Regression models using the training data set. 
+\
+
+- Part 2 - Here we build and select Linear Regression models using only the "Crashed" data from the training data set.
+
+\
+\
+
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
 if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
 if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
 if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
@@ -41,6 +72,10 @@ if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE)
 if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
 if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
 if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+if (!require("dummy",character.only = TRUE)) (install.packages("dummy",dep=TRUE))
+if (!require("reshape2",character.only = TRUE)) (install.packages("reshape2",dep=TRUE))
+if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
+
 
 library(ggplot2)
 library(MASS)
@@ -51,293 +86,587 @@ library(psych)
 library(stringr)
 library(car)
 library(faraway)
+library(dummy)
+library(reshape2)
+library(popbio)
+
+insure_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurance_training_data.csv")
 
 insurevars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv")
+#insurevars <- insurevars[str_trim(insurevars[,1])!="INDEX",] 
 
-insurevars <- insurevars[insurevars[,1]!="INDEX",] 
+kable(insurevars, caption = "Variable Description")
 
-insure_data<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurance_training_data.csv")
+#insure_test <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurance-evaluation-data.csv")
 
-insure_data2<- select(insure_data, -(INDEX))
+#str(city_crime_test)
+
+
 ```
 
-#1 Data Exploration Analysis
+We notice that there are 2 dependent variables - TARGET_FLAG and TARGET_AMT. Apart from these 2 dependent variables, we have 23 independent or predictor variables.\
+\
 
-In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
--Variable identification \
--Variable Relationships \
--Data summary analysis \
--Outliers and Missing Values Identification
+```{r}
+str(insure_train_full)
 
-##1.1	Variable identification
-
-First let's display and examine the data dictionary or the data columns as shown in table 1. \
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-insurevars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv")
-
-insurevars <- insurevars[insurevars[,1]!="INDEX",] 
-
-kable(insurevars, caption = "Variable Definition")
-
+levels(insure_train_full$MSTATUS)
+levels(insure_train_full$SEX)
+levels(insure_train_full$EDUCATION)
+levels(insure_train_full$JOB)
+levels(insure_train_full$CAR_TYPE)
+levels(insure_train_full$URBANICITY)
+#levels(insure_train_full$REVOKED)
 ```
 \
 \
 
+From the output above we can make the following observations:\
 
-We notice that all variables are numeric. The variable names seem to follow certain naming pattern to highlight certain arithmetic relationships. In other words, we can compute the number of '1B' hits by taking the difference between overall hits and '2B', '3B', 'HR'. Although such naming and construct is not recommended in normalized database design ( as it violates third normal form), it is very frequent practice in the data analytics.
+
+- some numeric variables like INCOME, HOME_VAL, BLUEBOOK, OLDCLAIM have been converted to Factor variables. This needs to be set right.
+
+- Some of the variables like MSTATUS, SEX, EDUCATION, JOB, CAR_TYPE, URBANICITY have some of the values encoded with "z_". Not that this will impact the analysis, but it will look a bit odd. So we will be fixing this.
+
+- EDUCATION has 2 "High School" values - one starting with "<" and another starting with "z_". It is assumed that both these values are to be converted to "HIGH School".
+
+- JOB has a "" value. This needs to be replaced with NA.
+
+- We will also create dummy variables for all the factors. 
+
+- Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
 
 \
-Our predictor input is made of 15 variables. And our dependent variable is one variable called TARGET_WINS.
+\
 
-Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
+Making the above fixes to the data, we now have a "clean" dataset which can be explored further.
+\
+
+```{r}
+
+#- some numeric variables like INCOME, HOME_VAL, BLUEBOOK, OLDCLAIM have been converted to Factor variables. This needs to be set right.
+
+insure_train_full$INCOME <- as.numeric(insure_train_full$INCOME)
+insure_train_full$HOME_VAL <- as.numeric(insure_train_full$HOME_VAL)
+insure_train_full$BLUEBOOK <- as.numeric(insure_train_full$BLUEBOOK)
+insure_train_full$OLDCLAIM <- as.numeric(insure_train_full$OLDCLAIM)
+
+#- Some of the variables like MSTATUS, SEX, EDUCATION, JOB, CAR_TYPE, URBANICITY have some of the values encoded with "z_". Not that this will impact the analysis, but it will look a bit odd. So we will be fixing this.
+
+#- EDUCATION has 2 "High School" values - one starting with "<" and another starting with "z_". It is assumed that both these values are to be converted to "HIGH School".
+
+#- JOB has a "" value. This needs to be replaced with NA.
+
+insure_train_full$MSTATUS <- as.factor(str_replace_all(insure_train_full$MSTATUS, "z_", ""))
+insure_train_full$SEX <- as.factor(str_replace_all(insure_train_full$SEX, "z_", ""))
+insure_train_full$EDUCATION <- as.factor(str_replace_all(insure_train_full$EDUCATION, "z_", ""))
+insure_train_full$EDUCATION <- as.factor(str_replace_all(insure_train_full$EDUCATION, "<", ""))
+insure_train_full$CAR_TYPE <- as.factor(str_replace_all(insure_train_full$CAR_TYPE, "z_", ""))
+insure_train_full$URBANICITY <- as.factor(str_replace_all(insure_train_full$URBANICITY, "z_", ""))
+
+insure_train_full$JOB[insure_train_full$JOB==""] <- NA
+insure_train_full$JOB <- as.factor(str_replace_all(insure_train_full$JOB, "z_", ""))
+
+#- We will also create dummy variables for all the factors and drop the original variables. 
+
+dummy_vars<-as.data.frame(sapply(dummy(insure_train_full), FUN = as.numeric))
+dummy_vars <- dummy_vars-1
+
+insure_train_full <- cbind(select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -EDUCATION, -JOB, -CAR_USE, -CAR_TYPE, -RED_CAR, -REVOKED, -URBANICITY), dummy_vars)
+
+# insure_train_full <- cbind(insure_train_full, dummy_vars)
+
+# - Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
+
+insure_train_full <- select(insure_train_full, -INDEX)
+
+```
 
 
-\newpage
+
+##1.2 Variable Relationships \
+
+Since we have 2 models to build, we have 2 sets of assumptions to be checked:
+
+
+- Logistic Regression for TARGET_FLAG: \newline
+-- The dependent variable need not to be normally distributed \
+-- Errors need to be independent but not normally distributed. \
+-- We will be using GLM and GLM does not assume a linear relationship between dependent and independent variables. However, it assumes a linear relationship between link function and independent variables in logit model. \
+-- Also does not use OLS (Ordinary Least Square) for parameter estimation. Instead, it uses maximum likelihood estimation (MLE) 
+
+\
+\
+
+
+**NEED TO ADD SOME POINTS**
+
+- Linear Regression for TARGET_AMT: \newline
+-- The dependent variable is normally distributed \
+-- Errors are independent and normally distributed. \
+
+
+\
+\
+
+
+
+In next step below relationship between the target variable and dependent variables is shown in three charts.
+
 
 ##1.2 Data Summary Analysis
 
 
-In this section, we will create summary data to better understand the initial relationship variables have with our dependent variable using correlation, central tendency, and dispersion As shown in table 2.  
+In this section, we will create summary data to better understand the relationship each of the variables have with our dependent variables using correlation, central tendency, and dispersion As shown in table 2.  
 
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
 
+ds_stats <- psych::describe(insure_train_full, skew = TRUE, na.rm = TRUE)
+#ds_stats
+kable(ds_stats[1:7], caption= "Data Summary")
+kable(ds_stats[8:13], caption= "Data Summary (Cont)")
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-ds_stats <- psych::describe(moneyball2, skew = FALSE, na.rm = TRUE)[c(3:6)]
+fun1 <- function(a, y) cor(y, a , use = 'na.or.complete')
+x<-insure_train_full[,]
+Correlation_TARGET_FLAG <- sapply(x, FUN = fun1, y=insure_train_full$TARGET_FLAG) 
 
-ds_stats0<- ds_stats
-ds_stats <- cbind(VARIABLE_NAME = rownames(ds_stats), ds_stats)
-#rownames(ds_stats) <- NULL
-kable(ds_stats0, caption = "Data Summary")
-
-
-Variable<- rownames(ds_stats)
-
-fun <- function(x) sum(!complete.cases(x))
-Missing <- sapply(moneyball2[Variable], FUN = fun) 
-
-#ds_stats <- cbind(ds_stats, Missing)
-
-
-# fun <- function(x) mean(x, na.rm=T)
-# Mean <- sapply(moneyball2[Variable], FUN = fun) 
-
-fun <- function(x, y) cor(y, x, use = "na.or.complete")
-Correlation <- sapply(moneyball2[Variable], FUN = fun, y=moneyball2$TARGET_WINS) 
-
-ds_stats2 <- data.frame(cbind( Missing, Correlation))
-#ds_stats2 <- left_join(ds_stats0, moneyballvars, by="VARIABLE_NAME")
-kable(ds_stats2, caption = "Missing Data and Data Correlation")
 ```
 
-Based on table 2 and Table 3, we can make the below observations: \
 
+Now we will produce the correlation table between the independent variables and the dependent variables - TARGET_FLAG and TARGET_AMT  
 
-1.Some of the variables like TEAM_PITCHING_H, TEAM_PITCHING_SO and TEAM_FIELDING_E seem to have outliers which is evident from the mean, median and trimmed mean values.
+\
+\
+First lets see the correlation for TARGET_FLAG:\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+Correlation_TARGET_FLAG <- sort(Correlation_TARGET_FLAG, decreasing = TRUE)
+kable(data.frame(Correlation_TARGET_FLAG), caption = "Correlation between TARGET_FLAG and predictor variables")
+
+```
+\
+
+The above table suggests that none of the variables seem to have a very strong correlation with TARGET_FLAG. However, CAR_TYPE_Van, RED_CAR_no, JOB_Home.Maker, SEX_F, JOB_Clerical, CAR_TYPE_SUV, TRAVTIME, BLUEBOOK, CAR_TYPE_Pickup, CAR_TYPE_Sports.Car, JOB_Student, KIDSDRIV, JOB_Blue.Collar, HOMEKIDS, MSTATUS_No, EDUCATION_High.School, CAR_USE_Commercial, REVOKED_Yes, PARENT1_Yes, OLDCLAIM, CLM_FREQ, MVR_PTS and URBANICITY_Highly.Urban..Urban have a positive correlation. 
+\
+Similarly, URBANICITY_Highly.Rural..Rural, PARENT1_No, REVOKED_No, HOME_VAL, CAR_USE_Private, CAR_TYPE_Minivan, MSTATUS_Yes, JOB_Manager, AGE, CAR_AGE, TIF, EDUCATION_Masters, YOJ, EDUCATION_PhD, JOB_Lawyer, JOB_Doctor, EDUCATION_Bachelors, JOB_Professional, INCOME, SEX_M, RED_CAR_yes, CAR_TYPE_Panel.Truck have a negative correlation. 
+
+\
+\
+
+Lets now see how values in some of the variable affects the correlation:
 
 \
 
-2.TEAM_BATTING_HBP and TEAM_BASERUN_CS seems to be missing a lot of values which casts doubt on its usefulness as a predictor. Maybe a flag for presense or absense of TEAM_BATTING_HBP and TEAM_BASERUN_CS might be a better predictor. Also given the fact that there is low correlation, we decided to exclude these 2 variables from any missing value or outlier treatment. 
+CAR_TYPE - If you drive Minivans and Panel Trucks you have lesser chance of being in a crash as against Pickups, Sports, SUVs and Vans. Since the distiction is clear, we believe that binning this variable accordingly will help strengthen the correlation.
+
+\
+\
+
+EDUCATION - If you have only a high school education then you are more likely to crash than if you have a Bachelors, Masters or a Phd. Again binning this variable will strengthen the correlation.
+\
+\
+
+JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you are more likely to be in a crash against Doctor, Lawyer, Manager or professional.  Again binning this variable will strengthen the correlation.
+
+\
+\
+
+We will carry out the above transformations in the Data Preparation phase.
+\
+\
+
+Next lets look at the correlation for TARGET_AMT. 
+\
+
+Prior to this, we need to filter for only those records where there has been a crash. The amount incurred is relevant only when there is a crash. We then look at the correlations.
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_crash <- insure_train_full[insure_train_full$TARGET_FLAG==1,]
+insure_train_crash <- select(insure_train_crash, -TARGET_FLAG)
+
+
+#select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -EDUCATION, -JOB, -CAR_USE, -CAR_TYPE, -RED_CAR, -REVOKED, -URBANICITY)
+```
 
 \
 
-3.Most of the variables seem to indicate a positive / negative correlation in line with the theoretical effect. However, the following stand out as they show a correlation opposite to the theoretical impact: TEAM_BASERUN_CS,  TEAM_PITCHING_HR, TEAM_PITCHING_BB, TEAM_PITCHING_SO and TEAM_FIELDING_DP. Lets evaluate these variables further once we fix any missing values or outliers.
+We will also have a look at the distribution of TARGET_AMT
+
+```{r}
+
+hist(insure_train_crash$TARGET_AMT)
+
+```
 
 \
+We see from the above chart that the TARGET_AMT is not normally distributed.
+\
+Let's see if some transformations will make the situation better\
 
-4. We will impute the missing values in TEAM_BATTING_SO, FIELDING_DP, BASERUN_SB and TEAM_PITCHING_SO since it has lesser missing values even though there is low correlation. So we will create new variables that will have the respective missing values handled.
+```{r}
+show_charts <- function(x, plottype='hist', ...) {
+    par(mfrow=c(2,3))
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    if(plottype=='boxplot') {
+        hist(x,main=xlabel)
+        boxplot(x,main=xlabel)
+    
+        y<-log(x)
+        boxplot(y,main='log transform')
+        y<-sqrt(x)
+        boxplot(y,main='sqrt transform')
+        y<-sin(x)
+        boxplot(y,main='sin transform')
+        y<-(1/x)
+        boxplot(y,main='Inverse transform')
+    } 
+    
+    else if(plottype=='hist') {
+        hist(x,main=xlabel)
+        y<-log(x)
+        hist(y,main='log transform')
+        y<-sqrt(x)
+        hist(y,main='sqrt transform')
+        y<-sin(x)
+        hist(y,main='sin transform')
+        y<-(1/x)
+        hist(y,main='Inverse transform')
+    }
+}
+
+show_charts(insure_train_crash$TARGET_AMT, 'hist')
+
+
+```
+
+\
+We can see from the above charts that a log transform and a sin transform on the TARGET_AMT will make it more normally distributed.
+\
+\
+
+We now use this log transformed TARGET_AMT to check the correlations.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+Correlation_TARGET_AMT_log <- sapply(insure_train_crash, FUN = fun1, y=log(insure_train_crash$TARGET_AMT)) 
+
+Correlation_TARGET_AMT_log <- sort(Correlation_TARGET_AMT_log, decreasing = TRUE)
+
+kable(data.frame(Correlation_TARGET_AMT_log), caption = "Correlation between log transformed TARGET_AMT and predictor variables")
+
+```
+\
+\
+
+The above table suggests that none of the variables seem to have a very strong correlation with TARGET_AMT. However, JOB_Blue.Collar, JOB_Manager, OLDCLAIM, JOB_Doctor, JOB_Lawyer, REVOKED_No, URBANICITY_Highly.Urban..Urban, YOJ, CAR_AGE, AGE, JOB_Professional, CAR_TYPE_Van, PARENT1_Yes, EDUCATION_Masters, RED_CAR_yes, CAR_USE_Commercial, EDUCATION_PhD, MVR_PTS, SEX_M, MSTATUS_No, CAR_TYPE_Panel.Truck have a positive correlation. 
+\
+Similarly, MSTATUS_Yes, SEX_F, CAR_USE_Private, RED_CAR_no, JOB_Home.Maker, PARENT1_No, CAR_TYPE_Sports.Car, CAR_TYPE_SUV, EDUCATION_Bachelors, CLM_FREQ, EDUCATION_High.School, URBANICITY_Highly.Rural..Rural, JOB_Student, REVOKED_Yes, BLUEBOOK, CAR_TYPE_Minivan, KIDSDRIV, TIF, HOME_VAL, CAR_TYPE_Pickup, TRAVTIME, HOMEKIDS, INCOME, JOB_Clerical have a negative correlation. 
+
+\
+\
+
+**NEED TO ANALYZE FURTHER**
+
+\
+\
+
+
+\
+\
+
+Lets also use the sin transformed TARGET_AMT to check the correlations.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+Correlation_TARGET_AMT_sin <- sapply(insure_train_crash, FUN = fun1, y=sin(insure_train_crash$TARGET_AMT)) 
+
+Correlation_TARGET_AMT_sin <- sort(Correlation_TARGET_AMT_sin, decreasing = TRUE)
+
+kable(data.frame(Correlation_TARGET_AMT_sin), caption = "Correlation between sin transformed TARGET_AMT and predictor variables")
+
+```
+\
+\
+
+The above table suggests that none of the variables seem to have a very strong correlation with TARGET_AMT. However, INCOME, EDUCATION_Bachelors, JOB_Manager, EDUCATION_High.School, RED_CAR_yes, MSTATUS_No, JOB_Home.Maker, EDUCATION_PhD, TRAVTIME, JOB_Professional, URBANICITY_Highly.Urban..Urban, SEX_M, JOB_Blue.Collar, AGE, CAR_TYPE_Sports.Car, HOME_VAL, BLUEBOOK, PARENT1_No, CAR_USE_Commercial, REVOKED_No, CAR_TYPE_Panel.Truck have a positive correlation. 
+\
+Similarly, REVOKED_Yes, CAR_USE_Private, CAR_TYPE_SUV, PARENT1_Yes, KIDSDRIV, CAR_AGE, JOB_Clerical, HOMEKIDS, JOB_Doctor, CLM_FREQ, SEX_F, URBANICITY_Highly.Rural..Rural, MVR_PTS, EDUCATION_Masters, CAR_TYPE_Van, CAR_TYPE_Minivan, YOJ, TIF, MSTATUS_Yes, RED_CAR_no, JOB_Lawyer, CAR_TYPE_Pickup, JOB_Student, OLDCLAIM have a negative correlation. 
+
+\
+\
+
+**NEED TO ANALYZE FURTHER**
+
+\
+\
 
 
 ##1.3	Outliers and Missing Values Identification
 
 
-In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the outliers. 
+###1.3.1 Missing Values 
 
+\
+\
+Based on the missing data from the below table, we can see that there are a few missing values for AGE, CAR_AGE, YOJ and JOB variables. 
 
-Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect outliers if any and treat it accordingly.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-show_charts <- function(x, ...) {
-    
-    par(mfrow=c(2,3))
-    
-    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
-#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
-    
-    hist(x,main=xlabel)
-    boxplot(x,main=xlabel)
-
-    y<-log(x)
-    boxplot(y,main='log transform')
-    y<-sqrt(x)
-    boxplot(y,main='sqrt transform')
-    y<-sin(x)
-    boxplot(y,main='sin transform')
-    y<-(x)^(1/9)
-    boxplot(y,main='ninth transform')
-}
-
-#show_charts(moneyball2$TEAM_BATTING_H,moneyball2$TARGET_WINS)
+missings<- sapply(insure_train_full,function(x) sum(is.na(x)))
+kable(data.frame(missings), caption = "Missing Values")
 
 ```
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.cap='TEAM_BATTING_H Transformation'}
-show_charts(moneyball2$TEAM_BATTING_H)
+\
+\
+
+We can try and impute values to AGE, YOJ, CAR_AGE. However, we will not be able to impute values for JOB since this is a categorical variable. Though there are a few methods to do this imputation, it may not be worth it.  
+\
+\
+Lets see the impact if we have to exclude these missing records.
+\
+```{r}
+
+sum(!complete.cases(insure_train_full))
+
+# Percentage of records
+
+sum(!complete.cases(insure_train_full))/nrow(insure_train_full) *100
 
 ```
 
-***Please note that we have created similar figures to figure 1 above for each remaining variable. 
-However, we hid the remaining figures for ease of streamlining the report as they have similar shapes. However, we have drawn the below observations from each remaining figure. \
+\
 
+We see from the above that excluding the missing rows will remove about 17.24% of the records. This would not seem to have too much of an impact. 
+\
+\
+We will exclude the rows with the missing values when we do the data preparation / tranformations for the TARGET_FLAG dataset.
 
-- For TEAM_BATTING_H, we can see that there are quite a few outliers, both at the upper and lower end. Accordingly,  we decide to create a new variable that will have the outlier fixed.
+\
+\
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+Similarly, based on the below analysis, we see that we are losing about 17.6% of the data for the TARGET_AMT dataset.
 
-show_charts(moneyball2$TEAM_BATTING_2B)
-
-```
-
-- For TEAM_BATTING_2B, we can see that there are quite a few outliers, both at the upper and a single outlier at the lower end. For this variable we decide to create a new variable that will have the outliers fixed.
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_BATTING_3B)
-
-```
-
-
-- For TEAM_BATTING_3B, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outliers fixed.
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_BATTING_HR)
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+missings<- sapply(insure_train_crash,function(x) sum(is.na(x)))
+kable(data.frame(missings), caption = "Missing Values")
+sum(!complete.cases(insure_train_crash))
+# Percentage of records
+sum(!complete.cases(insure_train_crash))/nrow(insure_train_crash) *100
 
 ```
 
+\
+\
+We will exclude the rows with the missing values when we do the data preparation / tranformations for the TARGET_AMT dataset.
 
-- For TEAM_BATTING_HR, we can see that there are no outliers.
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE,fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_BATTING_BB)
-
-```
-
-- For TEAM_BATTING_BB, we can see that there are quite a few outliers, both at the upper and lower end. For this variable we decide to create a new variable that will have the outlier fixed.
+\
+\
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
+\
 
-show_charts(moneyball2$TEAM_BATTING_SO)
+###1.3.2 Outliers identification 
 
-```
+In this section univariate analysis is being carried out and boxplots diagrams are being used to determine the outliers in variables and decide on whether to act on the outliers.\
+\
 
-- For TEAM_BATTING_SO, we can see that there are no outliers. No further action needed for this variable.
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_BASERUN_SB)
-
-```
-
-- For TEAM_BASERUN_SB, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
+We will do the outliers only on the numeric variables.\
+\
+Below are the plots:
+\
 
 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_FIELDING_E)
+#
+mdata<- select(insure_train_full, KIDSDRIV, AGE, BLUEBOOK, CAR_AGE, CLM_FREQ, HOME_VAL, HOMEKIDS, INCOME, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ)
+mdata2 <- melt(mdata)
+# Output the boxplot
+p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
+  geom_boxplot() + ggtitle("Outliers identification")
+p + facet_wrap( ~ variable, scales="free", ncol=5)
 
 ```
 
-- For TEAM_FIELDING_E, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
+From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. \
+
+We see that: KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ  need to be treated when we do the data preparation for modeling the TARGET_FLAG. 
+
+\
+\
+
+We carry out the same exercise for TARGET_AMT as well:
+
+\
+\
+
+We will do the outliers only on the numeric variables.\
+\
+Below are the plots:
+\
 
 
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-- For TEAM_FIELDING_DP, we can see that there are quite a few outliers, both at the upper and lower end. For this variable we decide to create a new variable that will have the outlier fixed.
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_PITCHING_BB)
-
-```
-
-- For TEAM_PITCHING_BB, we can see that there are quite a few outliers, both at the upper and lower end. For this variable we decide to create a new variable that will have the outlier fixed.
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_PITCHING_H)
-
-```
-
-- For TEAM_PITCHING_H, we can see that there are quite a few outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_PITCHING_HR)
-
-```
-- For TEAM_PITCHING_HR, we can see that there only 3 outliers at the upper end. For this variable we decide to create a new variable that will have the outlier fixed.
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
-
-show_charts(moneyball2$TEAM_PITCHING_SO)
+#
+mdata<- select(insure_train_crash, KIDSDRIV, AGE, BLUEBOOK, CAR_AGE, CLM_FREQ, HOME_VAL, HOMEKIDS, INCOME, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ)
+mdata2 <- melt(mdata)
+# Output the boxplot
+p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
+  geom_boxplot() + ggtitle("Outliers identification")
+p + facet_wrap( ~ variable, scales="free", ncol=5)
 
 ```
 
-- For TEAM_PITCHING_SO, we can see that there are quite a few outliers at the upper and a single outlier on the lower end. For this variable we decide to create a new variable that will have the outlier fixed.
+From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. \
 
-
-#####Please note that, in most of the cases above, we see that a SIN transformation seems to work well to take care of the outliers. We will go ahead and create these new variables respectively.
+We see that: KIDSDRIV, AGE, MVR_PTS, TIF, TRAVTIME, YOJ  need to be treated when we do the data preparation for modeling the TARGET_AMT. 
 
 
 \newpage
 
+##1.3.3 Analysis the link function \
+
+In this section, we will investigate how our initial data aligns with a typical logistic model plot. 
+
+Recall the Logistic Regression is part of a larger class of algorithms known as Generalized Linear Model (glm).  The fundamental equation of generalized linear model is:
+
+$g(E(y)) = a+ Bx_1+B_2x_2+ B_3x_3+...$   
+
+where, g() is the link function, E(y) is the expectation of target variable and $B_0 + B_1x_1 + B_2x_2+B_3x_3$ is the linear predictor ( $B_0,B_1,B_2, B_3$ to be predicted). The role of link function is to 'link' the expectation of y to linear predictor.
+
+In logistic regression, we are only concerned about the probability of outcome dependent variable ( success or failure). As described above, g() is the link function. This function is established using two things: Probability of Success (p) and Probability of Failure (1-p).  p should meet following criteria:
+It must always be positive (since p >= 0)
+It must always be less than equals to 1 (since p <= 1).
+
+Now let's investigate how our initial data model aligns with the above criteria. In other words, we will plot regression model plots for each variable and compare it to a typical logistic model plot:
+
+
+```{r}
+par(mfrow=c(2,3))
+
+# #fun1 <- function(a, y) cor(y, a , use = 'na.or.complete')
+# #Correlation_TARGET_FLAG <- sapply(x, FUN = fun1, y=insure_train_full$TARGET_FLAG) 
+# 
+# show_chart_logi.hist <- function(a, y, ...) {
+# #    xlabel <- unlist(str_split(deparse(substitute(a)), pattern = "\\$"))[2]
+#     xlabel <- deparse(substitute(a))
+#     message(xlabel)
+#     logi.hist.plot(a,y,logi.mod = 1, type="hist", boxp=FALSE,col="gray", mainlabel = xlabel)
+# }
+
+x <- insure_train_full[,-2]
+x <- x[complete.cases(x),]
+
+# sapply(x, FUN = show_chart_logi.hist, y=x$TARGET_FLAG) 
+
+logi.hist.plot(x$REVOKED_Yes,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'REVOKED_Yes')
+logi.hist.plot(x$CAR_USE_Private,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_USE_Private')
+logi.hist.plot(x$CAR_TYPE_SUV,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_SUV')
+logi.hist.plot(x$PARENT1_Yes,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'PARENT1_Yes')
+logi.hist.plot(x$KIDSDRIV,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'KIDSDRIV')
+logi.hist.plot(x$CAR_AGE,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_AGE')
+logi.hist.plot(x$JOB_Clerical,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Clerical')
+logi.hist.plot(x$HOMEKIDS,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'HOMEKIDS')
+logi.hist.plot(x$JOB_Doctor,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Doctor')
+logi.hist.plot(x$CLM_FREQ,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CLM_FREQ')
+logi.hist.plot(x$SEX_F,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'SEX_F')
+logi.hist.plot(x$URBANICITY_Highly.Rural..Rural,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'URBANICITY_Highly.Rural..Rural')
+logi.hist.plot(x$MVR_PTS,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'MVR_PTS')
+logi.hist.plot(x$EDUCATION_Masters,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'EDUCATION_Masters')
+logi.hist.plot(x$CAR_TYPE_Van,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_Van')
+logi.hist.plot(x$CAR_TYPE_Minivan,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_Minivan')
+logi.hist.plot(x$YOJ,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'YOJ')
+logi.hist.plot(x$TIF,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'TIF')
+logi.hist.plot(x$MSTATUS_Yes,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'MSTATUS_Yes')
+logi.hist.plot(x$RED_CAR_no,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'RED_CAR_no')
+logi.hist.plot(x$JOB_Lawyer,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Lawyer')
+logi.hist.plot(x$CAR_TYPE_Pickup,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_Pickup')
+logi.hist.plot(x$JOB_Student,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Student')
+logi.hist.plot(x$OLDCLAIM,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'OLDCLAIM')
+logi.hist.plot(x$INCOME,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'INCOME')
+logi.hist.plot(x$EDUCATION_Bachelors,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'EDUCATION_Bachelors')
+logi.hist.plot(x$JOB_Manager,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Manager')
+logi.hist.plot(x$EDUCATION_High.School,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'EDUCATION_High.School')
+logi.hist.plot(x$RED_CAR_yes,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'RED_CAR_yes')
+logi.hist.plot(x$MSTATUS_No,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'MSTATUS_No')
+logi.hist.plot(x$JOB_Home.Maker,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Home.Maker')
+logi.hist.plot(x$EDUCATION_PhD,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'EDUCATION_PhD')
+logi.hist.plot(x$TRAVTIME,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'TRAVTIME')
+logi.hist.plot(x$JOB_Professional,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Professional')
+logi.hist.plot(x$URBANICITY_Highly.Urban..Urban,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'URBANICITY_Highly.Urban..Urban')
+logi.hist.plot(x$SEX_M,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'SEX_M')
+logi.hist.plot(x$JOB_Blue.Collar,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'JOB_Blue.Collar')
+logi.hist.plot(x$AGE,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'AGE')
+logi.hist.plot(x$CAR_TYPE_Sports.Car,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_Sports.Car')
+logi.hist.plot(x$HOME_VAL,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'HOME_VAL')
+logi.hist.plot(x$BLUEBOOK,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'BLUEBOOK')
+logi.hist.plot(x$PARENT1_No,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'PARENT1_No')
+logi.hist.plot(x$CAR_USE_Commercial,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_USE_Commercial')
+logi.hist.plot(x$REVOKED_No,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'REVOKED_No')
+logi.hist.plot(x$CAR_TYPE_Panel.Truck,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_Panel.Truck')
+
+```
+
+##Interpretation \
+
+
+**NOT SEEING ANY CLEAR TRENDS. DO WE NEED TO INCLUDE THIS SECTION?**
+
+**IF SO, NEED TO REVISE THE BELOW TEXT**
+
+You can see clearly that the probability of crime being above average increases as we get closer to the "1" classification for the indus,nox,age,rad,tax,and lstat  variables. In the middle, the probability changes at the highest rate, while it tails off at each end in order to bound it between 0 and 1. \
+
+You can see clearly that the probability of crime being above average decreases as we get closer to the "1" classification for the zn, dis,black, and mdev  variables. In the middle, the probability changes at the lowest rate. However, it does not tails off at each end for all of the variables.
+
+\
+\
+\
+
+
 #2. Data Preparation 
 
-Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+Now that we have completed the data exploration / analysis, we will be cleaning and consolidating data into two datasets for use in analysis and modeling. \
+
+\
+One dataset will be used for building and selecting models for TARGET_FLAG and the other dataset with only the "crash" records will be used for building and selecting models for TARGET_AMT.\
+\
+
+
+We will be following the below steps as guidelines: \
 - Outliers treatment \
 - Missing values treatment \
-- Data transformation \
+- Adding New Variables \
 
 
 
 ##2.1 Outliers treatment
 
-For outliers, we will create 2 sets of variables. 
+For outliers, we will create 3 sets of variables. 
 
-The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+- The first set uses the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
 
-Accordingly we create the following new variables while retaining the original variables. 
+- In the second set, we will use the log transformation and create the respective variables
 
-TEAM_BATTING_H_NEW \
-TEAM_BATTING_2B_NEW \
-TEAM_BATTING_3B_NEW \
-TEAM_BATTING_BB_NEW \
-TEAM_BASERUN_SB_NEW \
-TEAM_FIELDING_E_NEW \
-TEAM_FIELDING_DP_NEW \
-TEAM_PITCHING_BB_NEW \
-TEAM_PITCHING_H_NEW \
-TEAM_PITCHING_HR_NEW \
-TEAM_PITCHING_SO_NEW \
+- In the third set, we will use the sin transformation and create the respective variables
 
+\
+\
+
+We do the above set of variables for both the TARGET_FLAG dataset as well as the TARGET_AMT dataset.
+\
+\
+###2.1.1 Outliers treatment for Full Dataset (TARGET_FLAG)
+
+\
+We create new variables for KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ by capping the outlier values. 
+
+\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
 
 treat_outliers <- function(x) {
 qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
@@ -349,781 +678,127 @@ x[x > (qnt[2] + H)] <- caps[2]
 return(x)
 }
 
-moneyball2$TEAM_BATTING_H_NEW <- treat_outliers(moneyball2$TEAM_BATTING_H)
-moneyball2$TEAM_BATTING_2B_NEW <- treat_outliers(moneyball2$TEAM_BATTING_2B)
-moneyball2$TEAM_BATTING_3B_NEW <- treat_outliers(moneyball2$TEAM_BATTING_3B)
-moneyball2$TEAM_BATTING_BB_NEW <- treat_outliers(moneyball2$TEAM_BATTING_BB)
-moneyball2$TEAM_BASERUN_SB_NEW <- treat_outliers(moneyball2$TEAM_BASERUN_SB)
-moneyball2$TEAM_FIELDING_E_NEW <- treat_outliers(moneyball2$TEAM_FIELDING_E)
-moneyball2$TEAM_FIELDING_DP_NEW <- treat_outliers(moneyball2$TEAM_FIELDING_DP)
-moneyball2$TEAM_PITCHING_BB_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_BB)
-moneyball2$TEAM_PITCHING_H_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_H)
-moneyball2$TEAM_PITCHING_HR_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_HR)
-moneyball2$TEAM_PITCHING_SO_NEW <- treat_outliers(moneyball2$TEAM_PITCHING_SO)
+#KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ
+
+insure_train_full$KIDSDRIV_cap <- treat_outliers(insure_train_full$KIDSDRIV)
+insure_train_full$AGE_cap <- treat_outliers(insure_train_full$AGE)
+insure_train_full$HOMEKIDS_cap <- treat_outliers(insure_train_full$HOMEKIDS)
+insure_train_full$MVR_PTS_cap <- treat_outliers(insure_train_full$MVR_PTS)
+insure_train_full$OLDCLAIM_cap <- treat_outliers(insure_train_full$OLDCLAIM)
+insure_train_full$TIF_cap <- treat_outliers(insure_train_full$TIF)
+insure_train_full$TRAVTIME_cap <- treat_outliers(insure_train_full$TRAVTIME)
+insure_train_full$YOJ_cap <- treat_outliers(insure_train_full$YOJ)
+
 
 ```
 
-
-\newpage
-
-
-Lets see how the new variables look in boxplots.
+Lets see how the capped variables look in boxplots.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-par(mfrow=c(2,3))
+par(mfrow=c(1,3))
 
-boxplot(moneyball2$TEAM_BATTING_H_NEW,main="TEAM_BATTING_H_NEW")
-boxplot(moneyball2$TEAM_BATTING_2B_NEW,main="TEAM_BATTING_2B_NEW")
-boxplot(moneyball2$TEAM_BATTING_3B_NEW,main="TEAM_BATTING_3B_NEW")
-boxplot(moneyball2$TEAM_BATTING_BB_NEW,main="TEAM_BATTING_BB_NEW")
-boxplot(moneyball2$TEAM_BASERUN_SB_NEW,main="TEAM_BASERUN_SB_NEW")
-boxplot(moneyball2$TEAM_FIELDING_E_NEW,main="TEAM_FIELDING_E_NEW")
-boxplot(moneyball2$TEAM_FIELDING_DP_NEW,main="TEAM_FIELDING_DP_NEW")
-boxplot(moneyball2$TEAM_PITCHING_BB_NEW,main="TEAM_PITCHING_BB_NEW")
-boxplot(moneyball2$TEAM_PITCHING_H_NEW,main="TEAM_PITCHING_H_NEW")
-boxplot(moneyball2$TEAM_PITCHING_HR_NEW,main="TEAM_PITCHING_HR_NEW")
-boxplot(moneyball2$TEAM_PITCHING_SO_NEW,main="TEAM_PITCHING_SO_NEW")
+boxplot(insure_train_full$KIDSDRIV_cap,main="KIDSDRIV_cap")
+boxplot(insure_train_full$AGE_cap,main="AGE_cap")
+boxplot(insure_train_full$HOMEKIDS_cap,main="HOMEKIDS_cap")
+boxplot(insure_train_full$MVR_PTS_cap,main="MVR_PTS_cap")
+boxplot(insure_train_full$OLDCLAIM_cap,main="OLDCLAIM_cap")
+boxplot(insure_train_full$TIF_cap,main="TIF_cap")
+boxplot(insure_train_full$TRAVTIME_cap,main="TRAVTIME_cap")
+boxplot(insure_train_full$YOJ_cap,main="YOJ_cap")
 
-```
-
-
-In the second set, we will use the sin transformation and create the following variables:
-
-TEAM_BATTING_H_SIN \
-TEAM_BATTING_2B_SIN \
-TEAM_BATTING_3B_SIN \
-TEAM_BATTING_BB_SIN \
-TEAM_BASERUN_SB_SIN \
-TEAM_FIELDING_E_SIN \
-TEAM_FIELDING_DP_SIN \
-TEAM_PITCHING_BB_SIN \
-TEAM_PITCHING_H_SIN \
-TEAM_PITCHING_HR_SIN \
-TEAM_PITCHING_SO_SIN \
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-moneyball2$TEAM_BATTING_H_SIN <- sin(moneyball2$TEAM_BATTING_H)
-moneyball2$TEAM_BATTING_2B_SIN <- sin(moneyball2$TEAM_BATTING_2B)
-moneyball2$TEAM_BATTING_3B_SIN <- sin(moneyball2$TEAM_BATTING_3B)
-moneyball2$TEAM_BATTING_BB_SIN <- sin(moneyball2$TEAM_BATTING_BB)
-moneyball2$TEAM_BASERUN_SB_SIN <- sin(moneyball2$TEAM_BASERUN_SB)
-moneyball2$TEAM_FIELDING_E_SIN <- sin(moneyball2$TEAM_FIELDING_E)
-moneyball2$TEAM_FIELDING_DP_SIN <- sin(moneyball2$TEAM_FIELDING_DP)
-moneyball2$TEAM_PITCHING_BB_SIN <- sin(moneyball2$TEAM_PITCHING_BB)
-moneyball2$TEAM_PITCHING_H_SIN <- sin(moneyball2$TEAM_PITCHING_H)
-moneyball2$TEAM_PITCHING_HR_SIN <- sin(moneyball2$TEAM_PITCHING_HR)
-moneyball2$TEAM_PITCHING_SO_SIN <- sin(moneyball2$TEAM_PITCHING_SO)
-
-```
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-par(mfrow=c(2,3))
-
-boxplot(moneyball2$TEAM_BATTING_H_SIN,main="TEAM_BATTING_H_SIN")
-boxplot(moneyball2$TEAM_BATTING_2B_SIN,main="TEAM_BATTING_2B_SIN")
-boxplot(moneyball2$TEAM_BATTING_3B_SIN,main="TEAM_BATTING_3B_SIN")
-boxplot(moneyball2$TEAM_BATTING_BB_SIN,main="TEAM_BATTING_BB_SIN")
-boxplot(moneyball2$TEAM_BASERUN_SB_SIN,main="TEAM_BASERUN_SB_SIN")
-boxplot(moneyball2$TEAM_FIELDING_E_SIN,main="TEAM_FIELDING_E_SIN")
-boxplot(moneyball2$TEAM_FIELDING_DP_SIN,main="TEAM_FIELDING_DP_SIN")
-boxplot(moneyball2$TEAM_PITCHING_BB_SIN,main="TEAM_PITCHING_BB_SIN")
-boxplot(moneyball2$TEAM_PITCHING_H_SIN,main="TEAM_PITCHING_H_SIN")
-boxplot(moneyball2$TEAM_PITCHING_HR_SIN,main="TEAM_PITCHING_HR_SIN")
-boxplot(moneyball2$TEAM_PITCHING_SO_SIN,main="TEAM_PITCHING_SO_SIN")
-
-```
-
-
-
-
-##2.2 Missing values treatment
-
-Next we impute missing values. Since we have handled outliers, we can go ahead and use the mean as impute values. As with outliers, we will go ahead and create new variables for the following:
-
-TEAM_BATTING_SO_NEW
-
-We will re-use the already created new variables for fixing the missing values for the below:
-
-TEAM_PITCHING_SO_NEW \
-TEAM_BASERUN_SB_NEW \
-TEAM_FIELDING_DP_NEW \
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-moneyball2$TEAM_BATTING_SO_NEW <- moneyball2$TEAM_BATTING_SO
-moneyball2$TEAM_BATTING_SO_NEW[is.na(moneyball2$TEAM_BATTING_SO_NEW)] <- mean(moneyball2$TEAM_BATTING_SO_NEW, na.rm = T) 
-
-moneyball2$TEAM_PITCHING_SO_NEW[is.na(moneyball2$TEAM_PITCHING_SO_NEW)] <- mean(moneyball2$TEAM_PITCHING_SO_NEW, na.rm = T) 
-moneyball2$TEAM_BASERUN_SB_NEW[is.na(moneyball2$TEAM_BASERUN_SB_NEW)] <- mean(moneyball2$TEAM_BASERUN_SB_NEW, na.rm = T) 
-moneyball2$TEAM_FIELDING_DP_NEW[is.na(moneyball2$TEAM_FIELDING_DP_NEW)] <- mean(moneyball2$TEAM_FIELDING_DP_NEW, na.rm = T) 
-
-```
-
-
-Lets now create some additional variables that might help us in out analysis. 
-
-##2.3 Missing Flags
-
-First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 0 and if the value is present we code it with 1. \
-We will name our missing flag variables as follow: \
-TEAM_BATTING_HBP_Missing \
-TEAM_BASERUN_CS_Missing \
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-moneyball2$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyball2$TEAM_BATTING_HBP),1,0)
-moneyball2$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyball2$TEAM_BASERUN_CS),1,0)
 
 ```
 \
 \
 
+In the second set, we will use the log transformation and create new variables for KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ. 
 
-##2.4 Ratios
-
-\
-
-Next we create some additional variables, that we think may be useful with the prediction. Here we create the following ratios: \
-
-Hits_R  = TEAM_BATTING_H/TEAM_PITCHING_H \
-Walks_R = TEAM_BATTING_BB/TEAM_PITCHING_BB \
-HomeRuns_R = TEAM_BATTING_HR/TEAM_PITCHING_HR \
-Strikeout_R = TEAM_BATTING_SO/TEAM_PITCHING_SO \
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-moneyball2$Hits_R <- moneyball2$TEAM_BATTING_H/moneyball2$TEAM_PITCHING_H
-moneyball2$Walks_R <- moneyball2$TEAM_BATTING_BB/moneyball2$TEAM_PITCHING_BB
-moneyball2$HomeRuns_R <- moneyball2$TEAM_BATTING_HR/moneyball2$TEAM_PITCHING_HR
-moneyball2$Strikeout_R <- moneyball2$TEAM_BATTING_SO/moneyball2$TEAM_PITCHING_SO
-
-
-```
-
-\
-\
-
-
-##2.5 Calculated Variables
-
-\
-
-Finally, we will also create calculated variables as below:
-
-1. TEAM_BATTING_EB (Extra Base Hits) = 2B + 3B + HR
-2. TEAM_BATTING_1B (Singles by batters) = TEAM_BATTING_H - TEAM_BATTING_EB
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-moneyball2$TEAM_BATTING_EB <- moneyball2$TEAM_BATTING_2B + moneyball2$TEAM_BATTING_3B + moneyball2$TEAM_BATTING_HR
-
-moneyball2$TEAM_BATTING_1B <- moneyball2$TEAM_BATTING_H - moneyball2$TEAM_BATTING_EB
-
-```
-
-##2.6 Correlation for new variables
-
-\
-
-Lets see how the new variables stack up against wins. 
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-fun <- function(x, y) cor(y, x, use = "na.or.complete")
-Correlation <- sapply(moneyball2[, 40:47], FUN = fun, y=moneyball2$TARGET_WINS) 
-#kable(Correlation, caption = "New variables Correlation ")
-Correlation
-```
+insure_train_full$KIDSDRIV_log <- log(insure_train_full$KIDSDRIV)
+insure_train_full$AGE_log <- log(insure_train_full$AGE)
+insure_train_full$HOMEKIDS_log <- log(insure_train_full$HOMEKIDS)
+insure_train_full$MVR_PTS_log <- log(insure_train_full$MVR_PTS)
+insure_train_full$OLDCLAIM_log <- log(insure_train_full$OLDCLAIM)
+insure_train_full$TIF_log <- log(insure_train_full$TIF)
+insure_train_full$TRAVTIME_log <- log(insure_train_full$TRAVTIME)
+insure_train_full$YOJ_log <- log(insure_train_full$YOJ)
 
-\
-All new variables seem to have a positive correlation with wins. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
-
-\newpage
-
-
-#3 Build Models
-
-In this phase, we will build four models. The models independent variables will be based initially on the original data set variables, derived dataset variables, transformed dataset variables, and all variables in the dataset.  In addition, for each model, we will perform a stepwise selection and stop at a point where we retain only those variables that have lower AIC (Akaike An Information Criterion).  Recall (AIC) is a measure of the relative quality of statistical models for a given set of data. Given a collection of models for the data, AIC estimates the quality of each model, relative to each of the other models. Lower AIC leads to better quality model.
-
-
-\newpage
-
-Below is a summary table showing models and their respective variables. \
-
- 
- 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/ModelVars.csv")
-kable(modelvars, caption = 'Models and their Respective Variables')
 
 ```
 
-\newpage 
 
-##3.1 Model One
-In this model, we will be using the original variables.  We will create model and we will highlight the variables that being recommended using the AIC value. \
-
-First we will produce the summary model as per below: 
+Lets see how the log transformed variables look in boxplots.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-data <- moneyball2[, c("TARGET_WINS","TEAM_BATTING_H","TEAM_BATTING_2B","TEAM_BATTING_3B","TEAM_BATTING_HR","TEAM_BATTING_BB", "TEAM_BATTING_SO", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO")] 
+par(mfrow=c(1,3))
 
-model1<-lm(TARGET_WINS~TEAM_BATTING_H+TEAM_BATTING_2B+TEAM_BATTING_3B+TEAM_BATTING_HR+TEAM_BATTING_BB+TEAM_BATTING_SO+TEAM_BASERUN_SB+TEAM_FIELDING_E+TEAM_FIELDING_DP+TEAM_PITCHING_BB+TEAM_PITCHING_H+TEAM_PITCHING_HR+TEAM_PITCHING_SO, na.omit(data))
+boxplot(insure_train_full$KIDSDRIV_log,main="KIDSDRIV_log")
+boxplot(insure_train_full$AGE_log,main="AGE_log")
+boxplot(insure_train_full$HOMEKIDS_log,main="HOMEKIDS_log")
+boxplot(insure_train_full$MVR_PTS_log,main="MVR_PTS_log")
+boxplot(insure_train_full$OLDCLAIM_log,main="OLDCLAIM_log")
+boxplot(insure_train_full$TIF_log,main="TIF_log")
+boxplot(insure_train_full$TRAVTIME_log,main="TRAVTIME_log")
+boxplot(insure_train_full$YOJ_log,main="YOJ_log")
 
-summary(model1)
-
-# coefficients(model1) # model coefficients
-# confint(model1, level=0.95) # CIs for model parameters 
-# fitted(model1) # predicted values
-# residuals(model1) # residuals
-# anova(model1) # anova table 
-# vcov(model1) # covariance matrix for model parameters 
-# influence(model1) # regression diagnostics 
 
 ```
 
-Next, we will step thru this model (model 1) and retain only those variables that have the most impact. 
 
 \
+\
 
+In the third set, we will use the sin transformation and create new variables for KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ. 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-
-
-#null<- lm(TARGET_WINS~1,  data=na.omit(moneyball2))
-#null
-#stepmod1<- step(null, scope=list(lower=null, upper=full), direction="forward")
-
-step1 <- step(model1,direction="backward",test="F")
-#coefficients(step1)
-# summary(step1)
-#step1$anova
-
-```
-
+\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-#sumary(step1)
+insure_train_full$KIDSDRIV_sin <- sin(insure_train_full$KIDSDRIV)
+insure_train_full$AGE_sin <- sin(insure_train_full$AGE)
+insure_train_full$HOMEKIDS_sin <- sin(insure_train_full$HOMEKIDS)
+insure_train_full$MVR_PTS_sin <- sin(insure_train_full$MVR_PTS)
+insure_train_full$OLDCLAIM_sin <- sin(insure_train_full$OLDCLAIM)
+insure_train_full$TIF_sin <- sin(insure_train_full$TIF)
+insure_train_full$TRAVTIME_sin <- sin(insure_train_full$TRAVTIME)
+insure_train_full$YOJ_sin <- sin(insure_train_full$YOJ)
+
 
 ```
 
 
-\
-\
-Based on the backward stepwise selection, below are the characteristics of the refined model :
-
-- The Residual standard error is 10.18
-- Multiple R-squared: 0.4058
-- Adjusted R-squared: 0.4019
-- F-statistic: 103.7 on 12 and 1822 DF
-- p-value: < 2.2e-16
-
-\
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
-#summary(step1)
-
-coef1<- data.frame('Coefficients'= step1$coefficients)
-kable(coef1, caption="Coefficients for the refined model 1")
-
-```
-\
-\
-
-Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
-
-- TEAM_BATTING_H (-0.034), TEAM_BATTING_2B (-0.049), TEAM_FIELDING_DP (-0.112), TEAM_PITCHING_SO (-0.054) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
-
-- Similarly, TEAM_BATTING_SO (0.033), TEAM_PITCHING_H (0.06) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
-
-- TEAM_BATTING_3B (0.183), TEAM_BATTING_HR (0.1), TEAM_BATTING_BB (0.118), TEAM_BASERUN_SB (0.069), TEAM_FIELDING_E (-0.119), TEAM_PITCHING_BB (-0.08) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
-
-\
-
-Since we have already seen this result in our data exploration phase, we will retain this model as is for comparision with other models. 
-\
-\
-
-
-##3.2 Model Two
-In this model (model2), we will be using the adjusted values based on our outlier treatment process. 
-We will create model and we will highlight the variables that being recommended using the AIC value.
-First we will produce the summary model as per below: \
-
-
+Lets see how the sin transformed variables look in boxplots.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-data <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_BATTING_3B_NEW", "TEAM_BATTING_BB_NEW", "TEAM_BASERUN_SB_NEW", "TEAM_FIELDING_E_NEW", "TEAM_FIELDING_DP_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_PITCHING_H_NEW", "TEAM_PITCHING_HR_NEW", "TEAM_PITCHING_SO_NEW")] 
+par(mfrow=c(1,3))
 
-model2<-lm(TARGET_WINS~TEAM_BATTING_H_NEW+TEAM_BATTING_2B_NEW+TEAM_BATTING_3B_NEW+TEAM_BATTING_BB_NEW+TEAM_BASERUN_SB_NEW+TEAM_FIELDING_E_NEW+TEAM_FIELDING_DP_NEW+TEAM_PITCHING_BB_NEW+TEAM_PITCHING_H_NEW+TEAM_PITCHING_HR_NEW+TEAM_PITCHING_SO_NEW, na.omit(data))
-
-summary(model2)
-# coefficients(model1) # model coefficients
-# confint(model1, level=0.95) # CIs for model parameters 
-# fitted(model1) # predicted values
-# residuals(model1) # residuals
-# anova(model1) # anova table 
-# vcov(model1) # covariance matrix for model parameters 
-# influence(model1) # regression diagnostics 
-
-```
-\
-\
-
-Lets now step thru this model and retain only those variables that have the most impact. 
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-
-step2 <- step(model2,direction="backward",test="F")
-summary(step2)
-#coefficients(step2)
+boxplot(insure_train_full$KIDSDRIV_sin,main="KIDSDRIV_sin")
+boxplot(insure_train_full$AGE_sin,main="AGE_sin")
+boxplot(insure_train_full$HOMEKIDS_sin,main="HOMEKIDS_sin")
+boxplot(insure_train_full$MVR_PTS_sin,main="MVR_PTS_sin")
+boxplot(insure_train_full$OLDCLAIM_sin,main="OLDCLAIM_sin")
+boxplot(insure_train_full$TIF_sin,main="TIF_sin")
+boxplot(insure_train_full$TRAVTIME_sin,main="TRAVTIME_sin")
+boxplot(insure_train_full$YOJ_sin,main="YOJ_sin")
 
 ```
 
-\
-\
 
-Based on the backward stepwise selection, below are the characteristics of the refined model :
-
-- The Residual standard error is 13.42
-- Multiple R-squared: 0.2779
-- Adjusted R-squared: 0.2747
-- F-statistic: 87.16 on 10 and 2265 DF
-- p-value: < 2.2e-16
+###2.1.2 Outliers treatment for "crashed" Dataset (TARGET_AMT)
 
 
 \
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
-
-coef2<- data.frame('Coefficients'= step2$coefficients)
-kable(coef2, caption="Coefficients for the refined model 2")
-
-
-```
+We create new variables for KIDSDRIV, AGE, MVR_PTS, TIF, TRAVTIME and YOJ by capping the outlier values. 
 
 \
-\
-
-Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
-
-- TEAM_FIELDING_DP_NEW (-0.104), TEAM_PITCHING_SO_NEW (-0.006) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
-
-- Similarly, TEAM_PITCHING_H_NEW (0.01), TEAM_PITCHING_HR_NEW (0.075) have a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
-
-- TEAM_BATTING_H_NEW (0.026), TEAM_BATTING_3B_NEW (0.126), TEAM_BATTING_BB_NEW (0.051), TEAM_BASERUN_SB_NEW (0.044), TEAM_FIELDING_E_NEW (-0.022), TEAM_PITCHING_BB_NEW (-0.031) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
-
-
-\
-\
-
-However, since the correlation seems to have a minor impact, we will go ahead and retain this model for further comparision.
- 
-\
-\
-
-
-
-##3.3 Model Three
-
-In this model (model3), we will be using the derived values based on our variable transformation process. We will create model and we will highlight the variables that being recommended using the AIC value.
-First we will produce the summary model as per below: \
-
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-data <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H_SIN", "TEAM_BATTING_2B_SIN", "TEAM_BATTING_3B_SIN", "TEAM_BATTING_BB_SIN", "TEAM_BASERUN_SB_SIN", "TEAM_FIELDING_E_SIN", "TEAM_FIELDING_DP_SIN", "TEAM_PITCHING_BB_SIN", "TEAM_PITCHING_H_SIN", "TEAM_PITCHING_HR_SIN", "TEAM_PITCHING_SO_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Walks_R", "HomeRuns_R", "Strikeout_R", "TEAM_BATTING_EB", "TEAM_BATTING_1B")] 
-
-model3<-lm(TARGET_WINS~TEAM_BATTING_H_SIN+TEAM_BATTING_2B_SIN+TEAM_BATTING_3B_SIN+TEAM_BATTING_BB_SIN+TEAM_BASERUN_SB_SIN+TEAM_FIELDING_E_SIN+TEAM_FIELDING_DP_SIN+TEAM_PITCHING_BB_SIN+TEAM_PITCHING_H_SIN+TEAM_PITCHING_HR_SIN+TEAM_PITCHING_SO_SIN+TEAM_BATTING_HBP_Missing+TEAM_BASERUN_CS_Missing+Hits_R+Walks_R+HomeRuns_R+Strikeout_R+TEAM_BATTING_EB+TEAM_BATTING_1B, na.omit(data))
-
-summary(model3)
-# coefficients(model1) # model coefficients
-# confint(model1, level=0.95) # CIs for model parameters 
-# fitted(model1) # predicted values
-# residuals(model1) # residuals
-# anova(model1) # anova table 
-# vcov(model1) # covariance matrix for model parameters 
-# influence(model1) # regression diagnostics 
-
-```
-\
-\
-
-Lets now step thru this model and retain only those variables that have the most impact. 
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-
-step3 <- step(model3,direction="backward",test="F")
-summary(step3)
-#coefficients(step3)
-
-```
-
-\
-\
-Based on the backward stepwise selection, below are the characteristics of the refined model :
-
-- The Residual standard error is 12.05
-- Multiple R-squared: 0.1648 
-- Adjusted R-squared: 0.1612 
-- F-statistic: 45.05 on 8 and 1826 DF 
-- p-value: < 2.2e-16
-
-
-\
-\
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
-
-coef3<- data.frame('Coefficients'= step3$coefficients)
-kable(coef3, caption="Coefficients for the refined model 3")
-
-
-```
-
-\
-\
-
-Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
-
-- TEAM_BATTING_BB_SIN (-0.587), TEAM_BASERUN_SB_SIN (-0.71) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
-
-
-- TEAM_BATTING_EB (0.074), TEAM_BATTING_1B (0.024) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
-
-- The newly derived variables TEAM_BATTING_HBP_Missing (-5.665) and TEAM_BASERUN_CS_Missing (-2.019) seem to a negative impact on wins. This means that a missing value will decrease the number of a wins. 
-
-- The newly derived variables, Walks_R (-1074.48), Strikeout_R (1081.787) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
-
-
-
-\
-At this point, we will retain this model as is for comparision with other models. 
-\
-\
-
-
-
-##3.4 Model Four
-
-In this model (model4), we will be using all variables original, adjusted, and derived values. We will create model and we will highlight the variables that being recommended using the AIC value.
-First we will produce the summary model as per below: \
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-data <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H", "TEAM_BATTING_2B", "TEAM_BATTING_3B", "TEAM_BATTING_HR", "TEAM_BATTING_BB", "TEAM_BATTING_SO", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_BATTING_3B_NEW", "TEAM_BATTING_BB_NEW", "TEAM_BASERUN_SB_NEW", "TEAM_FIELDING_E_NEW", "TEAM_FIELDING_DP_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_PITCHING_H_NEW", "TEAM_PITCHING_HR_NEW", "TEAM_PITCHING_SO_NEW", "TEAM_BATTING_H_SIN", "TEAM_BATTING_2B_SIN", "TEAM_BATTING_3B_SIN", "TEAM_BATTING_BB_SIN", "TEAM_BASERUN_SB_SIN", "TEAM_FIELDING_E_SIN", "TEAM_FIELDING_DP_SIN", "TEAM_PITCHING_BB_SIN", "TEAM_PITCHING_H_SIN", "TEAM_PITCHING_HR_SIN", "TEAM_PITCHING_SO_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Walks_R", "HomeRuns_R", "Strikeout_R", "TEAM_BATTING_EB", "TEAM_BATTING_1B")] 
-
-model4<-lm(TARGET_WINS~., na.omit(data))
-
-summary(model4)
-# coefficients(model1) # model coefficients
-# confint(model1, level=0.95) # CIs for model parameters 
-# fitted(model1) # predicted values
-# residuals(model1) # residuals
-# anova(model1) # anova table 
-# vcov(model1) # covariance matrix for model parameters 
-# influence(model1) # regression diagnostics 
-
-```
-\
-\
-Lets now step thru this model and retain only those variables that have the most impact. 
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results= 'hide'}
-
-step4 <- step(model4,direction="backward",test="F")
-summary(step4)
-#coefficients(step4)
-
-```
-
-
-\
-Based on the backward stepwise selection, below are the characteristics of the refined model :
-
-- The Residual standard error is 10.02
-- Multiple R-squared: 0.4264
-- Adjusted R-squared: 0.4197
-- F-statistic: 64.17 on 21 and 1813 DF
-- p-value: < 2.2e-16
-
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
-
-coef4<- data.frame('Coefficients'= step4$coefficients)
-kable(coef4, caption="Coefficients for the refined model 4")
-
-
-```
-\
-\
-
-Based on the above coefficients, we can see that some of the coefficients are counter-intutive to the Theoretical impact. 
-
-- TEAM_BATTING_H (-0.127), TEAM_FIELDING_DP (-0.105), TEAM_PITCHING_SO (-0.019), TEAM_BATTING_2B_NEW (-0.202), TEAM_BASERUN_SB_SIN (-0.699) have a negative coefficient even though they are theoretically supposed to have a positive impact on wins. This means that a unit change in each of these variables will decrease the number of a wins. 
-
-- TEAM_PITCHING_H (0.062), TEAM_FIELDING_E_NEW (0.063) has a positive coefficient even though they are theoretically supposed to have a negative impact on wins. This means that a unit change in each of these variables will increase the number of a wins. 
-
-- TEAM_BATTING_2B (0.154), TEAM_BATTING_3B (0.192), TEAM_BATTING_HR (0.208), TEAM_BATTING_BB (0.16), TEAM_BASERUN_SB (0.069), TEAM_FIELDING_E (-0.197), TEAM_PITCHING_BB (-0.081), TEAM_PITCHING_HR (-0.103), 
-TEAM_BATTING_H_NEW (0.091), TEAM_PITCHING_BB_NEW (-0.041) have the intended theoretical impact on wins. This means that a unit change in each of these variables will either decrease or increase the number of a wins as intended by the theoretical impact. 
-
-- The newly derived variables TEAM_BATTING_HBP_Missing (-2.539), TEAM_BASERUN_CS_Missing (-4.136) seem to a negative impact on wins. This means that a missing value will decrease the number of a wins. 
-
-- The newly derived variables, Hits_R (-1458.464), Strikeout_R (1465.04) seem to have a huge impact on the wins. A unit change in each of these variables seems to have a huge impact on the wins.
-
-
-\
-\
-At this point, we will retain this model as is for comparision with other models and further refining. 
-
-
-
-#4 Model Selection 
-
-In section we will further examine all four models.  We will apply a model selection strategy by comparing models' AIC, R-squared, and VIF (variance inflation factors).
-\
-In addition, we will perform diagnostics to validate the assumption of Linear Regression.
-
-            
-##4.1 Model selection strategy:
-
-Following model selection strategy has been used for this assignment: 
-
-(1) Akaike information criterion (AIC) measure has been used to compare relative performance of different models
-(2) Along with that of adjusted R^2 values are also used to compare different models performance \ 
-(3) Different regression model diagnostics plots has been used to test assumptions for regression- (a) test for  normality of residuals (b) plot  for randomness of residuals, (c) evaluation of homoscedasticity 
-(4) Finally model has been tested for collinearity and enhanced by removing collinearity  with the use of variance inflation factors (VIF) \
-
-
-#### Compare models by AIC measures and adjusted R^2 values \
-\
-
-
-1- Below are the AIC Scores for the 4 models that we built earlier:
-
-
-```{r ,echo=FALSE}
-
-# Compare the four models created above to identify the best model. By using AIC values on the four models  
-x<- data.frame(models=c("Model1", "Model2", "Model3", "Model4"), AIC=c(AIC(step1), AIC(step2), AIC(step3), AIC(step4)))
-
-kable(x, caption= "Model AIC Scores")
-
-# AIC(step1)
-# AIC(step2)
-# AIC(step3)
-# AIC(step4)
-
-#summary(step4)
-
-```
-
-Looking at the AIC values it appears that models, "step1" & "step 4" are comparatively better models of the pack.
-
-2- Below are the analysis of the adjusted R^2 values: \ 
-
-
-We noticed that "step1" has adjusted R^2 value 0.4019 which means this model can explain 40.19% variability in data. "step4" has adjusted R^2 value of 0.4197 and this model can explain 41.97% variability in data. Therefore, based on these two data points model "step4" was picked for further evaluation.
-
-\newpage
-
-##4.2 Model diagnostics
- 
-We will create plots to validate the assumption of Linear Regression:
-
-###Normality check of residual values:\
-
-
-```{r, echo=FALSE}
-
-#  Analysis of plot on residuals to verify normal distribution of residuals
-
-library(MASS)
-sresid <- studres(step4) 
-hist(sresid, freq=FALSE, 
-     main="Distribution of Residuals")
-xfit<-seq(min(sresid),max(sresid),length=40) 
-yfit<-dnorm(xfit) 
-lines(xfit, yfit)
-```
-
-Based on the normality plot it appears that residual distribution is normal. This indicates the mean of the difference between our predictions. 
-
-plot residuals with respect to predicted value for randomness:
-
-```{r ,echo=FALSE}
-
-step4.res <- resid(step4)
-score<-predict(step4,type="response")
-
-plot(score, step4.res,  ylab="Residuals", xlab="Number of Predicted Wins", main="Residual vs Predicted values") 
-abline(0, 0) 
-```
-
-Distribution of residual values are random around base line and do not show any pattern around base line.
-
-###Evaluate homoscedasticity:
-
-```{r ,echo=FALSE,eval=TRUE}
-
-library(car)
-
-ncvTest(step4)
-# plot studentized residuals vs. fitted values 
-spreadLevelPlot(step4)
-
-
-
-```
-
-The test confirms the non-constant error variance test. It also has a p-value higher than a significance level of 0.05. 
-
-###Analysis of collinearity: 
-```{r ,echo=FALSE,warning=FALSE,message=FALSE}
-
-library(faraway)
-
-# Evaluate Collinearity of the variables in model "step4" vif(step4) # variance inflation factors 
-kable(sqrt(vif(step4)), caption = 'Analysis of collinearity')
-
-```
-
-Variables have been tested with variance inflation factors (VIF). If any variable has value which is greater than 3 then the highest value variable been removed from model and model performance has been evaluated. Following are the out comes from this assessment steps-
-
-pass 1- Based on that variance inflation factors (VIF) following variable "Hits_R" has highest value < 3 and is removed from model, and model is evaluated without that variable. Adjusted R^2 value has changed from 0.4197 to 0.4187 due to removal of this variable. Hence this variable is not adding lot of value to the model and can be removed.
-
-pass 2- Based on that variance inflation factors (VIF) following variable "TEAM_BATTING_BB" has highest value < 3 and is removed from model, and model is evaluated without that variable. Adjusted R^2 values changed from 0.4187  to 0.4159. Hence this variable is not adding lot of value to the model and can be removed.
-
-pass 3-pass 9- Based on that variance inflation factors (VIF) step 3- step 9 was followed by removing one variable at a time to reduce the VIF measure below 3 for all variable and without compromising too much on model performance(adjusted R^2 value). In final model adjusted R^2 value is 0.4037. That means around 40.37 % variability can be explained by this model. Also all the variables are relevant and having p value less than 0.05.
-
-
-
-
-```{r ,echo=FALSE}
-
-data_step4 <- moneyball2[, c("TARGET_WINS", "TEAM_BATTING_H", "TEAM_BATTING_2B", "TEAM_BATTING_3B", "TEAM_BATTING_HR", "TEAM_BATTING_BB", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_FIELDING_E_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_BASERUN_SB_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Strikeout_R")] 
-
-
-# pass 1
-step4_up<-lm(TARGET_WINS~.-Hits_R,data=data_step4)
-
-
-#summary(step4)
-#summary(step4_up)
-
-sqrt(vif(step4_up))
-
-#pass 2
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB ,data=data_step4)
-
-#summary(step4_up)
-
-
-#sqrt(vif(step4_up))
-
-# pass 3-
-
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H ,data=data_step4)
-
-
-#summary(step4_up)
-
-#sqrt(vif(step4_up))
-
-# pass 4
-
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H-TEAM_BATTING_HR,data=data_step4)
-
-#sqrt(vif(step4_up))
-
-#summary(step4_up)
-
-#pass 5
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H-TEAM_BATTING_HR-TEAM_BATTING_2B ,data=data_step4)
-
-#sqrt(vif(step4_up))
-
-#summary(step4_up)
-
-# pass 6
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H-TEAM_BATTING_HR-TEAM_BATTING_2B-TEAM_PITCHING_H ,data=data_step4)
-
-#sqrt(vif(step4_up))
-
-#summary(step4_up)
-
-# pass 7
-
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H-TEAM_BATTING_HR-TEAM_BATTING_2B-TEAM_PITCHING_H-TEAM_PITCHING_BB ,data=data_step4)
-
-#sqrt(vif(step4_up))
-
-#summary(step4_up)
-
-
-# pass 8
-
-step4_up<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H-TEAM_BATTING_HR-TEAM_BATTING_2B-TEAM_PITCHING_H-TEAM_PITCHING_BB-TEAM_FIELDING_E_NEW ,data=data_step4)
-
-#sqrt(vif(step4_up))
-
-#summary(step4_up)
-
-# pass 9
-
-step4_final<-lm(TARGET_WINS ~ .-Hits_R-TEAM_BATTING_BB-TEAM_BATTING_H-TEAM_BATTING_HR-TEAM_BATTING_2B-TEAM_PITCHING_H-TEAM_PITCHING_BB-TEAM_FIELDING_E_NEW-TEAM_BATTING_HBP_Missing ,data=data_step4)
-
-sqrt(vif(step4_final))
-
-summary(step4_final)
-
-```
-
-Final model was derived after number of iterations of variable eliminations were carried out. VIF values in the final model among variables < 3. In this scenario a model with slightly less performance was selected to avoid collinearity effect among variables and reduced complexity. Final model all the variables are relevant and having p value less than 0.05.
-\
-
-
-#5 Test Data 
-
-We will now run the final model on the test data. Our initial step is to carry out the same transformations that we did to the train dataset. Below is a quick summary after the transformations:
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-# reading the test data from github
-
-url <- "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/moneyball-evaluation-data.csv"
-moneyballT<- read.csv(url)
-
-#removing the index column which is not required
-moneyballTest<- select(moneyballT, -(INDEX))
-#summary(moneyballTest)
-
-# function for removing outliers - http://r-statistics.co/Outlier-Treatment-With-R.html
 
 treat_outliers <- function(x) {
 qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
@@ -1135,149 +810,199 @@ x[x > (qnt[2] + H)] <- caps[2]
 return(x)
 }
 
-moneyballTest$TEAM_BATTING_H_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_H)
-moneyballTest$TEAM_BATTING_2B_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_2B)
-moneyballTest$TEAM_BATTING_3B_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_3B)
-moneyballTest$TEAM_BATTING_BB_NEW <- treat_outliers(moneyballTest$TEAM_BATTING_BB)
-moneyballTest$TEAM_BASERUN_SB_NEW <- treat_outliers(moneyballTest$TEAM_BASERUN_SB)
-moneyballTest$TEAM_FIELDING_E_NEW <- treat_outliers(moneyballTest$TEAM_FIELDING_E)
-moneyballTest$TEAM_FIELDING_DP_NEW <- treat_outliers(moneyballTest$TEAM_FIELDING_DP)
-moneyballTest$TEAM_PITCHING_BB_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_BB)
-moneyballTest$TEAM_PITCHING_H_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_H)
-moneyballTest$TEAM_PITCHING_HR_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_HR)
-moneyballTest$TEAM_PITCHING_SO_NEW <- treat_outliers(moneyballTest$TEAM_PITCHING_SO)
+#KIDSDRIV, AGE, MVR_PTS, TIF, TRAVTIME and YOJ
 
-# In the second set, we will use the sin transformation and create the following variables:
+insure_train_crash$KIDSDRIV_cap <- treat_outliers(insure_train_crash$KIDSDRIV)
+insure_train_crash$AGE_cap <- treat_outliers(insure_train_crash$AGE)
+insure_train_crash$MVR_PTS_cap <- treat_outliers(insure_train_crash$MVR_PTS)
+insure_train_crash$TIF_cap <- treat_outliers(insure_train_crash$TIF)
+insure_train_crash$TRAVTIME_cap <- treat_outliers(insure_train_crash$TRAVTIME)
+insure_train_crash$YOJ_cap <- treat_outliers(insure_train_crash$YOJ)
 
-moneyballTest$TEAM_BATTING_H_SIN <- sin(moneyballTest$TEAM_BATTING_H)
-moneyballTest$TEAM_BATTING_2B_SIN <- sin(moneyballTest$TEAM_BATTING_2B)
-moneyballTest$TEAM_BATTING_3B_SIN <- sin(moneyballTest$TEAM_BATTING_3B)
-moneyballTest$TEAM_BATTING_BB_SIN <- sin(moneyballTest$TEAM_BATTING_BB)
-moneyballTest$TEAM_BASERUN_SB_SIN <- sin(moneyballTest$TEAM_BASERUN_SB)
-moneyballTest$TEAM_FIELDING_E_SIN <- sin(moneyballTest$TEAM_FIELDING_E)
-moneyballTest$TEAM_FIELDING_DP_SIN <- sin(moneyballTest$TEAM_FIELDING_DP)
-moneyballTest$TEAM_PITCHING_BB_SIN <- sin(moneyballTest$TEAM_PITCHING_BB)
-moneyballTest$TEAM_PITCHING_H_SIN <- sin(moneyballTest$TEAM_PITCHING_H)
-moneyballTest$TEAM_PITCHING_HR_SIN <- sin(moneyballTest$TEAM_PITCHING_HR)
-moneyballTest$TEAM_PITCHING_SO_SIN <- sin(moneyballTest$TEAM_PITCHING_SO)
-
-
-## Missing Values
-
-# Next we impute missing values. Since we have handled outliers, we can go ahead and use the mean as impute values. As with outliers, we will go ahead and create new variables for the following:
-# 
-# TEAM_BATTING_SO_NEW
-# 
-# We will re-use the already created new variables for fixing the missing values for the below:
-# 
-# TEAM_PITCHING_SO_NEW 
-# TEAM_BASERUN_SB_NEW
-# TEAM_FIELDING_DP_NEW
-
-
-
-moneyballTest$TEAM_BATTING_SO_NEW <- moneyballTest$TEAM_BATTING_SO
-moneyballTest$TEAM_BATTING_SO_NEW[is.na(moneyballTest$TEAM_BATTING_SO_NEW)] <- mean(moneyballTest$TEAM_BATTING_SO_NEW, na.rm = T) 
-
-moneyballTest$TEAM_PITCHING_SO_NEW[is.na(moneyballTest$TEAM_PITCHING_SO_NEW)] <- mean(moneyballTest$TEAM_PITCHING_SO_NEW, na.rm = T) 
-moneyballTest$TEAM_BASERUN_SB_NEW[is.na(moneyballTest$TEAM_BASERUN_SB_NEW)] <- mean(moneyballTest$TEAM_BASERUN_SB_NEW, na.rm = T) 
-moneyballTest$TEAM_FIELDING_DP_NEW[is.na(moneyballTest$TEAM_FIELDING_DP_NEW)] <- mean(moneyballTest$TEAM_FIELDING_DP_NEW, na.rm = T) 
-
-### Missing Flags
-
-# First we create flag variables to indicate whether TEAM_BATTING_HBP and TEAM_BASERUN_CS and missing. If the value is missing, we code it with 1 and if the value is present we code it with 0.
-
-
-moneyballTest$TEAM_BATTING_HBP_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BATTING_HBP),1,0)
-moneyballTest$TEAM_BASERUN_CS_Missing <- ifelse(complete.cases(moneyballTest$TEAM_BASERUN_CS),1,0)
-
-
-###Ratios
-
-# Next we create some additional variables, that we think may be useful with the prediction. Here we create the following ratios:
-
-moneyballTest$Hits_R <- moneyballTest$TEAM_BATTING_H/moneyballTest$TEAM_PITCHING_H
-moneyballTest$Walks_R <- moneyballTest$TEAM_BATTING_BB/moneyballTest$TEAM_PITCHING_BB
-moneyballTest$HomeRuns_R <- moneyballTest$TEAM_BATTING_HR/moneyballTest$TEAM_PITCHING_HR
-moneyballTest$Strikeout_R <- moneyballTest$TEAM_BATTING_SO/moneyballTest$TEAM_PITCHING_SO
-
-
-###Calculated Variables
-
-moneyballTest$TEAM_BATTING_EB <- moneyballTest$TEAM_BATTING_2B + moneyballTest$TEAM_BATTING_3B + 
-                                  moneyballTest$TEAM_BATTING_HR
-
-moneyballTest$TEAM_BATTING_1B <- moneyballTest$TEAM_BATTING_H - moneyballTest$TEAM_BATTING_EB
-
-
-# retain only those variables that are used in the final refined model4.
-
-data_test <- moneyballTest[, c("TEAM_BATTING_H", "TEAM_BATTING_2B", "TEAM_BATTING_3B", "TEAM_BATTING_HR", "TEAM_BATTING_BB", "TEAM_BASERUN_SB", "TEAM_FIELDING_E", "TEAM_FIELDING_DP", "TEAM_PITCHING_BB", "TEAM_PITCHING_H", "TEAM_PITCHING_HR", "TEAM_PITCHING_SO", "TEAM_BATTING_H_NEW", "TEAM_BATTING_2B_NEW", "TEAM_FIELDING_E_NEW", "TEAM_PITCHING_BB_NEW", "TEAM_BASERUN_SB_SIN", "TEAM_BATTING_HBP_Missing", "TEAM_BASERUN_CS_Missing", "Hits_R", "Strikeout_R")] 
-
-#head(moneyballTest)
-
-summary(data_test)
 
 ```
-\
-\
 
-Now that we have the test data prepared, we will go ahead and run the final model on this dataset.
+Lets see how the capped variables look in boxplots.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-#summary(step4_final)
+par(mfrow=c(1,3))
 
-pred_test <- predict(step4_final, data_test, interval="prediction", level=0.95)
+boxplot(insure_train_crash$KIDSDRIV_cap,main="KIDSDRIV_cap")
+boxplot(insure_train_crash$AGE_cap,main="AGE_cap")
+boxplot(insure_train_crash$MVR_PTS_cap,main="MVR_PTS_cap")
+boxplot(insure_train_crash$TIF_cap,main="TIF_cap")
+boxplot(insure_train_crash$TRAVTIME_cap,main="TRAVTIME_cap")
+boxplot(insure_train_crash$YOJ_cap,main="YOJ_cap")
 
-#pred_test
 
-final_predicted_DS <- cbind(data_test, pred_test)
 ```
+\
+\
 
-Below is sample of the result of the prediction for the 259 cases that we had for evaluation.
+In the second set, we will use the log transformation and create new variables for KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ. 
+
+\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-head(final_predicted_DS)
+
+insure_train_crash$KIDSDRIV_log <- log(insure_train_crash$KIDSDRIV)
+insure_train_crash$AGE_log <- log(insure_train_crash$AGE)
+insure_train_crash$MVR_PTS_log <- log(insure_train_crash$MVR_PTS)
+insure_train_crash$TIF_log <- log(insure_train_crash$TIF)
+insure_train_crash$TRAVTIME_log <- log(insure_train_crash$TRAVTIME)
+insure_train_crash$YOJ_log <- log(insure_train_crash$YOJ)
+
+
+```
+
+
+Lets see how the log transformed variables look in boxplots.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,3))
+
+boxplot(insure_train_crash$KIDSDRIV_log,main="KIDSDRIV_log")
+boxplot(insure_train_crash$AGE_log,main="AGE_log")
+boxplot(insure_train_crash$MVR_PTS_log,main="MVR_PTS_log")
+boxplot(insure_train_crash$TIF_log,main="TIF_log")
+boxplot(insure_train_crash$TRAVTIME_log,main="TRAVTIME_log")
+boxplot(insure_train_crash$YOJ_log,main="YOJ_log")
+
+
+```
+
+
+\
+\
+
+In the third set, we will use the sin transformation and create new variables for KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ. 
+
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_crash$KIDSDRIV_sin <- sin(insure_train_crash$KIDSDRIV)
+insure_train_crash$AGE_sin <- sin(insure_train_crash$AGE)
+insure_train_crash$MVR_PTS_sin <- sin(insure_train_crash$MVR_PTS)
+insure_train_crash$TIF_sin <- sin(insure_train_crash$TIF)
+insure_train_crash$TRAVTIME_sin <- sin(insure_train_crash$TRAVTIME)
+insure_train_crash$YOJ_sin <- sin(insure_train_crash$YOJ)
+
+
+```
+
+
+Lets see how the sin transformed variables look in boxplots.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,3))
+
+boxplot(insure_train_crash$KIDSDRIV_sin,main="KIDSDRIV_sin")
+boxplot(insure_train_crash$AGE_sin,main="AGE_sin")
+boxplot(insure_train_crash$MVR_PTS_sin,main="MVR_PTS_sin")
+boxplot(insure_train_crash$TIF_sin,main="TIF_sin")
+boxplot(insure_train_crash$TRAVTIME_sin,main="TRAVTIME_sin")
+boxplot(insure_train_crash$YOJ_sin,main="YOJ_sin")
+
+```
+
+
+##2.2 Missing Values treatment
+
+\
+\
+As we have seen in the data exploration phase, we can do with removing the rows that contain missing values. We now do this for both the datasets:
+
+\
+\
+
+```{r}
+
+insure_train_full <- insure_train_full[complete.cases(insure_train_full),]
+insure_train_crash <- insure_train_crash[complete.cases(insure_train_crash),]
+
+```
+
+
+\
+\
+
+##2.3 Adding New Variables
+
+In this section, we generate some additional variables that we feel will help the correlations. As before, we do it for both the datasets.
+
+###2.3.1 New Variables for Full Dataset (TARGET_FLAG)
+
+\
+
+The following were some of the observations we made during the data exploration phase for TARGET_FLAG
+
+\
+\
+
+CAR_TYPE - If you drive Minivans and Panel Trucks you have lesser chance of being in a crash as against Pickups, Sports, SUVs and Vans. Since the distiction is clear, we believe that binning this variable accordingly will help strengthen the correlation. \
+\
+Accordingly, we will bin these variables as below:
+\
+CAR_TYPE_FLAG_BIN : \
+\
+- 1 : if CAR_TYPE is Minivans or Panel Trucks \
+- 0 : if CAR_TYPE is Pickups, Sports, SUVs or Vans
+\
+\
+
+
+```{r}
+
+insure_train_full$CAR_TYPE_FLAG_BIN <- ifelse(insure_train_full$CAR_TYPE_Minivan | insure_train_full$CAR_TYPE_Panel.Truck, 1, 0)
 
 ```
 
 \
-Below is the histogram of the predicted wins for the 259 cases that we had for evaluation:
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-hist(final_predicted_DS$fit)
-
-```
-
-#6. Conclusion \
-
-Based on AIC, R-square, VIF, and our regression diagnostics for normality, homoscedasticity, and collinearity, we feel that model Four has performed better than the other three models.  In this case, we feel that after we fixed the data discrepancy issues, where outliers and missing data are remediated, and data transformations are added, we saw little improvement in the model (4).
-However, based on R-squared values 40%, we feel that our prediction on this this data is little low. We tried to improve our prediction by creating additional values, however, it did not improve our prediction to the level expected (we were hoping for over 70%). Perhaps additional information on the data set such as team and players statistics by year, league, and even team and players issues may help improve our prediction ability on the data set. \
-
-
-Finally, we would like to share the below linear model based on our final analysis:
-
-Y = 40.283276 + \
-0.172848 * TEAM_BATTING_3B + \
-0.071631 * TEAM_BASERUN_SB -  \
-0.120338 * TEAM_FIELDING_E - \
-0.106677 * TEAM_FIELDING_DP + \
-0.094122 * TEAM_PITCHING_HR - \
-0.019500 * TEAM_PITCHING_SO + \
-0.032683 * TEAM_BATTING_H_NEW - \newline 
-0.056302 * TEAM_BATTING_2B_NEW +  \newline 
-0.033202 * TEAM_PITCHING_BB_NEW  - \newline
-0.668686 * TEAM_BASERUN_SB_SIN - \
-4.062390 * TEAM_BASERUN_CS_Missing  + \
-17.050630 * Strikeout_R + $\epsilon$
-   
-\newpage
-
-#Appendix A: DATA621 Homework 01 R Code 
 \
 
-```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/HW1_Final_03.Rmd', documentation = 0)), eval = FALSE}
+EDUCATION - If you have only a high school education then you are more likely to crash than if you have a Bachelors, Masters or a Phd. Again binning this variable will strengthen the correlation.
+\
+\
+Accordingly, we will bin these variables as below:
+\
+EDUCATION_FLAG_BIN : \
+\
+- 1 : if EDUCATION is High School \
+- 0 : if EDUCATION is Bachelors, Masters or Phd
+\
+\
+
+
+```{r}
+
+insure_train_full$EDUCATION_FLAG_BIN <- ifelse(insure_train_full$EDUCATION_High.School, 1, 0)
+
 ```
+
+
+
+JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you are more likely to be in a crash against Doctor, Lawyer, Manager or professional.  Again binning this variable will strengthen the correlation.
+
+\
+\
+Accordingly, we will bin these variables as below:
+\
+JOB_TYPE_FLAG_BIN : \
+\
+- 1 : if JOB_TYPE is Student, Homemaker, or in a Blue Collar or Clerical \
+- 0 : if JOB_TYPE is Doctor, Lawyer, Manager or professional
+\
+\
+
+```{r}
+
+insure_train_full$JOB_TYPE_FLAG_BIN <- ifelse(insure_train_full$JOB_Student |  insure_train_full$JOB_Home.Maker | insure_train_full$JOB_Clerical | insure_train_full$JOB_Blue.Collar, 1, 0)
+
+```
+
 
 
