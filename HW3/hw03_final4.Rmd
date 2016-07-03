@@ -349,7 +349,7 @@ par(mfrow=c(1,2))
 In this section, we will analyze few transformation options using Sin, Log, Sqrt, nth transformations.
 Using histogram and boxplots to evaluate best transformation to handle outliers. \
 
-First we will start with variable, zn (proportion of residential land zoned for large lots) as per below 
+First we will start with variable, zn (proportion of residential land zoned for large lots) as per below- 
 
 
 
@@ -398,8 +398,6 @@ show_charts(zn)
 
 ##2.3.1 Variable Transformation Interpretation 
 
-For zn, we can see that there are large number of values with 0. ninth transformation seem better for this variable..(1)
-
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
@@ -407,7 +405,7 @@ show_charts(indus)
 
 ```
 
-For indus, we can see that there is a spike toward right side of he distribution. Looking at the sqrt transformation it appears that distribution is close to normal and having two peaks after transformation.  
+  
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
@@ -427,8 +425,7 @@ show_charts(rm)
 
 ```
 
-\
-For rm, there are some outliers as we can see from box plot. This variable will need some transformation to handle the outliers.
+
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,fig.show ='hide'}
@@ -436,7 +433,7 @@ For rm, there are some outliers as we can see from box plot. This variable will 
 show_charts(age)
 ```
 
-age of the building variable is skewed heavily towards right side. We will need some transformation for this variable and looks sin transformation is best option for this case  
+
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
@@ -445,8 +442,7 @@ show_charts(dis)
 
 ```
 
-For this variable dis, there are some outliers which needs transformation to handle those outliers. log transformation looks best suited for this scenario.
-\
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
@@ -455,9 +451,6 @@ show_charts(rad)
 
 ```
 
-For rad variable distribution is not uniform as seen from the chart and will need transformation.
-
-\
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.show ='hide'}
 
@@ -466,7 +459,7 @@ show_charts(tax)
 
 ```
 
-For tax variable is not uniformly distributed but there is no outlier for this variable.
+
 \
 
 
@@ -477,7 +470,6 @@ show_charts(ptratio)
 
 ```
 
-For pratio has right aligned peak but no outliers are there in data set.
 \
 \
 
@@ -495,7 +487,7 @@ show_charts(black)
 show_charts(lstat)
 
 ```
-The variable lstat has long right tail and lef skewed
+
 
 \
 \
@@ -505,16 +497,19 @@ The variable lstat has long right tail and lef skewed
 show_charts(medv)
 
 ```
+Logit function has been used in building models in this assignment. Any transformation like sin,sqrt,nth etc for logit model brings additional complexity while doing the interpretation of the model. For that purpose any such transformation has not been used for the variables as normality is not a criteria for logit model. Following are some of the transformation of the variables that have been used here-
 
 
 
+1. zn: proportion of residential land zoned for large lots (over 25000 square feet) (predictor variable). 
+For zn, we can see that there are large number of values with 0. Option to transformed zn to a variable of binary values 0 and 1. Values with 0 value to be transformed to 0 other values will be bucketed to 1.\
 
-\\\\
-Following variables will need some transformation:
+2. chas: a dummy var. for whether the suburb borders the Charles River (1) or not (0) (predictor variable). This variable will be converted to a factor with values of 0 and 1 in the model.\ 
 
-1. zn: proportion of residential land zoned for large lots (over 25000 square feet) (predictor variable) 
-2. chas: a dummy var. for whether the suburb borders the Charles River (1) or not (0) (predictor variable) 
-3. target: whether the crime rate is above the median crime rate (1) or not (0) (response variable) 
+
+3. target: whether the crime rate is above the median crime rate (1) or not (0) (response variable). Target variable will also be converted to a factor variable before using that in the model.
+
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -557,8 +552,6 @@ train_test_mod$zn_new [train_test_mod$zn_new== 0] <- 0
 
 ```
 
-\
-All new variables seem to have a positive correlation with wins. However, some of them do not seem to have a strong correlation. Lets see how they perform while modeling.
 
 
 \newpage
@@ -624,7 +617,7 @@ $\newline$
  
  (iv) No. of iterations are 9 before lowest value of AIC was derived for this model.
 
-###3.1.2 Model Two 
+##3.1.2 Model Two 
 
 This model, we will be using original variables; however using step function (backward process) instead of GLM.
 
@@ -693,7 +686,7 @@ tax_new, medv_new, and lstat_new.
   c. For a one unit increase in dis, the log odds of crime rate above median value increases by 0.82.\
 
 
-###3.1.4 Model Four 
+##3.1.4 Model Four 
 
 In this model we will be using transformed variables using backward step function instead of GLM
 
@@ -725,7 +718,7 @@ $\newline$
 
 (iv) same variables as model3 are being marked as relevant for model 4 after backward elimination process.\
 
-###3.1,5 Model Five 
+##3.1,5 Model Five 
 
 In this model we will be using original variables; however the Linear Discriminant Analysis function lda in ISLR package.
 
@@ -743,14 +736,18 @@ model3
 
 ###??
 $\newline$
-(i) summary provides prior probability of outcome before star of model
-
-(ii) Group means provides mean values for variables with respect to target variable values 0 and 1 here
-
-(iii) One point to note here this model performs less accurately compared to earlier logistics models.LDA models assumes normality of its variable and hence the outliers than we have seen in actual model is impacting the result out of this model.
+(i)Classification boundary equation is following-
+ -0.004 x zn+ 0.0281 x indus -0.055 x chas + 7.910 x nox + 0.165 X rm + 0.013 x age + 0.084 x dis + 0.102 x rad -0.001 x tax + 0.009 x ptratio  -0.0009 x black + 0.024 x lstat + 0.042 x medv =0
 
 
-###3.1.6 Model six
+(ii) From summary table provides prior probability of outcome before the model is run.\
+
+(iii) Group means provides mean values for each variable with respect to target variable values 0 and 1.\
+
+ (iv) This model has accuracy value 82.97 % which is less compare to the other models.LDA model assumes normality of the variables used in the model and theere are some variables which are not normally distributed and have outliers that is impacting the result out of this model.
+
+
+##3.1.6 Model six
 
 In this model we be using transformed variables using Linear Discriminant Analysis 
 
@@ -765,11 +762,16 @@ model3_mod
 
 #####  Interpretation for model 6 \
 
-###??
 $\newline$
-(i) summary provides prior probability of outcome before star of model
-(ii) Group means provides mean values for variables with respect to target variable values 0 and 1 here
-(iii) One point to note here this model performs better than the previous one as outliers were taken care of in transformed set bringing more normality to the model. But overall this model also perform less than logistics model. 
+(i)Classification boundary equation is following-
+ 0.022 x indus -0.186 x chas + 7.970 x nox +  0.015 x age + 0.100 x rad -0.001 x tax - 0.014 x ptratio  -0.001 x black + 0.016 x lstat_new + 0.047 x medv_new -0.008 x rm_new -0.034 x dis_new -0.001 x zn_new =0
+
+
+(ii) From summary table provides prior probability of outcome before the model is run.\
+
+(iii) Group means provides mean values for each variable with respect to target variable values 0 and 1.\
+
+ (iv) This model has accuracy value 82.97 % which is less compare to the other models.LDA model assumes normality of the variables used in the model and theere are some variables which are not normally distributed and have outliers that is impacting the result out of this model. This model with transformed variables seems to performed margaianlly better.
 
 
 
@@ -832,8 +834,12 @@ df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_')
 #Eval(df_pre_train1)
 
 model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+
+
  
  model_comparison[1,]<-Eval(df_pre_train1)
+ 
+ model_comparison<-c(1)
  
  #row.names(model_comparison[1,])<-"model 1"
 
@@ -1015,11 +1021,11 @@ From the comparison table it can be seen model 1 and mode 3 are very close. Mode
 
 For final model following analysis has been carried out-\
 
- (i) Relevant variables in the model
-(ii)  Estimate confidence interval for coefficient
-(iii) odds ratios and 95% CI
-(iv) AUC curve
- (v) Distribution of prediction 
+ (i) Relevant variables in the model\
+(ii)  Estimate confidence interval for coefficient\
+(iii) odds ratios and 95% CI\
+(iv) AUC curve\
+ (v) Distribution of prediction\ 
  
  
 ##4.2.2 Most important variables in the model
@@ -1048,13 +1054,15 @@ Following points can be interpreted for the important variables in the model-
 
 (i)Keeping all other variables same odds of having crime rate above median value increases following way -0.875 for per unit change in indus,2.50 per unit change in dis,1.74 for per unit change in rad,1.51 for per unit change in ptratio and 1.30 for per unit change in medv. Any value which is less than 1 means less chance of an event with the per unit increase of the variable.\
 \
-(ii) nox variable has very high oddd ratio and reason is, in given data set there are records where for range of nox values there is only one outcome of target (either 0 or 1) as shown in the chrt below. That makes easy for prediction of target variable and increases the accuracy of the model. Outlier treatment for this variable will result in 50% reduction on train data set. For this assignment we have kept this variable.\
+(ii) nox variable has very high oddd ratio and reason is, in given data set there are records where for range of nox values there is only one outcome of target (either 0 or 1) as shown in the chrt below with vertical lines. That makes easy for prediction of target variable and increases the accuracy of the model. Outlier treatment for this variable will result in 50% reduction on train data set. For this assignment we have kept this variable.\
 \
-Note: There are approaches to handle such scenario like form of penalized regression. For this assignment purpose we have not perused further into any other model.  
+  
 
 ```{r Nox variable plot with target,echo=FALSE}
 
 plot (city_crime_train$nox,city_crime_train$target, main="nox vs target")
+abline(v=0.425)
+abline(v=0.635)
 
 ```
 
