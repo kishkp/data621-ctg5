@@ -1,0 +1,272 @@
+---
+title: "Business Analytics - Final Project"
+author:
+- Critical Thinking Group 5
+- Arindam Barman
+- Mohamed Elmoudni
+- Shazia Khan
+- Kishore Prasad
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+\newpage
+
+# Overview 
+
+The data set contains approximately 41188 obs. of 21 variables. \
+
+This dataset is based on "Bank Marketing" UCI dataset (please check the description at: http://archive.ics.uci.edu/ml/datasets/Bank+Marketing).
+   The data is enriched by the addition of five new social and economic features/attributes (national wide indicators from a ~10M population country), published by the Banco de Portugal and publicly available at: https://www.bportugal.pt/estatisticasweb.\
+   
+The binary classification goal is to predict if the client will subscribe a bank term deposit (variable y).
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Missing values and Unique Values \
+
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
+if (!require("gdata",character.only = TRUE)) (install.packages("gdata",dep=TRUE))
+
+
+#install.packages("fancyvrb")
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+#library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(Amelia)
+library(popbio)
+library(gdata)
+
+bank_train <- read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional-full.csv",
+           sep = ";",
+           header = TRUE)
+
+variables<- read.csv(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Variable%20Description.csv")
+kable(variables, caption = "Variable Description") 
+
+
+bank_test <-read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional.csv",
+           sep = ";",
+           header = TRUE)
+# head(bank_test)
+
+
+```
+
+We notice that the variables are numerical, categorical and binary. The responce variable y is binary.
+
+Based on the original dataset, our predictor input has 21 variables. And our response variable is 1 variable called y. 
+
+Binomial Logistic regression is the appropriate regression analysis to conduct when the dependent variable is dichotomous (binary).  Like all regression analyses, the logistic regression is a predictive analysis.  Logistic regression is used to describe data and to explain the relationship between one dependent binary variable and one or more metric (interval or ratio scale) independent variables.
+
+
+##1.2 Missing values and Unique Values
+
+We see that there are no missing values in our dataset as shown in table 2 and graph format.
+The unique values are given in the table 3.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,1))
+#finding missing values
+missings<- data.frame(sapply(bank_train,function(x) sum(is.na(x))))
+names(missings)[1]<- paste("Missing Values")
+kable(missings, caption = "Missing Values")
+
+# missing values graph
+#missmap(bank_train, main = "Missing values vs observed")
+
+### finding unique values
+uniques<- data.frame(sapply(bank_train, function(x) length(unique(x))))
+names(uniques)[1]<- paste("Unique Values")
+kable(uniques, caption = "Unique Values")
+
+#str(bank_train)
+
+#prop.table(table(bank_train$y))
+
+
+
+
+```
+
+
+
+#2	Data Preparation
+
+-Convert Binary to 0 and 1\
+-Create dummy variables\
+-Data Summary Analysis \
+-Correlation of Variables with y\
+
+```{r}
+```
+
+
+##2.1 Convert Binary yes and no to 0 and 1
+
+Now in order to prepare the data for modeling, we need to update Yes = 1 and No = 0. \
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+bank_train2<-bank_train
+
+#update response variable to binary values of 0 and 1
+#levels(bank_train2$y)
+levels(bank_train2$y) <- c(0, 1)
+bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
+
+```
+
+
+##2.2 Create dummy variables
+
+Now we need to create dummy variables to find out the relationship between y variables and dependent variables, for all categorical variables.\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#job has 12 unique values, therefore we will need k-1 dummy variables 11
+for(level in unique(bank_train2$job)){
+  bank_train2[paste("job", level, sep = "_")] <- ifelse(bank_train2$job == level, 1, 0)
+}
+#bank_train2$job_unemployed <- NULL
+bank_train2$job <- NULL
+#head(bank_train2)
+
+# Marital has 3 levels - 2 variables are required
+#levels(bank_train2$marital)
+for(level in unique(bank_train2$marital)){
+  bank_train2[paste("marital", level, sep = "_")] <- ifelse(bank_train2$marital == level, 1, 0)
+}
+#bank_train2$marital_divorced <- NULL
+bank_train2$marital <- NULL
+#head(bank_train2)
+
+# education has 7 levels - 6 variables are required
+#levels(bank_train2$education)
+for(level in unique(bank_train2$education)){
+  bank_train2[paste("education", level, sep = "_")] <- ifelse(bank_train2$education == level, 1, 0)
+}
+#bank_train2$education_illiterate <- NULL
+bank_train2$education <- NULL
+#head(bank_train2)
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_train2$contact)
+for(level in unique(bank_train2$contact)){
+  bank_train2[paste("contact", level, sep = "_")] <- ifelse(bank_train2$contact == level, 1, 0)
+}
+bank_train2$contact <- NULL
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_train2$default)
+for(level in unique(bank_train2$default)){
+  bank_train2[paste("default", level, sep = "_")] <- ifelse(bank_train2$default == level, 1, 0)
+}
+bank_train2$default <- NULL
+
+
+#levels(bank_train2$housing)
+for(level in unique(bank_train2$housing)){
+  bank_train2[paste("housing", level, sep = "_")] <- ifelse(bank_train2$housing == level, 1, 0)
+}
+bank_train2$housing <- NULL
+
+#levels(bank_train2$loan)
+for(level in unique(bank_train2$loan)){
+  bank_train2[paste("loan", level, sep = "_")] <- ifelse(bank_train2$loan == level, 1, 0)
+}
+bank_train2$loan <- NULL
+
+#levels(bank_train2$poutcome)
+for(level in unique(bank_train2$poutcome)){
+  bank_train2[paste("poutcome", level, sep = "_")] <- ifelse(bank_train2$poutcome == level, 1, 0)
+}
+bank_train2$poutcome <- NULL
+
+#levels(bank_train2$month)
+for(level in unique(bank_train2$month)){
+  bank_train2[paste("month", level, sep = "_")] <- ifelse(bank_train2$month == level, 1, 0)
+}
+bank_train2$month <- NULL
+
+#levels(bank_train2$day_of_week)
+for(level in unique(bank_train2$day_of_week)){
+  bank_train2[paste("day_of_week", level, sep = "_")] <- ifelse(bank_train2$day_of_week == level, 1, 0)
+}
+bank_train2$day_of_week <- NULL
+
+#dummy variable for previous contact yes or no ; 1 or 0 
+bank_train2$previous_contact <- as.numeric(ifelse(bank_train2$pdays == 999, 0, 1))
+#head(bank_train2)
+
+```
+
+##2.3 Data Summary Analysis 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#str(bank_train2)
+
+ds_stats <- psych::describe(bank_train2, skew = TRUE, na.rm = TRUE)
+#ds_stats
+kable(ds_stats[1:7], caption= "Data Summary")
+kable(ds_stats[8:13], caption= "Data Summary (Cont)")
+
+#head(bank_train2)
+
+fun1 <- function(a, y) cor(y, a)
+x<-bank_train2[,]
+Correlation <- sapply(x, FUN = fun1, y=bank_train2$y) 
+
+#kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
+```
+
+##2.4 Correlation of Variables with y 
+Now we will produce the correlation table between the independent variables and the dependent variable
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+Correlation <- sort(Correlation, decreasing = TRUE)
+#head(Correlation)
+kable(Correlation, caption = "Variable Correlation")
+
+#str(bank_train2)
+#summary(bank_train2)
+
+```
