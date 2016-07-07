@@ -128,6 +128,9 @@ levels(insure_train_full$CAR_TYPE)
 levels(insure_train_full$URBANICITY)
 levels(insure_train_full$REVOKED)
 
+
+summary(insure_train_full)
+
 ```
 \
 \
@@ -141,31 +144,44 @@ From the output above we can make the following observations:\
 - EDUCATION has 2 "High School" values - one starting with "<" and another starting with "z_". It is assumed that both these values are to be converted to "HIGH School".
 \
 \
-- JOB has a "" value. This needs to be replaced with NA.
+- JOB has a "" value. This would indicate that the job is unknown or is not coded. Hence, we will replace this with "Unknown".
+\
+\
+- There are records where CAR_AGE is negative which is not possible. Upon investigation, we find that this is a single record that have the negative value. We will remove this record.
 \
 \
 - We will also create dummy variables for all the factors. 
 \
 \
-- Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
+- Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables. 
+\
+\
+- Similarly, we will drop the TARGET_AMT since we will not be using this as a predictor in this exercise.
 \
 \
 Making the above fixes to the data, we now have a "clean" dataset which can be explored further.
 \
 \
+
+
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 #- some numeric variables like INCOME, HOME_VAL, BLUEBOOK, OLDCLAIM have been converted to Factor variables. This needs to be set right.
 
-insure_train_full$INCOME <- as.numeric(insure_train_full$INCOME)
-insure_train_full$HOME_VAL <- as.numeric(insure_train_full$HOME_VAL)
-insure_train_full$BLUEBOOK <- as.numeric(insure_train_full$BLUEBOOK)
-insure_train_full$OLDCLAIM <- as.numeric(insure_train_full$OLDCLAIM)
+insure_train_full$INCOME <- as.numeric(str_replace_all(insure_train_full$INCOME, pattern =  "[\\$*,]", replacement = ""))
+insure_train_full$HOME_VAL <- as.numeric(str_replace_all(insure_train_full$HOME_VAL, pattern =  "[\\$*,]", replacement = ""))
+insure_train_full$BLUEBOOK <- as.numeric(str_replace_all(insure_train_full$BLUEBOOK, pattern =  "[\\$*,]", replacement = ""))
+insure_train_full$OLDCLAIM <- as.numeric(str_replace_all(insure_train_full$OLDCLAIM, pattern =  "[\\$*,]", replacement = ""))
+
+#head(insure_train_full[, c(8,27,10,28, 17,29, 21, 30)], 20)
+
 
 #- Some of the variables like MSTATUS, SEX, EDUCATION, JOB, CAR_TYPE, URBANICITY have some of the values encoded with "z_". Not that this will impact the analysis, but it will look a bit odd. So we will be fixing this.
 
 #- EDUCATION has 2 "High School" values - one starting with "<" and another starting with "z_". It is assumed that both these values are to be converted to "HIGH School".
 
-#- JOB has a "" value. This needs to be replaced with NA.
+#- JOB has a "" value. This needs to be replaced with Unknown.
+
+#- There are records where CAR_AGE is negative which is not possible. Upon investigation, we find that this is a single record that have the negative value. We will remove this record.
 
 insure_train_full$MSTATUS <- as.factor(str_replace_all(insure_train_full$MSTATUS, "z_", ""))
 insure_train_full$SEX <- as.factor(str_replace_all(insure_train_full$SEX, "z_", ""))
@@ -174,8 +190,12 @@ insure_train_full$EDUCATION <- as.factor(str_replace_all(insure_train_full$EDUCA
 insure_train_full$CAR_TYPE <- as.factor(str_replace_all(insure_train_full$CAR_TYPE, "z_", ""))
 insure_train_full$URBANICITY <- as.factor(str_replace_all(insure_train_full$URBANICITY, "z_", ""))
 
-insure_train_full$JOB[insure_train_full$JOB==""] <- NA
+
+insure_train_full$JOB <- as.character(insure_train_full$JOB)
+insure_train_full$JOB[insure_train_full$JOB==""] <- "Unknown"
 insure_train_full$JOB <- as.factor(str_replace_all(insure_train_full$JOB, "z_", ""))
+
+insure_train_full <- filter(insure_train_full, INDEX !=as.integer(filter(insure_train_full, insure_train_full$CAR_AGE<0)[1]))
 
 #- We will also create dummy variables for all the factors and drop the original variables. 
 
@@ -191,20 +211,10 @@ insure_train_full <- cbind(select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -
 
 # - Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
 
-insure_train_full <- select(insure_train_full, -INDEX)
+insure_train_full <- select(insure_train_full, -INDEX, -TARGET_AMT)
 
-summary(insure_train_full)
 
 ```
-\
-\
-Since we are doing a Logistic Regression for TARGET_FLAG we need to check for the following assumptions:\
-\
-\
--- The dependent variable need not to be normally distributed \
--- Errors need to be independent but not normally distributed. \
--- We will be using GLM and GLM does not assume a linear relationship between dependent and independent variables. However, it assumes a linear relationship between link function and independent variables in logit model. \
--- Also does not use OLS (Ordinary Least Square) for parameter estimation. Instead, it uses maximum likelihood estimation (MLE) 
 \
 \
 
@@ -243,10 +253,10 @@ kable(data.frame(Correlation_TARGET_FLAG), caption = "Correlation between TARGET
 \
 \
 
-The above table suggests that none of the variables seem to have a very strong correlation with TARGET_FLAG. However, CAR_TYPE_Van, RED_CAR_no, JOB_Home.Maker, SEX_F, JOB_Clerical, CAR_TYPE_SUV, TRAVTIME, BLUEBOOK, CAR_TYPE_Pickup, CAR_TYPE_Sports.Car, JOB_Student, KIDSDRIV, JOB_Blue.Collar, HOMEKIDS, MSTATUS_No, EDUCATION_High.School, CAR_USE_Commercial, REVOKED_Yes, PARENT1_Yes, OLDCLAIM, CLM_FREQ, MVR_PTS and URBANICITY_Highly.Urban..Urban have a positive correlation. 
+The above table suggests that none of the variables seem to have a very strong correlation with TARGET_FLAG. However, CAR_TYPE_Van, RED_CAR_no, JOB_Home.Maker, SEX_F, JOB_Clerical, CAR_TYPE_SUV, TRAVTIME, CAR_TYPE_Pickup, CAR_TYPE_Sports.Car, JOB_Student, JOB_Blue.Collar, KIDSDRIV, HOMEKIDS, MSTATUS_No, OLDCLAIM, EDUCATION_High.School, CAR_USE_Commercial, REVOKED_Yes, PARENT1_Yes, CLM_FREQ, MVR_PTS, URBANICITY_Highly.Urban..Urban have a positive correlation. 
 \
 \
-Similarly, URBANICITY_Highly.Rural..Rural, PARENT1_No, REVOKED_No, HOME_VAL, CAR_USE_Private, CAR_TYPE_Minivan, MSTATUS_Yes, JOB_Manager, AGE, CAR_AGE, TIF, EDUCATION_Masters, YOJ, EDUCATION_PhD, JOB_Lawyer, JOB_Doctor, EDUCATION_Bachelors, JOB_Professional, INCOME, SEX_M, RED_CAR_yes, CAR_TYPE_Panel.Truck have a negative correlation. 
+Similarly, URBANICITY_Highly.Rural..Rural, HOME_VAL, PARENT1_No, REVOKED_No, CAR_USE_Private, INCOME, CAR_TYPE_Minivan, MSTATUS_Yes, JOB_Manager, BLUEBOOK, AGE, CAR_AGE, TIF, EDUCATION_Masters, YOJ, EDUCATION_PhD, JOB_Lawyer, JOB_Doctor, EDUCATION_Bachelors, JOB_Professional, SEX_M, RED_CAR_yes, CAR_TYPE_Panel.Truck have a negative correlation. 
 \
 \
 Lets now see how values in some of the variable affects the correlation:
@@ -258,12 +268,55 @@ CAR_TYPE - If you drive Minivans and Panel Trucks you have lesser chance of bein
 EDUCATION - If you have only a high school education then you are more likely to crash than if you have a Bachelors, Masters or a Phd. Again binning this variable will strengthen the correlation.
 \
 \
-JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you are more likely to be in a crash against Doctor, Lawyer, Manager or professional.  Again binning this variable will strengthen the correlation.
+JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you are more likely to be in a crash against Doctor, Lawyer, Manager, professional or Unknown job.  Again binning this variable will strengthen the correlation.
 \
 \
+
+Lets explore the KIDSDRIV variable.
+\
+\
+
+```{r}
+
+table(insure_train_full$KIDSDRIV)
+
+```
+\
+\
+
+
+We can see from the above table that there are many insurers that do not have driving kids. So we can bin this variable as well.
+\
+\
+
+Similarly, having a look at a few more variables for binning, we get the below output:
+
+```{r}
+
+table(insure_train_full$HOMEKIDS)
+
+HOMEKIDS_0 <- insure_train_full[insure_train_full$TARGET_FLAG==0,'HOMEKIDS' ]
+HOMEKIDS_1 <- insure_train_full[insure_train_full$TARGET_FLAG==1,'HOMEKIDS' ]
+
+
+income_0 <- insure_train_full[insure_train_full$TARGET_FLAG==0,6 ]
+
+
+
+
+
+
+
+
+```
+
+
+
 We will carry out the above transformations in the Data Preparation phase.
 \
 \
+
+
 
 
 ###2.1.3 Missing Values\
@@ -271,7 +324,7 @@ We will carry out the above transformations in the Data Preparation phase.
 
 \
 \
-Based on the missing data from the below table, we can see that there are a few missing values for AGE, CAR_AGE, YOJ and JOB variables. 
+Based on the missing data from the below table, we can see that there are a few missing values for AGE, YOJ, INCOME, HOME_VAL, CAR_AGE variables. 
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -283,30 +336,26 @@ kable(data.frame(missings), caption = "Missing Values")
 \
 \
 
+We can try and impute values to AGE, YOJ, INCOME, HOME_VAL, CAR_AGE. Lets look at the distributions for each of the variable to determine the value to use to impute. 
 
-We can try and impute values to AGE, YOJ, CAR_AGE. However, we will not be able to impute values for JOB since this is a categorical variable. Though there are a few methods to do this imputation, it may not be worth it.  
 
-\
-\
+```{r}
 
-Lets see the impact if we have to exclude these missing records.
-
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-sum(!complete.cases(insure_train_full))
-
-# Percentage of records
-
-sum(!complete.cases(insure_train_full))/nrow(insure_train_full) *100
-
+par(mfrow=c(2,3))
+hist(insure_train_full$AGE)
+hist(insure_train_full$YOJ)
+hist(insure_train_full$INCOME)
+hist(insure_train_full$HOME_VAL)
+hist(insure_train_full$CAR_AGE)
 ```
+
 \
 \
-We see from the above that excluding the missing rows will remove about 17.24% of the records. This would not seem to have too much of an impact. We will exclude the rows with the missing values when we do the data preparation / tranformations for the TARGET_FLAG dataset.
+
+Given that Age and YOJ look to be somewhat normally distributed, we can go ahead and use the mean to impute the missing values for these variables. For INCOME, HOME_VAL and CAR_AGE the median seems to be a better value to impute since there are strong right skews. We will carry out these transformation while data preparation.
 \
 \
+
 
 
 
@@ -488,28 +537,13 @@ show_charts <- function(x, varlab, ...) {
 \
 
 
-**Transformations for KIDSDRV**
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-show_charts(insure_train_full$KIDSDRIV, 'KIDSDRV')
-
-insure_train_full$KIDSDRIV_log <- log(insure_train_full$KIDSDRIV)
-insure_train_full$KIDSDRIV_inv <- 1 / insure_train_full$KIDSDRIV
-```
-\
-\
-From the above charts we can see that a log or an inverse transformation works well for KIDSDRV. Hence, We create both these variables.
-\
-\
-
 
 
 **Transformations for AGE**
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+summary(insure_train_full$AGE)
 show_charts(insure_train_full$AGE, 'AGE')
 insure_train_full$AGE_sin <- sin(insure_train_full$AGE)
 ```
@@ -520,43 +554,12 @@ From the above charts we can see that a sin transformation works well for AGE. W
 \
 
 
-**Transformations for HOMEKIDS**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-show_charts(insure_train_full$HOMEKIDS, 'HOMEKIDS')
-insure_train_full$HOMEKIDS_log <- log(insure_train_full$HOMEKIDS)
-insure_train_full$HOMEKIDS_inv <- 1/(insure_train_full$HOMEKIDS)
-```
-\
-\
-From the above charts we can see that all the transformations address the outliers. However, the log and inverse transformation seem to do a better job of maintaining the central tendancy. So We just use the log and inverse transformation for HOMEKIDS. 
-\
-\
-
-
-**Transformations for MVR_PTS**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-show_charts(insure_train_full$MVR_PTS, 'MVR_PTS')
-
-insure_train_full$MVR_PTS_log <- log(insure_train_full$MVR_PTS)
-insure_train_full$MVR_PTS_sqrt <- sqrt(insure_train_full$MVR_PTS)
-insure_train_full$MVR_PTS_inv <- 1/(insure_train_full$MVR_PTS)
-```
-\
-\
-From the above charts we can see that a log, sqrt or an inverse transformation works better for MVR_PTS. Hence, We will create these variables.
-\
-\
-
-
-
 **Transformations for OLDCLAIM**
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+summary(insure_train_full$OLDCLAIM)
 show_charts(insure_train_full$OLDCLAIM, 'OLDCLAIM')
 
 insure_train_full$OLDCLAIM_log <- log(insure_train_full$OLDCLAIM)
@@ -574,6 +577,7 @@ From the above charts we can see that a log, sqrt or an inverse transformation w
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+summary(insure_train_full$TIF)
 show_charts(insure_train_full$TIF, 'TIF')
 
 insure_train_full$TIF_log <- log(insure_train_full$TIF)
@@ -596,6 +600,7 @@ From the above charts we can see that a log, sqrt, sin or an inverse transformat
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 #TRAVTIME and YOJ
 
+summary(insure_train_full$TRAVTIME)
 show_charts(insure_train_full$TRAVTIME, 'TRAVTIME')
 
 insure_train_full$TRAVTIME_sin <- sin(insure_train_full$TRAVTIME)
@@ -613,12 +618,13 @@ From the above charts we can see that a sin transformation works well for TRAVTI
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+summary(insure_train_full$YOJ)
 show_charts(insure_train_full$YOJ, 'YOJ')
 insure_train_full$YOJ_sin <- sin(insure_train_full$YOJ)
 ```
 \
 \
-From the above charts we can see that a sin transformation works well for YOJ. Hence, We will create this variable.
+From the above charts we can see that a sin transformation works well for YOJ. This variable also have 0s as values. However, we are not doing any log or inverse transformations, so we can skip adding the constant and create a sin variable.
 \
 \
 
@@ -692,7 +698,7 @@ JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you 
 JOB_TYPE_FLAG_BIN : \
 \
 - 1 : if JOB_TYPE is Student, Homemaker, or in a Blue Collar or Clerical \
-- 0 : if JOB_TYPE is Doctor, Lawyer, Manager or professional
+- 0 : if JOB_TYPE is Doctor, Lawyer, Manager, professional, Unknown
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -748,8 +754,8 @@ In this model, we will be using all the given variables in train data set.  We w
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-#model1 <- glm(TARGET_FLAG ~ ., data = DS_TARGET_FLAG_TRAIN, family = "binomial")
-#summary(model1)
+model1 <- glm(TARGET_FLAG ~ ., data = DS_TARGET_FLAG_TRAIN, family = "binomial")
+summary(model1)
 ```
 
 ##### Interpretation for model 1  \
@@ -782,14 +788,14 @@ This model, we will be using original variables; however using step function (ba
 
 ```{r step for model 1 creation,echo=FALSE,results="hide"}
 
-#stepmodel1<- step(model1, direction="backward")
+stepmodel1<- step(model1, direction="backward")
 
 ```
 \
 
 ```{r step for model 1,echo=FALSE}
 
-#summary(stepmodel1)
+summary(stepmodel1)
 
 ```
 
