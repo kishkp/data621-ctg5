@@ -79,7 +79,7 @@ insure_train_full$SEX_M <- ifelse(insure_train_full$SEX=="M", 1, 0)
 insure_train_full$URBANICITY_Rural <- ifelse(insure_train_full$URBANICITY=="Highly Rural/ Rural", 1, 0)
 
 # remove original variables
-#insure_train_full <- select(insure_train_full, -CAR_USE, -MSTATUS, -PARENT1, -RED_CAR, -REVOKED, -SEX, -URBANICITY)
+insure_train_full <- select(insure_train_full, -CAR_USE, -MSTATUS, -PARENT1, -RED_CAR, -REVOKED, -SEX, -URBANICITY)
 
 #- Dummy Varibles for remaining factor variables JOB, EDUCATION, CAR_TYPE. 
 
@@ -158,6 +158,40 @@ DS_TARGET_FLAG_TRAIN<- insure_train_full[train_index, ]
 DS_TARGET_FLAG_VALID <- insure_train_full[-train_index, ]
 
 
+# Model 1
+
+model1 <- glm(TARGET_FLAG ~ ., data = na.omit(DS_TARGET_FLAG_TRAIN), family = "binomial")
+summary(model1)
+
+model1_ref<- step(model1, direction="backward")
+summary(model1_ref)
+
+
+# Model 2
+
+# grow tree 
+model2 <- rpart(TARGET_FLAG~., data=DS_TARGET_FLAG_TRAIN, method = "class")
+
+printcp(model2) # display the results 
+plotcp(model2) # visualize cross-validation results 
+summary(model2) # detailed summary of splits
+
+# plot tree 
+plot(model2, uniform=TRUE, main="Classification Tree for TARGET_FLAG")
+text(model2, use.n=TRUE, all=TRUE, cex=.8)
+
+# create attractive postscript plot of tree 
+#post(fit, file = "c:/tree.ps", title = "Classification Tree for Kyphosis")
+
+
+model2_ref <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
+
+# plot the pruned tree 
+plot(model2_ref, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
+text(model2_ref, use.n=TRUE, all=TRUE, cex=.8)
+#post(pfit, file = "c:/ptree.ps",    title = "Pruned Classification Tree for Kyphosis") 
+
+
 
 ###########################
 # Linear Regression
@@ -172,7 +206,7 @@ insure_train_crash <- insure_train_full[insure_train_full$TARGET_FLAG==1,]
 
 # Remove transformations that were specific to TARGET_FLAG
 
-insure_train_crash <- select(insure_train_crash, -AGE_sin, -BLUEBOOK_sin, -CAR_AGE_FLAG_BIN, -CAR_TYPE, -CAR_TYPE_FLAG_BIN, -CAR_USE, -CAR_USE_Private, -CLM_FREQ_FLAG_BIN, -EDUCATION, -EDUCATION_FLAG_BIN, -HOME_VAL_FLAG_BIN, -INCOME_FLAG_BIN, -JOB, -JOB_TYPE_FLAG_BIN, -MSTATUS, -MSTATUS_No, -MVR_PTS_FLAG_BIN, -OLDCLAIM_FLAG_BIN, -PARENT1, -PARENT1_No, -RED_CAR, -RED_CAR_no, -REVOKED, -REVOKED_No, -SEX, -SEX_F, -TARGET_FLAG, -TIF_sin, -URBANICITY, -URBANICITY_Highly.Rural..Rural, -URBANICITY_Highly.Urban..Urban, -YOJ_FLAG_BIN)
+# insure_train_crash <- select(insure_train_crash, -AGE_sin, -BLUEBOOK_sin, -CAR_AGE_FLAG_BIN, -CAR_TYPE, -CAR_TYPE_FLAG_BIN, -CAR_USE, -CAR_USE_Private, -CLM_FREQ_FLAG_BIN, -EDUCATION, -EDUCATION_FLAG_BIN, -HOME_VAL_FLAG_BIN, -INCOME_FLAG_BIN, -JOB, -JOB_TYPE_FLAG_BIN, -MSTATUS, -MSTATUS_No, -MVR_PTS_FLAG_BIN, -OLDCLAIM_FLAG_BIN, -PARENT1, -PARENT1_No, -RED_CAR, -RED_CAR_no, -REVOKED, -REVOKED_No, -SEX, -SEX_F, -TARGET_FLAG, -TIF_sin, -URBANICITY, -URBANICITY_Highly.Rural..Rural, -URBANICITY_Highly.Urban..Urban, -YOJ_FLAG_BIN)
 
 
 # Transformations for TARGET_FLAG
@@ -216,37 +250,37 @@ insure_train_crash$CAR_AGE_AMT_BIN <- ifelse(insure_train_crash$CAR_AGE <=1, 1, 
 
 insure_train_crash$TRAVTIME_AMT_BIN <- ifelse(insure_train_crash$TRAVTIME <=20, 1, 0)
 
-insure_amt<- insure_orig[insure_orig$TARGET_FLAG==1,]
-insure_amt<- select(insure_amt, -TARGET_FLAG)
+insure_train_crash<- insure_orig[insure_orig$TARGET_FLAG==1,]
+insure_train_crash<- select(insure_train_crash, -TARGET_FLAG)
 
-insure_amt$KIDSDRIV_BIN_0  <- ifelse(insure_amt$KIDSDRIV <=0, 1, 0)
-insure_amt$KIDSDRIV_BIN_1  <- ifelse(insure_amt$KIDSDRIV <=1, 1, 0)
+insure_train_crash$KIDSDRIV_BIN_0  <- ifelse(insure_train_crash$KIDSDRIV <=0, 1, 0)
+insure_train_crash$KIDSDRIV_BIN_1  <- ifelse(insure_train_crash$KIDSDRIV <=1, 1, 0)
 
-insure_amt$HOMEKIDS_BIN_0  <- ifelse(insure_amt$HOMEKIDS <=0, 1, 0)
-insure_amt$HOMEKIDS_BIN_3  <- ifelse(insure_amt$HOMEKIDS <=3, 1, 0)
+insure_train_crash$HOMEKIDS_BIN_0  <- ifelse(insure_train_crash$HOMEKIDS <=0, 1, 0)
+insure_train_crash$HOMEKIDS_BIN_3  <- ifelse(insure_train_crash$HOMEKIDS <=3, 1, 0)
 
-insure_amt$YOJ_BIN_0_AND_9To14  <- ifelse((insure_amt$YOJ ==0 | (insure_amt$YOJ>=9 & insure_amt$YOJ>=14)), 1, 0)
+insure_train_crash$YOJ_BIN_0_AND_9To14  <- ifelse((insure_train_crash$YOJ ==0 | (insure_train_crash$YOJ>=9 & insure_train_crash$YOJ>=14)), 1, 0)
 
-insure_amt$INCOME_BIN_MISS_0  <- ifelse((is.na(insure_amt$INCOME) |  insure_amt$INCOME<=0), 1, 0)
+insure_train_crash$INCOME_BIN_MISS_0  <- ifelse((is.na(insure_train_crash$INCOME) |  insure_train_crash$INCOME<=0), 1, 0)
 
-insure_amt$HOME_VAL_BIN_MISS_0  <- ifelse((is.na(insure_amt$HOME_VAL) |  insure_amt$HOME_VAL<=0), 1, 0)
+insure_train_crash$HOME_VAL_BIN_MISS_0  <- ifelse((is.na(insure_train_crash$HOME_VAL) |  insure_train_crash$HOME_VAL<=0), 1, 0)
 
-insure_amt$EDUCATION_BIN_HS  <- ifelse(insure_amt$EDUCATION_High.School==1, 1, 0)
-insure_amt$EDUCATION_BIN_HS_B  <- ifelse((insure_amt$EDUCATION_Bachelors |  insure_amt$EDUCATION_High.School), 1, 0)
+insure_train_crash$EDUCATION_BIN_HS  <- ifelse(insure_train_crash$EDUCATION_High.School==1, 1, 0)
+insure_train_crash$EDUCATION_BIN_HS_B  <- ifelse((insure_train_crash$EDUCATION_Bachelors |  insure_train_crash$EDUCATION_High.School), 1, 0)
 
-insure_amt$JOB_BIN_CPSB  <- ifelse((insure_amt$JOB_Clerical |  insure_amt$JOB_Blue.Collar | insure_amt$JOB_Professional |  insure_amt$JOB_Student), 1, 0)
+insure_train_crash$JOB_BIN_CPSB  <- ifelse((insure_train_crash$JOB_Clerical |  insure_train_crash$JOB_Blue.Collar | insure_train_crash$JOB_Professional |  insure_train_crash$JOB_Student), 1, 0)
 
-insure_amt$TIF_BIN_6  <- ifelse(insure_amt$TIF <=6, 1, 0)
+insure_train_crash$TIF_BIN_6  <- ifelse(insure_train_crash$TIF <=6, 1, 0)
 
-insure_amt$CAR_TYPE_BIN_V_PT_MV  <- ifelse((insure_amt$CAR_TYPE_Van |  insure_amt$CAR_TYPE_Panel.Truck | insure_amt$CAR_TYPE_Minivan), 1, 0)
+insure_train_crash$CAR_TYPE_BIN_V_PT_MV  <- ifelse((insure_train_crash$CAR_TYPE_Van |  insure_train_crash$CAR_TYPE_Panel.Truck | insure_train_crash$CAR_TYPE_Minivan), 1, 0)
 
-insure_amt$OLDCLAIM_BIN_MISS_0  <- ifelse((is.na(insure_amt$OLDCLAIM) |  insure_amt$OLDCLAIM<=0), 1, 0)
+insure_train_crash$OLDCLAIM_BIN_MISS_0  <- ifelse((is.na(insure_train_crash$OLDCLAIM) |  insure_train_crash$OLDCLAIM<=0), 1, 0)
 
-insure_amt$CLM_FREQ_BIN_0  <- ifelse(insure_amt$CLM_FREQ<=0, 1, 0)
-insure_amt$CLM_FREQ_BIN_3  <- ifelse(insure_amt$CLM_FREQ<=3, 1, 0)
+insure_train_crash$CLM_FREQ_BIN_0  <- ifelse(insure_train_crash$CLM_FREQ<=0, 1, 0)
+insure_train_crash$CLM_FREQ_BIN_3  <- ifelse(insure_train_crash$CLM_FREQ<=3, 1, 0)
 
-insure_amt$MVR_PTS_BIN_0  <- ifelse(insure_amt$MVR_PTS<=0, 1, 0)
-insure_amt$MVR_PTS_BIN_5  <- ifelse(insure_amt$MVR_PTS<=5, 1, 0)
+insure_train_crash$MVR_PTS_BIN_0  <- ifelse(insure_train_crash$MVR_PTS<=0, 1, 0)
+insure_train_crash$MVR_PTS_BIN_5  <- ifelse(insure_train_crash$MVR_PTS<=5, 1, 0)
 
 
 ## - OPTIONAL - REMOVE ALL ORIGINAL VARIABLES THAT HAVE BEEN TRANSFORMED.
@@ -267,10 +301,22 @@ train_index <- sample(seq_len(nrow(insure_train_crash)), size = smp_size)
 
 # Dataset ready for modeling TARGET_AMT
 
-DS_TARGET_FLAG_TRAIN<- insure_train_crash[train_index, ]
-DS_TARGET_FLAG_VALID <- insure_train_crash[-train_index, ]
+DS_TARGET_AMT_TRAIN<- insure_train_crash[train_index, ]
+DS_TARGET_AMT_VALID <- insure_train_crash[-train_index, ]
 
 
+# TA Model 1
+
+TA_model1<- lm(TARGET_AMT~., data=DS_TARGET_AMT_TRAIN)
+summary(TA_model1)
+kable(sort(summary(TA_model1)$coefficients[,4]), col.names = "pvalues")
+
+
+# Model refinement
+
+TA_model1_ref<-step(TA_model1,direction="backward",test="F")
+summary(TA_model1_ref)
+kable(sort(summary(TA_model1_ref)$coefficients[,4]), col.names = "pvalues")
 
 
 
