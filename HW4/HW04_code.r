@@ -1,3 +1,33 @@
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+if (!require("dummy",character.only = TRUE)) (install.packages("dummy",dep=TRUE))
+if (!require("reshape2",character.only = TRUE)) (install.packages("reshape2",dep=TRUE))
+if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
+if (!require("rpart",character.only = TRUE)) (install.packages("rpart",dep=TRUE))
+
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+library(faraway)
+library(dummy)
+library(reshape2)
+library(popbio)
+library(rpart)
+
+
 
 # Read the data
 
