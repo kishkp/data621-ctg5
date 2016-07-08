@@ -92,6 +92,7 @@ if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=T
 if (!require("dummy",character.only = TRUE)) (install.packages("dummy",dep=TRUE))
 if (!require("reshape2",character.only = TRUE)) (install.packages("reshape2",dep=TRUE))
 if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
+if (!require("rpart",character.only = TRUE)) (install.packages("rpart",dep=TRUE))
 
 
 library(ggplot2)
@@ -106,11 +107,11 @@ library(faraway)
 library(dummy)
 library(reshape2)
 library(popbio)
+library(rpart)
 
 insure_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurance_training_data.csv")
 
-insurevars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv")
-kable(insurevars, caption = "Variable Description")
+kable(read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv"), caption = "Variable Description")
 
 ```
 \
@@ -147,16 +148,13 @@ From the output above we can make the following observations:\
 - JOB has a "" value. This would indicate that the job is unknown or is not coded. Hence, we will replace this with "Unknown".
 \
 \
-- There are records where CAR_AGE is negative which is not possible. Upon investigation, we find that this is a single record that have the negative value. We will remove this record.
+- There are records where CAR_AGE is negative or zero, which is improbable. Upon investigation, we find that there are 4 records that We will remove this record.
 \
 \
 - We will also create dummy variables for all the factors. 
 \
 \
 - Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables. 
-\
-\
-- Similarly, we will drop the TARGET_AMT since we will not be using this as a predictor in this exercise.
 \
 \
 Making the above fixes to the data, we now have a "clean" dataset which can be explored further.
@@ -195,7 +193,7 @@ insure_train_full$JOB <- as.character(insure_train_full$JOB)
 insure_train_full$JOB[insure_train_full$JOB==""] <- "Unknown"
 insure_train_full$JOB <- as.factor(str_replace_all(insure_train_full$JOB, "z_", ""))
 
-insure_train_full <- filter(insure_train_full, INDEX !=as.integer(filter(insure_train_full, insure_train_full$CAR_AGE<0)[1]))
+insure_train_full <- insure_train_full[ -which( insure_train_full$CAR_AGE == -3 | insure_train_full$CAR_AGE == 0 ) , ]
 
 #- We will also create dummy variables for all the factors and drop the original variables. 
 
@@ -205,13 +203,13 @@ dummy_vars <- dummy_vars-1
 # EDU_ = factor(insure_train_full$EDUCATION)
 # dummies = model.matrix(~EDU_)
 
-insure_train_full <- cbind(select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -EDUCATION, -JOB, -CAR_USE, -CAR_TYPE, -RED_CAR, -REVOKED, -URBANICITY), dummy_vars)
+# insure_train_full <- cbind(select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -EDUCATION, -JOB, -CAR_USE, -CAR_TYPE, -RED_CAR, -REVOKED, -URBANICITY), dummy_vars)
 
-# insure_train_full <- cbind(insure_train_full, dummy_vars)
+insure_train_full <- cbind(insure_train_full, dummy_vars)
 
 # - Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables.   
 
-insure_train_full <- select(insure_train_full, -INDEX, -TARGET_AMT)
+insure_train_full <- select(insure_train_full, -INDEX)
 
 
 ```
@@ -228,14 +226,17 @@ In this section, we will create summary data to better understand the relationsh
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-ds_stats <- psych::describe(insure_train_full, skew = TRUE, na.rm = TRUE)
+
+ds <- select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -EDUCATION, -JOB, -CAR_USE, -CAR_TYPE, -RED_CAR, -REVOKED, -URBANICITY, -TARGET_AMT)
+
+ds_stats <- psych::describe(ds, skew = TRUE, na.rm = TRUE)
 #ds_stats
 kable(ds_stats[1:7], caption= "Data Summary")
 kable(ds_stats[8:13], caption= "Data Summary (Cont)")
 
+
 fun1 <- function(a, y) cor(y, a , use = 'na.or.complete')
-x<-insure_train_full[,]
-Correlation_TARGET_FLAG <- sapply(x, FUN = fun1, y=insure_train_full$TARGET_FLAG) 
+Correlation_TARGET_FLAG <- sapply(ds, FUN = fun1, y=ds$TARGET_FLAG) 
 
 ```
 \
@@ -272,44 +273,127 @@ JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you 
 \
 \
 
-Lets explore the KIDSDRIV variable.
+Lets have a look at the following numeric variables that have 0 as one of their values: INCOME, YOJ, HOME_VAL, OLDCLAIM, CLM_FREQ, MVR_PTS, CAR_AGE, AGE, BLUEBOOK, TIF, TRAVTIME. The goal here is to see if we can bin these variables into zero and non-zero bin values and check the correlations. While doing that we will also see how the variables are distributed vis-a-vis TARGET_FLAG.
 \
 \
+
 
 ```{r}
 
-table(insure_train_full$KIDSDRIV)
+show_hist <- function(var) {
+    
+    col_x <- which(colnames(insure_train_full)==var)
+    h0 <- select(insure_train_full[insure_train_full$TARGET_FLAG==1,], col_x)
+    h1 <- select(insure_train_full[insure_train_full$TARGET_FLAG==0,], col_x)
+
+    min_x <- min(select(insure_train_full, col_x), na.rm = TRUE) 
+    max_x <- max(select(insure_train_full, col_x), na.rm = TRUE) 
+    by_x <- (max_x - min_x) / 20
+    
+        
+    hist(h0[,1], breaks = 20, col=rgb(1,0,0,0.5), main="Overlapping Histogram", xlab = var, xaxt = "n") 
+    axis(1, at = seq(min_x, max_x, by = by_x), las=2)
+
+    hist(h1[,1], breaks = 20, col=rgb(0,0,1,0.5), add=T) # 
+#    axis(1, at = seq(min_x, max_x, by = by_x), las=2)
+
+    box()
+}
+
+check_bins <- function(var, thresholds) {
+
+    col_x <- which(colnames(insure_train_full)==var)
+    old_x <- select(insure_train_full, col_x)
+    cor_old <- cor(old_x, insure_train_full$TARGET_FLAG,use = 'na.or.complete')
+    ds <- data.frame("Item" = "Original", "Correlation"= round(cor_old, 5))
+
+
+    
+    for(i in 1:length(thresholds)) {
+        New_x <- ifelse(select(insure_train_full, col_x)<=thresholds[i],0,1)
+        cor_new <- cor(New_x, insure_train_full$TARGET_FLAG,use = 'na.or.complete')
+        ds_1 <- data.frame("Item" = as.character(thresholds[i]), "Correlation"= round(cor_new, 5))
+        ds <- rbind(ds, ds_1)
+    }
+    return (ds)
+}
+
+show_hist("INCOME")
+check_bins("INCOME", c(0, 20000, 90000, 130000))
+
+show_hist("YOJ")
+check_bins("YOJ", c(0, 4, 8, 15))
+
+show_hist("HOME_VAL")
+check_bins("HOME_VAL", c(0, 20000, 90000, 130000))
+
+show_hist("OLDCLAIM")
+check_bins("OLDCLAIM", c(0, 5000, 10000, 15000, 20000, 40000))
+
+show_hist("CLM_FREQ")
+check_bins("CLM_FREQ", c(0, 1, 2, 3, 4))
+
+table(insure_train_full$MVR_PTS)
+show_hist("MVR_PTS")
+check_bins("MVR_PTS", c(0:12))
+
+#table(insure_train_full$CAR_AGE)
+show_hist("CAR_AGE")
+#check_bins("CAR_AGE", c(1:27))
+
+#table(insure_train_full$AGE)
+show_hist("AGE")
+#check_bins("AGE", c(16:80))
+
+#table(insure_train_full$BLUEBOOK)
+show_hist("BLUEBOOK")
+#check_bins("BLUEBOOK", c(11000, 41000, 41050, 57500, 58000))
+
+table(insure_train_full$TIF)
+show_hist("TIF")
+check_bins("TIF", c(1, 4, 6, 10, 24))
+
+table(insure_train_full$TRAVTIME)
+show_hist("TRAVTIME")
+check_bins("TRAVTIME", c(21, 59, 120))
+
+
 
 ```
+
+\
+\
+
+From the outputs above, we can come to the following conclusions:
 \
 \
 
 
-We can see from the above table that there are many insurers that do not have driving kids. So we can bin this variable as well.
+- INCOME - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this at zero value.
+
+- YOJ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+
+- HOME_VAL - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+
+- OLDCLAIM- There is a huge difference in the coorrelation when we transform this vatiable. Binning this variable seems like a good idea.
+
+- CLM_FREQ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+
+- MVR_PTS - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+
+- CAR_AGE - There are quite a few records with a 1 year car age. We will use this bound to generate a binned variable as well as retain the original varible as is. 
+
+- AGE - There is no specific pattern that emerges. We will retain this variable as is.
+
+-BLUEBOOK - There is no specific pattern that emerges. We will retain the variable as is.
+
+- TIF - Looking at the plots, values and the correlations with TARGET_FLAG, we can conclude that this is not a good variable for binning. We will retain this variable as is.
+
+- TRAVTIME - from the plot, we can see that there is a clear pattern around the value - 20. We will go ahead and create a binned variable for this.
+
+
 \
 \
-
-Similarly, having a look at a few more variables for binning, we get the below output:
-
-```{r}
-
-table(insure_train_full$HOMEKIDS)
-
-HOMEKIDS_0 <- insure_train_full[insure_train_full$TARGET_FLAG==0,'HOMEKIDS' ]
-HOMEKIDS_1 <- insure_train_full[insure_train_full$TARGET_FLAG==1,'HOMEKIDS' ]
-
-
-income_0 <- insure_train_full[insure_train_full$TARGET_FLAG==0,6 ]
-
-
-
-
-
-
-
-
-```
-
 
 
 We will carry out the above transformations in the Data Preparation phase.
@@ -358,17 +442,16 @@ Given that Age and YOJ look to be somewhat normally distributed, we can go ahead
 
 
 
-
 ###2.1.4 Outliers identification\ 
 
 
 
-In this sub-section, we will look at the boxplots and determine the outliers in variables and decide on whether to act on the outliers. We will do the outliers only on the numeric variables. Below are the plots:
+In this sub-section, we will look at the boxplots and determine the outliers in variables and decide on whether to act on the outliers. We will do the outliers only on some of the currency and few other variables. Below are the plots:
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 #
-mdata<- select(insure_train_full, KIDSDRIV, AGE, BLUEBOOK, CAR_AGE, CLM_FREQ, HOME_VAL, HOMEKIDS, INCOME, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ)
+mdata<- select(insure_train_full, AGE, BLUEBOOK, TIF)
 mdata2 <- melt(mdata)
 # Output the boxplot
 p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
@@ -377,7 +460,7 @@ p + facet_wrap( ~ variable, scales="free", ncol=5)
 
 ```
 
-From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. We see that: KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ  need to be treated when we do the data preparation for modeling the TARGET_FLAG. 
+From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. We will treat the outliers in this variable when we do the data preparation for modeling the TARGET_FLAG. 
 \
 \
 
@@ -415,7 +498,7 @@ par(mfrow=c(2,3))
 #     logi.hist.plot(a,y,logi.mod = 1, type="hist", boxp=FALSE,col="gray", mainlabel = xlabel)
 # }
 
-x <- insure_train_full[,-2]
+x <- select(insure_train_full, -TARGET_AMT)
 x <- x[complete.cases(x),]
 
 # sapply(x, FUN = show_chart_logi.hist, y=x$TARGET_FLAG) 
@@ -510,7 +593,7 @@ We will be following the below steps as guidelines: \
 
 
 
-In this sub-section, we will check different transformations for each of the variables - KIDSDRIV, AGE, HOMEKIDS, MVR_PTS, OLDCLAIM, TIF, TRAVTIME and YOJ - and create the appropriate outlier-handled / transformed variables.  
+In this sub-section, we will check different transformations for AGE, BLUEBOOK and TIF to create the appropriate outlier-handled / transformed variables.  
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -539,6 +622,36 @@ show_charts <- function(x, varlab, ...) {
 
 
 
+**Transformations for TIF**
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+summary(insure_train_full$TIF)
+show_charts(insure_train_full$TIF, 'TIF')
+insure_train_full$TIF_sin <- sin(insure_train_full$TIF)
+```
+\
+\
+
+From the above charts we can see that a log, sqrt, sin or an inverse transformation works well for TIF. However, the sin transformation seems to be better distributed. Hence, We will create this variable.
+\
+\
+
+**Transformations for BLUEBOOK**
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+summary(insure_train_full$BLUEBOOK)
+show_charts(insure_train_full$BLUEBOOK, 'BLUEBOOK')
+insure_train_full$BLUEBOOK_sin <- sin(insure_train_full$BLUEBOOK)
+```
+\
+\
+
+From the above charts we can see that a sin transformation works well. Hence, We will create this variable.
+\
+\
+
 **Transformations for AGE**
 
 
@@ -549,82 +662,8 @@ insure_train_full$AGE_sin <- sin(insure_train_full$AGE)
 ```
 \
 \
-From the above charts we can see that a sin transformation works well for AGE. We will create this variable.
-\
-\
 
-
-**Transformations for OLDCLAIM**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-summary(insure_train_full$OLDCLAIM)
-show_charts(insure_train_full$OLDCLAIM, 'OLDCLAIM')
-
-insure_train_full$OLDCLAIM_log <- log(insure_train_full$OLDCLAIM)
-insure_train_full$OLDCLAIM_sqrt <- sqrt(insure_train_full$OLDCLAIM)
-insure_train_full$OLDCLAIM_inv <- 1/(insure_train_full$OLDCLAIM)
-```
-\
-\
-From the above charts we can see that a log, sqrt or an inverse transformation works better for OLDCLAIM. Hence, We will create these variables.
-\
-\
-
-
-**Transformations for TIF**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-summary(insure_train_full$TIF)
-show_charts(insure_train_full$TIF, 'TIF')
-
-insure_train_full$TIF_log <- log(insure_train_full$TIF)
-insure_train_full$TIF_sqrt <- sqrt(insure_train_full$TIF)
-insure_train_full$TIF_sin <- sin(insure_train_full$TIF)
-insure_train_full$TIF_inv <- 1 / insure_train_full$TIF
-```
-\
-\
-
-From the above charts we can see that a log, sqrt, sin or an inverse transformation works well for TIF. Hence, We will create these variables.
-\
-\
-
-
-
-**Transformations for TRAVTIME**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-#TRAVTIME and YOJ
-
-summary(insure_train_full$TRAVTIME)
-show_charts(insure_train_full$TRAVTIME, 'TRAVTIME')
-
-insure_train_full$TRAVTIME_sin <- sin(insure_train_full$TRAVTIME)
-
-```
-\
-\
-From the above charts we can see that a sin transformation works well for TRAVTIME. Hence, We will create this variable.
-\
-\
-
-
-
-**Transformations for YOJ**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-summary(insure_train_full$YOJ)
-show_charts(insure_train_full$YOJ, 'YOJ')
-insure_train_full$YOJ_sin <- sin(insure_train_full$YOJ)
-```
-\
-\
-From the above charts we can see that a sin transformation works well for YOJ. This variable also have 0s as values. However, we are not doing any log or inverse transformations, so we can skip adding the constant and create a sin variable.
+From the above charts we can see that a sin works well for AGE.Hence, We will create this variable.
 \
 \
 
@@ -635,14 +674,23 @@ From the above charts we can see that a sin transformation works well for YOJ. T
 
 \
 \
-As we have seen in the data exploration phase, we can do with removing the rows that contain missing values. We now do this removal of rows with missing information:
+As we have seen in the data exploration phase, Age and YOJ look to be somewhat normally distributed, we can go ahead and use the mean to impute the missing values for these variables. For INCOME, HOME_VAL and CAR_AGE the median seems to be a better value to impute since there are strong right skews. 
 \
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-insure_train_full <- insure_train_full[complete.cases(insure_train_full),]
-#insure_train_crash <- insure_train_crash[complete.cases(insure_train_crash),]
+insure_train_full$AGE[is.na(insure_train_full$AGE)] <- mean(insure_train_full$AGE, na.rm = T) 
+insure_train_full$YOJ[is.na(insure_train_full$YOJ)] <- mean(insure_train_full$YOJ, na.rm = T) 
+
+insure_train_full$INCOME[is.na(insure_train_full$INCOME)] <- median(insure_train_full$INCOME, na.rm = T) 
+insure_train_full$HOME_VAL[is.na(insure_train_full$HOME_VAL)] <- median(insure_train_full$HOME_VAL, 
+na.rm = T) 
+insure_train_full$CAR_AGE[is.na(insure_train_full$CAR_AGE)] <- median(insure_train_full$CAR_AGE, na.rm = 
+T) 
+
+# insure_train_full <- insure_train_full[complete.cases(insure_train_full),]
+# insure_train_crash <- insure_train_crash[complete.cases(insure_train_crash),]
 
 ```
 \
@@ -709,12 +757,194 @@ insure_train_full$JOB_TYPE_FLAG_BIN <- ifelse(insure_train_full$JOB_Student |  i
 \
 \
 
+- INCOME - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this at zero value.
+\
+\
+
+INCOME_FLAG_BIN : \
+\
+- 1 : if INCOME <= 0 \
+- 0 : if INCOME > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_full$INCOME_FLAG_BIN <- ifelse(insure_train_full$INCOME <=0, 1, 0)
+
+```
+\
+\
+
+- YOJ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+\
+\
+YOJ_FLAG_BIN : \
+\
+- 1 : if YOJ <= 0 \
+- 0 : if YOJ > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_full$YOJ_FLAG_BIN <- ifelse(insure_train_full$YOJ <=0, 1, 0)
+
+```
+\
+\
+
+
+- HOME_VAL - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+\
+\
+HOME_VAL_FLAG_BIN : \
+\
+- 1 : if HOME_VAL <= 0 \
+- 0 : if HOME_VAL > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_full$HOME_VAL_FLAG_BIN <- ifelse(insure_train_full$HOME_VAL <=0, 1, 0)
+
+```
+\
+\
+
+- OLDCLAIM- There is a huge difference in the coorrelation when we transform this vatiable. Binning this variable seems like a good idea.
+\
+\
+OLDCLAIM_FLAG_BIN : \
+\
+- 1 : if OLDCLAIM <= 0 \
+- 0 : if OLDCLAIM > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_full$OLDCLAIM_FLAG_BIN <- ifelse(insure_train_full$OLDCLAIM <=0, 1, 0)
+```
+\
+\
+
+- CLM_FREQ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+\
+\
+CLM_FREQ_FLAG_BIN : \
+\
+- 1 : if CLM_FREQ <= 0 \
+- 0 : if CLM_FREQ > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_full$CLM_FREQ_FLAG_BIN <- ifelse(insure_train_full$CLM_FREQ <=0, 1, 0)
+```
+\
+\
+
+- MVR_PTS - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
+\
+\
+MVR_PTS_FLAG_BIN : \
+\
+- 1 : if MVR_PTS <= 0 \
+- 0 : if MVR_PTS > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_full$MVR_PTS_FLAG_BIN <- ifelse(insure_train_full$MVR_PTS <=0, 1, 0)
+```
+\
+\
+
+- CAR_AGE - There are quite a few records with a 1 year car age. We will use this bound to generate a binned variable as well as retain the original varible as is. 
+\
+\
+CAR_AGE_FLAG_BIN : \
+\
+- 1 : if CAR_AGE <= 1 \
+- 0 : if CAR_AGE > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_full$CAR_AGE_FLAG_BIN <- ifelse(insure_train_full$CAR_AGE <=1, 1, 0)
+```
+\
+\
+
+- AGE - There is no specific pattern that emerges. We will retain this variable as is.
+\
+\
+
+- BLUEBOOK - There is no specific pattern that emerges. We will retain this variable as is.
+\
+\
+
+
+- TRAVTIME - from the plot, we can see that there is a clear pattern around the value - 20. We will go ahead and create a binned variable for this.
+\
+\
+TRAVTIME_FLAG_BIN : \
+\
+- 1 : if TRAVTIME <= 20 \
+- 0 : if TRAVTIME > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_full$TRAVTIME_FLAG_BIN <- ifelse(insure_train_full$TRAVTIME <=20, 1, 0)
+```
+\
+\
+There are a few variables that are binary and can be converted to 0s and 1s. The following are the variables: CAR_USE_Commercial, CAR_USE_Private, MSTATUS_No, MSTATUS_Yes, PARENT1_No, PARENT1_Yes, RED_CAR_no, RED_CAR_yes, REVOKED_No, REVOKED_Yes, SEX_F, SEX_M, URBANICITY_Highly.Rural..Rural, URBANICITY_Highly.Urban..Urban. We will create a binary variable for each of these as well.
+\
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+# CAR_USE_Commercial, CAR_USE_Private, 
+
+insure_train_full$CAR_USE_Commercial <- ifelse(insure_train_full$CAR_USE_Commercial==1, 1, 0)
+
+# MSTATUS_No, MSTATUS_Yes, 
+insure_train_full$MSTATUS_Yes <- ifelse(insure_train_full$MSTATUS_Yes==1, 1, 0)
+
+# PARENT1_No, PARENT1_Yes, 
+insure_train_full$PARENT1_Yes <- ifelse(insure_train_full$PARENT1_Yes==1, 1, 0)
+
+# RED_CAR_no, RED_CAR_yes, 
+insure_train_full$RED_CAR_yes <- ifelse(insure_train_full$RED_CAR_yes==1, 1, 0)
+
+# REVOKED_No, REVOKED_Yes, 
+insure_train_full$REVOKED_Yes <- ifelse(insure_train_full$REVOKED_Yes==1, 1, 0)
+
+# SEX_F, SEX_M, 
+insure_train_full$SEX_M <- ifelse(insure_train_full$SEX_M==1, 1, 0)
+
+# URBANICITY_Highly.Rural..Rural, URBANICITY_Highly.Urban..Urban.
+insure_train_full$URBANICITY_Rural <- ifelse(insure_train_full$URBANICITY_Highly.Rural..Rural==1, 1, 0)
+
+
+```
+
+
+After having prepared the data, we will go ahead and drop some of the variables.
+
+```{r}
+
+#write.csv(insure_train_full, file = "D:/CUNY/Courses/Business Analytics and Data Mining/Assignments/data621-ctg5/HW4/final.csv")
+
+DS_TARGET_FLAG <- select(insure_train_full, -AGE, -BLUEBOOK, -CAR_TYPE, -CAR_TYPE_Minivan, -CAR_TYPE_Panel.Truck, -CAR_TYPE_Pickup, -CAR_TYPE_Sports.Car, -CAR_TYPE_SUV, -CAR_TYPE_Van, -CAR_USE, -CAR_USE_Private, -CLM_FREQ, -EDUCATION, -EDUCATION_Bachelors, -EDUCATION_High.School, -EDUCATION_Masters, -EDUCATION_PhD, -HOME_VAL, -INCOME, -JOB, -JOB_Blue.Collar, -JOB_Clerical, -JOB_Doctor, -JOB_Home.Maker, -JOB_Lawyer, -JOB_Manager, -JOB_Professional, -JOB_Student, -JOB_Unknown, -MSTATUS, -MSTATUS_No, -MVR_PTS, -OLDCLAIM, -PARENT1, -PARENT1_No, -RED_CAR, -RED_CAR_no, -REVOKED, -REVOKED_No, -SEX, -SEX_F, -TARGET_AMT, -TIF, -TRAVTIME, -URBANICITY, -URBANICITY_Highly.Rural..Rural, -URBANICITY_Highly.Urban..Urban, -YOJ)
+
+str(DS_TARGET_FLAG)
+
+```
+\
+\
+
 
 ##2.3 Build Models
 
 
 
-In this section, we will create 4 models. Aside from using original and transformed data, we will also using different methods and functions such as Linear Discriminant Analysis, step function, and logit function to enhance our models. 
+In this section, we will create 3 models. Aside from using original and transformed data, we will also using different methods and functions such as Linear Discriminant Analysis, step function, and logit function to enhance our models. 
 \newline
 \newline
 Below is our model definition: \
@@ -739,29 +969,39 @@ smp_size <- floor(0.80 * nrow(insure_train_full))
 ## set the seed to make your partition reproductible
 set.seed(123)
 
-train_index <- sample(seq_len(nrow(insure_train_full)), size = smp_size)
+train_index <- sample(seq_len(nrow(DS_TARGET_FLAG)), size = smp_size)
 
-DS_TARGET_FLAG_TRAIN<- insure_train_full[train_index, ]
-DS_TARGET_FLAG_VALID <- insure_train_full[-train_index, ]
+DS_TARGET_FLAG_TRAIN<- DS_TARGET_FLAG[train_index, ]
+DS_TARGET_FLAG_VALID <- DS_TARGET_FLAG[-train_index, ]
 ```
 
 
 ###2.3.2 Model 1
 
 
-In this model, we will be using all the given variables in train data set.  We will create model using logit function and we will highlight the summary of the model. \
- 
+In this model, we will be using all the given variables in train data set.  We will create model using logit function. We will then step thru the model to remove unnecessary variables and generate the refined model. We will highlight the summary of the refined model. \
+\
+\
+
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 model1 <- glm(TARGET_FLAG ~ ., data = DS_TARGET_FLAG_TRAIN, family = "binomial")
 summary(model1)
+
+#model1_ref<- step(model1, direction="backward")
+#summary(model1_ref)
+
+
 ```
 
 ##### Interpretation for model 1  \
 
+
+**NEED TO WORK ON THIS**
+
 $\newline$
-(i) Based on the outcome, it can be seen that indus, chas, rm, age, black, and lstat are not statistically significant. 
+(i) Based on the outcome, it can be seen that YOJ_FLAG_BIN, CLM_FREQ_FLAG_BIN, CAR_AGE_FLAG_BIN, AGE_FLAG_BIN, BLUEBOOK_FLAG_BIN, RED_CAR_FLAG_yes and SEX_FLAG_M are not statistically significant. 
 
 (ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox to the target variable. Other important variables are dis, rad, tax, ptratio, and medv. The AIC value for the model1 =168.71.
 
@@ -783,25 +1023,41 @@ $\newline$
 ###2.3.3 Model 2
 
 
-This model, we will be using original variables; however using step function (backward process) instead of GLM.
+In this model, we will be using original variables; however we use the CART (Classification and Regression Trees) algorithm to train the model. We will then look at the summary of this model as well.
 
 
-```{r step for model 1 creation,echo=FALSE,results="hide"}
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-stepmodel1<- step(model1, direction="backward")
+ # grow tree 
+ model2 <- rpart(TARGET_FLAG~., data=DS_TARGET_FLAG_TRAIN, method = "class")
 
-```
-\
+ printcp(model2) # display the results 
+ plotcp(model2) # visualize cross-validation results 
+ summary(model2) # detailed summary of splits
 
-```{r step for model 1,echo=FALSE}
+ # plot tree 
+ plot(model2, uniform=TRUE, main="Classification Tree for TARGET_FLAG")
+ text(model2, use.n=TRUE, all=TRUE, cex=.8)
 
-summary(stepmodel1)
+ # create attractive postscript plot of tree 
+ #post(fit, file = "c:/tree.ps", title = "Classification Tree for Kyphosis")
+
+ 
+model2_ref <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
+
+ # plot the pruned tree 
+ plot(model2_ref, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
+ text(model2_ref, use.n=TRUE, all=TRUE, cex=.8)
+ #post(pfit, file = "c:/ptree.ps",    title = "Pruned Classification Tree for Kyphosis") 
 
 ```
 
 #####  Interpretation for model 2  \
 
 $\newline$
+
+**NEED TO WORK ON THIS**
+
 (i)It can be seen that zn, age, and black are not statistically significant. 
 
 (ii)As for the statistically significant variables, nox has the lowest p-value suggesting a strong association of the nox of the target variable. other important variables are dis, rad, tax, ptratio, medv, and lstat. 
@@ -831,16 +1087,19 @@ In this model we will be using original variables; however the Linear Discrimina
 ```{r model with Linear Discriminant Analysis, eval=TRUE,echo=FALSE}
 
 
-# model3=lda(target~.,data=city_crime_train)
-# 
-# model3
+model3=lda(TARGET_FLAG~.,data=DS_TARGET_FLAG_TRAIN)
+summary(model3)
 
 
 ```
 
-#####  Interpretation for model 5  \
+#####  Interpretation for model 3  \
 
 $\newline$
+
+**NEED TO WORK ON THIS**
+
+
 (i)The Classification boundary equation for our model 5 is below: \
 
  $-0.004 * zn + 0.0281 * indus - 0.055 * chas + 7.910 * nox + 0.165 * rm + 0.013 * age + 0.084 * dis + 0.102 * rad - 0.001 * tax + 0.009 * ptratio  - 0.0009 * black + 0.024 * lstat + 0.042 * medv =0$
@@ -851,7 +1110,6 @@ $\newline$
 (iii) Group means provides mean values for each variable with respect to target variable values 0 and 1.\
 
  (iv) This model has accuracy value 82.97 % which is less compare to the other models. LDA model assumes normality of the variables used in the model and theere are some variables which are not normally distributed and have outliers that is impacting the result out of this model.
-
 
 
 ##2.4 Select Models
@@ -883,31 +1141,28 @@ In this section we will use Linear regression to model the TARGET_AMT. We will f
 
 \
 
-In this analysis, we will be using only those records where the TARGET-FLAG is 1. This indicates that the vehicle crashed. In such a scenario, we will be modeling the cost of repair using Linear Regression. 
-\
-\
-First, lets create the required data set for the "Crashed" data from the existing "clean" full data and look at the structure of the resulting dataset.
-\
-\
-We will remove from the new "crashed" dataset all those variables that were created specifically for predicting TARGET_FLAG. We willbe creating these variables separately for predicting TARGET_AMT.
+In this analysis, we will be using only those records where the TARGET_FLAG is 1. This indicates that the vehicle crashed. In such a scenario, we will be modeling the cost of repair using Linear Regression. First, lets create the required data set for the "Crashed" data from the existing "clean" full data and look at the structure of the resulting dataset. We will remove from the new "crashed" dataset all those variables that were created specifically for predicting TARGET_FLAG. We will be creating these variables separately for predicting TARGET_AMT.
 \
 \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_crash <- insure_train_full[insure_train_full$TARGET_FLAG==1,]
-insure_train_crash <- select(insure_train_crash, -TARGET_FLAG)
-insure_train_crash <- insure_train_crash[, c(1:46)]
+
+#write.csv(insure_train_crash, file = "D:/CUNY/Courses/Business Analytics and Data Mining/Assignments/data621-ctg5/HW4/final.csv")
+
+insure_train_crash <- select(insure_train_crash, -AGE_sin, -BLUEBOOK_sin, -CAR_AGE_FLAG_BIN, -CAR_TYPE, -CAR_TYPE_FLAG_BIN, -CAR_USE, -CAR_USE_Private, -CLM_FREQ_FLAG_BIN, -EDUCATION, -EDUCATION_FLAG_BIN, -HOME_VAL_FLAG_BIN, -INCOME_FLAG_BIN, -JOB, -JOB_TYPE_FLAG_BIN, -MSTATUS, -MSTATUS_No, -MVR_PTS_FLAG_BIN, -OLDCLAIM_FLAG_BIN, -PARENT1, -PARENT1_No, -RED_CAR, -RED_CAR_no, -REVOKED, -REVOKED_No, -SEX, -SEX_F, -TARGET_FLAG, -TIF_sin, -TRAVTIME_FLAG_BIN, -URBANICITY, -URBANICITY_Highly.Rural..Rural, -URBANICITY_Highly.Urban..Urban, -YOJ_FLAG_BIN)
+
 str(insure_train_crash)
 ```
 \
 \
-We notice that the dependent variable here is TARGET_AMT. Apart from the dependent variables, we have 45 independent or predictor variables.\
+We notice that the dependent variable here is TARGET_AMT. Apart from the dependent variables, we have 39 independent or predictor variables.\
 \
-Also, since we created this dataset from the "Clean" full dataset, we already have taken care of missing values, Outliers etc.
+Also, since we created this dataset from the "Clean" full dataset, we already have taken care of the missing values.
 \
 \
-However, we may need to look into the correlations again since we have a new target variable to correlate against.
+However, we may need to look into the outliers and correlations again since we have a new target variable to correlate against.
 \
 \
 
@@ -947,15 +1202,15 @@ kable(data.frame(Correlation_TARGET_AMT), caption = "Correlation between TARGET_
 The above table suggests that none of the variables seem to have a very strong correlation with TARGET_AMT. 
 \
 \
-However, CAR_TYPE_Panel.Truck, JOB_Professional, MSTATUS_No, CAR_TYPE_Van, SEX_M, REVOKED_No, CAR_USE_Commercial, JOB_Blue.Collar, MVR_PTS, INCOME, YOJ, PARENT1_Yes, EDUCATION_Bachelors, AGE, EDUCATION_PhD, RED_CAR_yes, URBANICITY_Highly.Urban..Urban, JOB_Lawyer have a positive correlation. 
+However, BLUEBOOK, CAR_TYPE_Panel.Truck, SEX_FLAG_M, CAR_TYPE_Van, CAR_USE_FLAG_Commercial, INCOME, JOB_Professional, JOB_Unknown, MVR_PTS, YOJ, HOME_VAL, EDUCATION_PhD, AGE, RED_CAR_FLAG_yes, PARENT1_FLAG_Yes, JOB_Blue.Collar, EDUCATION_Masters, EDUCATION_Bachelors, JOB_Lawyer, TRAVTIME, CLM_FREQ, HOMEKIDS JOB_Lawyer have a positive correlation. 
 \
 \
-Similarly, CAR_TYPE_Minivan, URBANICITY_Highly.Rural..Rural, EDUCATION_Masters, TRAVTIME, CAR_TYPE_Sports.Car, HOMEKIDS, TIF, JOB_Doctor, KIDSDRIV, RED_CAR_no, EDUCATION_High.School, PARENT1_No, BLUEBOOK, HOME_VAL, CAR_TYPE_Pickup, JOB_Home.Maker, CAR_AGE, JOB_Clerical, JOB_Manager, OLDCLAIM, CAR_TYPE_SUV, CLM_FREQ, JOB_Student, CAR_USE_Private, REVOKED_Yes, SEX_F, MSTATUS_Yes have a negative correlation. 
+Similarly, KIDSDRIV, URBANICITY_FLAG_Rural, OLDCLAIM, CAR_TYPE_Minivan, TIF, JOB_Doctor, CAR_AGE, JOB_Clerical, CAR_TYPE_Sports.Car, CAR_TYPE_Pickup, JOB_Manager, JOB_Home.Maker, JOB_Student, MSTATUS_FLAG_Yes, EDUCATION_High.School, REVOKED_FLAG_Yes, CAR_TYPE_SUV have a negative correlation. 
 \
 \
 
 Lets now see how values in some of the variable affects the correlation:
-
+\
 \
 
 CAR_TYPE - If you drive Vans or Panel Trucks your cost of repair seems to increase as against Minivan, Pickup, Sports.Car, SUV. Since the distiction is clear, we believe that binning this variable accordingly will help strengthen the correlation.
@@ -964,12 +1219,126 @@ CAR_TYPE - If you drive Vans or Panel Trucks your cost of repair seems to increa
 EDUCATION - If you have only a high school education then your cost of repair is less compared to a Bachelors, Masters or a Phd. Again binning this variable will strengthen the correlation.
 \
 \
-JOB - If you are a Lawyer, Professional or in a Blue Collar job, you spend more on repairs as compared to a Doctor, Manager, Home Maker, Student, or Clerical job.  Again binning this variable will strengthen the correlation.
+JOB - If you are a Lawyer, Professional, in a Blue Collar job or the job is unknown, you spend more on repairs as compared to a Doctor, Manager, Home Maker, Student, or Clerical job.  Again binning this variable will strengthen the correlation.
 \
 \
+
+Lets have a look at the following numeric variables that have 0 as one of their values: INCOME, YOJ, HOME_VAL, OLDCLAIM, CLM_FREQ, MVR_PTS, CAR_AGE, AGE, BLUEBOOK, TIF, TRAVTIME. The goal here is to see if we can bin these variables into zero and non-zero bin values and check the correlations. While doing that we will also see how the variables are distributed vis-a-vis TARGET_AMT.
+\
+\
+
+
+```{r}
+
+check_bins <- function(var, thresholds) {
+    col_x <- which(colnames(insure_train_crash)==var)
+    old_x <- select(insure_train_crash, col_x)
+    cor_old <- cor(old_x, insure_train_crash$TARGET_AMT,use = 'na.or.complete')
+    ds <- data.frame("Item" = "Original", "Correlation"= round(cor_old, 5))
+
+    old_tresh <- 0
+    for(i in 1:length(thresholds)) {
+        New_x <- ifelse((select(insure_train_crash, col_x) >= old_tresh & select(insure_train_crash, col_x)<=thresholds[i]),0,1)
+        
+        cor_new <- cor(New_x, insure_train_crash$TARGET_AMT,use = 'na.or.complete')
+        
+        ds_1 <- data.frame("Item" = as.character(thresholds[i]), "Correlation"= round(cor_new, 5))
+        
+        ds <- rbind(ds, ds_1)
+        old_tresh <- thresholds[i]
+    }
+    
+    return (ds)
+}
+
+plot(insure_train_crash$INCOME, insure_train_crash$TARGET_AMT)
+#check_bins("INCOME", c(0, 50000, 125000, 200000))
+
+plot(insure_train_crash$YOJ, insure_train_crash$TARGET_AMT)
+#check_bins("YOJ", c(0:19))
+
+plot(insure_train_crash$HOME_VAL, insure_train_crash$TARGET_AMT)
+#check_bins("HOME_VAL", c(seq(0, 600000, 10000)))
+
+plot(insure_train_crash$OLDCLAIM, insure_train_crash$TARGET_AMT)
+hist(insure_train_crash$OLDCLAIM, breaks=50)
+#check_bins("OLDCLAIM", c(seq(0, 50000, 1000)))
+
+#show_hist("CLM_FREQ")
+plot(insure_train_crash$CLM_FREQ, insure_train_crash$TARGET_AMT)
+#check_bins("CLM_FREQ", c(0, 1, 2, 3, 4))
+
+#table(insure_train_full$MVR_PTS)
+plot(insure_train_crash$MVR_PTS, insure_train_crash$TARGET_AMT)
+#check_bins("MVR_PTS", c(0:12))
+
+table(insure_train_full$CAR_AGE)
+show_hist("CAR_AGE")
+plot(insure_train_crash$CAR_AGE, insure_train_crash$TARGET_AMT)
+#check_bins("CAR_AGE", c(1:27))
+
+#table(insure_train_full$AGE)
+plot(insure_train_crash$AGE, insure_train_crash$TARGET_AMT)
+#show_hist("AGE")
+#check_bins("AGE", c(16:80))
+
+#table(insure_train_full$BLUEBOOK)
+plot(insure_train_crash$BLUEBOOK, insure_train_crash$TARGET_AMT)
+#show_hist("BLUEBOOK")
+#check_bins("BLUEBOOK", c(5000, 10000, 20000, 30000, 45000, 57500, 58000))
+
+# table(insure_train_full$TIF)
+# show_hist("TIF")
+plot(insure_train_crash$TIF, insure_train_crash$TARGET_AMT)
+# check_bins("TIF", c(1, 4, 6, 10, 24))
+
+#table(insure_train_full$TRAVTIME)
+plot(insure_train_crash$TRAVTIME, insure_train_crash$TARGET_AMT)
+show_hist("TRAVTIME")
+#check_bins("TRAVTIME", c(21, 59, 120))
+
+```
+
+\
+\
+
+From the outputs above, we can come to the following conclusions:
+\
+\
+
+
+- INCOME - From the plot we can see that there is a marked difference in the chart at around 125000. We will use this value to bin this variable. 
+
+- YOJ - We can see that from 7 - 17 years, there is a visible change in the TARGET_AMT. We will use this  bound to create the binned variable.
+ 
+- HOME_VAL - We see from the plot 3 distinct segments - Between 0-10000, 60000-400000 and the rest. We will use these values to create 2 bins.
+
+- OLDCLAIM- We can visualize 3 clusters in the data - 0-2000, 2000-10000, > 10000,  We will use these values to create 2 bins.
+
+- CLM_FREQ - Values less than 4 seem to have a positive correlation. We will use this value for binning. 
+
+- MVR_PTS - We can see from the plot that after 2, the TARGET_AMT starts decreasing. We will use this value for binning. 
+
+- CAR_AGE - There are quite a few records with a 1 year car age. We will use this bound to generate a binned variable as well as retain the original varible as is. 
+
+- AGE - There is no specific pattern that emerges in AGE. We will retain the variable as is.
+
+- BLUEBOOK - There is no specific pattern that emerges. We will retain the variable as is.
+
+- TIF - Looking at the plot we can conclude that this is not a good variable for binning. We will retain this variable as is.
+
+- TRAVTIME - from the plot, we can see that there is a clear pattern around the value - 20. We will go ahead and create a binned variable for this.
+
+
+
+\
+\
+
+
 We will carry out the above transformations in the Data Preparation phase.
 \
 \
+
 
 
 ###3.1.2 Missing Values\
@@ -987,10 +1356,6 @@ kable(data.frame(missings), caption = "Missing Values")
 ```
 \
 \
-For the record, we lost about 17.6% of the data for the TARGET_AMT dataset when we started with the "clean" dataset.
-\
-\
-
 
 
 ###3.1.3 Outliers identification\ 
@@ -999,15 +1364,17 @@ For the record, we lost about 17.6% of the data for the TARGET_AMT dataset when 
 
 In this sub-section, we will look at the boxplots and determine the outliers in variables and decide on whether to act on the outliers.\
 \
-We will do the outliers only on the numeric variables.\
+We will do the outliers only on the numeric variables: AGE, BLUEBOOK and TIF. The other variables will be binned and would not beed outlier handling.
+\
 \
 Below are the plots:
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-#
-mdata<- select(insure_train_crash, KIDSDRIV, AGE, BLUEBOOK, CAR_AGE, CLM_FREQ, HOME_VAL, HOMEKIDS, INCOME, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ)
+# AGE, BLUEBOOK, CAR_AGE, CLM_FREQ, HOME_VAL, HOMEKIDS, INCOME, KIDSDRIV, MVR_PTS, OLDCLAIM, TIF, TRAVTIME, YOJ
+
+mdata<- select(insure_train_crash, AGE, BLUEBOOK, TIF)
 mdata2 <- melt(mdata)
 # Output the boxplot
 p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
@@ -1018,7 +1385,7 @@ p + facet_wrap( ~ variable, scales="free", ncol=5)
 
 From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. \
 \
-We see that: KIDSDRIV, AGE, CAR_AGE, MVR_PTS, TIF, TRAVTIME, YOJ  need to be treated when we do the data preparation for modeling the TARGET_AMT. 
+We see thatall the 3 variables need to be treated when we do the data preparation for modeling the TARGET_AMT. 
 \
 \
 \
@@ -1043,8 +1410,7 @@ We will be following the below steps as guidelines: \
 ###3.2.1 Outliers treatment\
 
 
-
-In this sub-section, we will check different transformations for each of the variables - KIDSDRIV, AGE, CAR_AGE, MVR_PTS, TIF, TRAVTIME and YOJ - and create the appropriate outlier-handled / transformed variables.  
+In this sub-section, we will check different transformations for each of the variables - AGE, BLUEBOOK, TIF - and create the appropriate outlier-handled / transformed variables.  
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -1071,25 +1437,6 @@ show_charts <- function(x, varlab, ...) {
 \
 
 
-**Transformations for KIDSDRV**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-#KIDSDRIV, AGE, CAR_AGE, MVR_PTS, TIF, TRAVTIME and YOJ
-
-show_charts(insure_train_crash$KIDSDRIV, 'KIDSDRV')
-
-insure_train_crash$KIDSDRIV_log <- log(insure_train_crash$KIDSDRIV)
-insure_train_crash$KIDSDRIV_inv <- 1 / insure_train_crash$KIDSDRIV
-```
-\
-\
-From the above charts we can see that a log or an inverse transformation works well for KIDSDRV. Hence, We create both these variables.
-\
-\
-
-
 
 **Transformations for AGE**
 
@@ -1106,91 +1453,31 @@ From the above charts we can see that a sin transformation works well for AGE. W
 \
 
 
-
-**Transformations for HOMEKIDS**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-#KIDSDRIV, AGE, CAR_AGE, MVR_PTS, TIF, TRAVTIME and YOJ
-show_charts(insure_train_crash$CAR_AGE, 'CAR_AGE')
-insure_train_crash$CAR_AGE_log <- log(insure_train_crash$CAR_AGE)
-insure_train_crash$CAR_AGE_inv <- 1/(insure_train_crash$CAR_AGE)
-```
-\
-\
-From the above charts we can see that all the transformations address the outliers. However, the log and inverse transformation seem to do a better job of maintaining the central tendancy. So We just use the log and inverse transformation for CAR_AGE. 
-\
-\
-
-
-**Transformations for MVR_PTS**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-show_charts(insure_train_crash$MVR_PTS, 'MVR_PTS')
-
-insure_train_crash$MVR_PTS_log <- log(insure_train_crash$MVR_PTS)
-insure_train_crash$MVR_PTS_sqrt <- sqrt(insure_train_crash$MVR_PTS)
-insure_train_crash$MVR_PTS_sin <- sin(insure_train_crash$MVR_PTS)
-```
-\
-\
-From the above charts we can see that a log, sqrt or a sin transformation works better for MVR_PTS. Hence, We will create these variables.
-\
-\
-
-
-
 **Transformations for TIF**
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 show_charts(insure_train_crash$TIF, 'TIF')
-
-insure_train_crash$TIF_log <- log(insure_train_crash$TIF)
-insure_train_crash$TIF_sqrt <- sqrt(insure_train_crash$TIF)
 insure_train_crash$TIF_sin <- sin(insure_train_crash$TIF)
-insure_train_crash$TIF_inv <- 1 / insure_train_crash$TIF
 ```
 \
 \
 
-From the above charts we can see that a log, sqrt, sin or an inverse transformation works well for TIF. Hence, We will create these variables.
+From the above charts we can see that a log, sqrt, sin or an inverse transformation works well for TIF. However, a sin transformation seems to be more appropriate as it is well centered. Hence, We will create these variables.
 \
 \
 
-
-
-**Transformations for TRAVTIME**
+**Transformations for BLUEBOOK**
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
-#TRAVTIME and YOJ
-
-show_charts(insure_train_crash$TRAVTIME, 'TRAVTIME')
-
-insure_train_crash$TRAVTIME_sqrt <- sqrt(insure_train_crash$TRAVTIME)
-insure_train_crash$TRAVTIME_sin <- sin(insure_train_crash$TRAVTIME)
-
+show_charts(insure_train_crash$BLUEBOOK, 'BLUEBOOK')
+insure_train_crash$BLUEBOOK_sin <- sin(insure_train_crash$BLUEBOOK)
 ```
 \
 \
-From the above charts we can see that a sqrt and sin transformation works well for TRAVTIME. Hence, We will create these variables.
-\
-\
 
-
-
-**Transformations for YOJ**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-show_charts(insure_train_crash$YOJ, 'YOJ')
-insure_train_crash$YOJ_sin <- sin(insure_train_crash$YOJ)
-```
-\
-\
-From the above charts we can see that a sin transformation works well for YOJ. Hence, We will create this variable.
+From the above charts we can see that a sin transformation works well for BLUEBOOK. We will create these variables.
 \
 \
 
@@ -1247,8 +1534,7 @@ insure_train_crash$EDUCATION_AMT_BIN <- ifelse(insure_train_crash$EDUCATION_High
 
 ```
 
-JOB - If you are a Lawyer, Professional or in a Blue Collar job, you spend more on repairs as compared to a Doctor, Manager, Home Maker, Student, or Clerical job.  Again binning this variable will strengthen the correlation.
-
+JOB - If you are a Lawyer, Professional, in a Blue Collar job or the job is unknown, you spend more on repairs as compared to a Doctor, Manager, Home Maker, Student, or Clerical job.  Again binning this variable will strengthen the correlation.
 \
 \
 
@@ -1256,18 +1542,185 @@ Accordingly, we will bin these variables as below:
 \
 JOB_TYPE_AMT_BIN : \
 \
-- 1 : if JOB_TYPE is Lawyer, Professional or in a Blue Collar \
+- 1 : if JOB_TYPE is Lawyer, Professional, Unknown or in a Blue Collar \
 - 0 : if JOB_TYPE is Doctor, Manager, Home Maker, Student, or Clerical
 \
 \
 
 ```{r}
 
-insure_train_crash$JOB_TYPE_AMT_BIN <- ifelse(insure_train_crash$JOB_Lawyer |  insure_train_crash$JOB_Professional | insure_train_crash$JOB_Blue.Collar, 1, 0)
+insure_train_crash$JOB_TYPE_AMT_BIN <- ifelse(insure_train_crash$JOB_Lawyer |  insure_train_crash$JOB_Professional | insure_train_crash$JOB_Blue.Collar | insure_train_crash$JOB_Unknown, 1, 0)
 
 ```
 \
 \
+
+
+- INCOME - From the plot we can see that there is a marked difference in the chart at around 125000. We will use this value to bin this variable. 
+
+\
+\
+
+INCOME_AMT_BIN : \
+\
+- 1 : if INCOME <= 125000 \
+- 0 : if INCOME > 125000
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_crash$INCOME_AMT_BIN <- ifelse(insure_train_crash$INCOME <=125000, 1, 0)
+
+```
+\
+\
+
+- YOJ - We can see that from 7 - 17 years, there is a visible change in the TARGET_AMT. We will use this  bound to create the binned variable.
+\
+\
+YOJ_AMT_BIN : \
+\
+- 1 : if YOJ >=7 and YOJ<= 17 \
+- 0 : ELSE 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_crash$YOJ_AMT_BIN <- ifelse((insure_train_crash$YOJ>=7 & insure_train_crash$YOJ<=17), 1, 0)
+
+```
+\
+\
+
+
+- HOME_VAL - We see from the plot 3 distinct segments - Between 0-10000, 60000-400000 and the rest. We will use these values to create 2 bins.
+\
+\
+HOME_VAL_AMT_0_10K_BIN : \
+\
+- 1 : if HOME_VAL >=0 and HOME_VAL<= 10000 \
+- 0 : ELSE 0
+\
+\
+HOME_VAL_AMT_60K_400K_BIN : \
+\
+- 1 : if HOME_VAL >=60000 and HOME_VAL<= 400000 \
+- 0 : ELSE 0
+
+
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_crash$HOME_VAL_AMT_0_10K_BIN <- ifelse((insure_train_crash$HOME_VAL>=0 & insure_train_crash$HOME_VAL<=10000), 1, 0)
+
+insure_train_crash$HOME_VAL_AMT_60K_400K_BIN <- ifelse((insure_train_crash$HOME_VAL>=60000 & insure_train_crash$HOME_VAL<=400000), 1, 0)
+
+```
+\
+\
+
+- OLDCLAIM- We can visualize 3 clusters in the data - 0-2000, 2000-10000, > 10000,  We will use these values to create 2 bins.
+\
+\
+OLDCLAIM_AMT_0_2K_BIN : \
+\
+- 1 : if OLDCLAIM >=0 and OLDCLAIM<= 2000 \
+- 0 : ELSE 0
+\
+\
+OLDCLAIM_AMT_2K_10K_BIN : \
+\
+- 1 : if OLDCLAIM >=2000 and OLDCLAIM<= 10000 \
+- 0 : ELSE 0
+
+
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_crash$OLDCLAIM_AMT_0_2K_BIN <- ifelse((insure_train_crash$OLDCLAIM>=0 & insure_train_crash$OLDCLAIM<=2000), 1, 0)
+
+insure_train_crash$OLDCLAIM_AMT_2K_10K_BIN <- ifelse((insure_train_crash$OLDCLAIM>=2001 & insure_train_crash$OLDCLAIM<=10000), 1, 0)
+
+```
+\
+\
+
+
+- CLM_FREQ - Values less than 4 seem to have a positive correlation. We will use this value for binning. 
+\
+\
+CLM_FREQ_AMT_BIN : \
+\
+- 1 : if CLM_FREQ < 4 \
+- 0 : if CLM_FREQ >= 4
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_crash$CLM_FREQ_AMT_BIN <- ifelse(insure_train_crash$CLM_FREQ <4, 1, 0)
+```
+\
+\
+
+- MVR_PTS - We can see from the plot that after 2, the TARGET_AMT starts decreasing. We will use this value for binning. 
+\
+\
+MVR_PTS_AMT_BIN : \
+\
+- 1 : if MVR_PTS <=2 \
+- 0 : if MVR_PTS > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_crash$MVR_PTS_AMT_BIN <- ifelse(insure_train_crash$MVR_PTS <=2, 1, 0)
+```
+\
+\
+
+- CAR_AGE - There are quite a few records with a 1 year car age. We will use this bound to generate a binned variable as well as retain the original varible as is. 
+\
+\
+CAR_AGE_AMT_BIN : \
+\
+- 1 : if CAR_AGE <= 1 \
+- 0 : if CAR_AGE > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_crash$CAR_AGE_AMT_BIN <- ifelse(insure_train_crash$CAR_AGE <=1, 1, 0)
+```
+\
+\
+
+- TRAVTIME - from the plot, we can see that there is a clear pattern around the value - 20. We will go ahead and create a binned variable for this.
+\
+\
+TRAVTIME_AMT_BIN : \
+\
+- 1 : if TRAVTIME <= 20 \
+- 0 : if TRAVTIME > 0
+\
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+insure_train_crash$TRAVTIME_AMT_BIN <- ifelse(insure_train_crash$TRAVTIME <=20, 1, 0)
+```
+\
+\
+
+After having prepared the data, we will go ahead and drop some of the variables.
+
+```{r}
+
+# write.csv(insure_train_crash, file = "D:/CUNY/Courses/Business Analytics and Data Mining/Assignments/data621-ctg5/HW4/final.csv")
+
+DS_TARGET_AMT <- select(insure_train_crash, -AGE, -BLUEBOOK, -CAR_TYPE_Minivan, -CAR_TYPE_Panel.Truck, -CAR_TYPE_Pickup, -CAR_TYPE_Sports.Car, -CAR_TYPE_SUV, -CAR_TYPE_Van, -CLM_FREQ, -EDUCATION_Bachelors, -EDUCATION_High.School, -EDUCATION_Masters, -EDUCATION_PhD, -HOME_VAL, -INCOME, -JOB_Blue.Collar, -JOB_Clerical, -JOB_Doctor, -JOB_Home.Maker, -JOB_Lawyer, -JOB_Manager, -JOB_Professional, -JOB_Student, -JOB_Unknown, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ)
+
+```
+\
+\
+
+
 
 
 
@@ -1309,7 +1762,7 @@ We will then generate inferences from these models.\
 ###3.4.3 Selection Summary
 ##3.5 Prediction Using Evaluation Data
 ###3.5.1 Tranformation of Evaluation Data 
-###3.5.2 Independent Prediction Using Selected Model
+###3.5.2 Prediction Using Selected Model
 ###3.5.3 Dependent Prediction Using Selected Model
 ###3.5.4 Inference
 #4 Conclusion
