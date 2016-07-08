@@ -196,6 +196,8 @@ insure_train_full$JOB <- as.factor(str_replace_all(insure_train_full$JOB, "z_", 
 insure_train_full <- insure_train_full[ -which( insure_train_full$CAR_AGE == -3 | insure_train_full$CAR_AGE == 0 ) , ]
 
 
+insure_orig <- insure_train_full
+
 #- We will also create dummy variables for all the factors and drop the original variables. 
 
 dummy_vars<-as.data.frame(sapply(dummy(insure_train_full), FUN = as.numeric))
@@ -213,7 +215,6 @@ insure_train_full <- cbind(insure_train_full, dummy_vars)
 
 insure_train_full <- select(insure_train_full, -INDEX)
 
-insure_orig <- insure_train_full
 
 
 ```
@@ -869,7 +870,9 @@ CAR_AGE_FLAG_BIN : \
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
 insure_train_full$CAR_AGE_FLAG_BIN <- ifelse(insure_train_full$CAR_AGE <=1, 1, 0)
+
 ```
 \
 \
@@ -893,6 +896,9 @@ TRAVTIME_FLAG_BIN : \
 \
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+insure_train_full$TRAVTIME_FLAG_BIN <- ifelse(insure_train_full$TRAVTIME <=20, 1, 0)
+
 
 ```
 \
@@ -1767,7 +1773,7 @@ In this model, we will be using the stadard lm modeling technique. We will creat
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 TA_model1<-lm(TARGET_AMT~., na.omit(DS_TARGET_AMT_TRAIN))
-TA_model1_ref <- step(TA_model1,direction="forward",test="F")
+TA_model1_ref <- step(TA_model1,direction="backward",test="F")
 summary(TA_model1_ref)
 
 ```

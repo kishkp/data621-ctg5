@@ -1,84 +1,3 @@
----
-title: "Home Work Assignment - 04"
-author: "Critical Thinking Group 5"
-output:
-  html_document:
-    toc: yes
-  pdf_document:
-    toc: yes
----
-
-\newpage
-
-#1 Overview 
-The data set contains approximately 8161 records. Each record represents a customer profile at an auto insurance company. Each record has two response variables. 
-\
-\
-The first response variable, TARGET_FLAG, is a 1 or a 0. A "1" means that the person was in a car crash. A zero means that the person was not in a car crash. 
-\
-\
-The second response variable is TARGET_AMT. This is the amount spent on repairs if there was a crash. This value is zero if the person did not crash their car. But if they did crash their car, this number will be a value greater than zero.
-\
-\
-We will be exploring, analyzing, and modeling the training data. Since there are 2 different predictions we have to work with, we will deal with each prediction independently. The following are the 2 predictions we will be modeling for:\
-\
-1. TARGET_FLAG - This dependent variable tells whether there was a crash or not. This is a binary variable and as such we will be using a Logistic Regression Model to predict this.\
-2. TARGET_AMT - This dependent variable gives the amount / cost of repairs if there was a crash. This is a continuous variable and we will ve using a Linear Regression Model to predict this.
-\
-\
-Each of the above models will be built and evaluated separately. In the first section of this document we will deal with the Logistic Model for TARGET_FLAG and in the second section we will deal with Linear Model for the TARGET_AMT
-\
-\
-Out of the many models for each task, we will go ahead and shortlist one model that works the best. We will then use these models (one for each task) on the test / evaluation data.
-\
-\
-To attain our objective, we will be follow the below steps for each modeling exercise:\
-
-1 -Data Exploration \
-2 -Data Preparation \
-3 -Build Models \
-4 -Select Models \
-\
-**Model Selection Strategy:** As a strategy, we will split the train dataset into 2 parts - TRAIN and VALID. In the VALID dataset, we will hold out some values to validate how well the model is trained using the TRAIN dataset. We will then use the Model that performs the best on the EVALUATION data to give the required output. We will split the TRAIN / VALID data after the **Data Exploration / Preparation** before the **Build Models**.
-\
-\
-**Please Note:** 
-\
-\
-- While working on the Linear Models for the TARGET_AMT, we will be using only a subset of the data where the TARGET_FLAG = 1. This will give us all the records where there was a crash and subsequently a repair amount.\
-\
-- While Predicting the TARGET_AMT with the given Evaluation dataset, We will do 2 evaluations:\
-1. Independent Prediction - Here we use the Evaluation dataset variables to predict the TARGET_AMT without the need to predict the TARGET_FLAG since the model has been developed independently.\
-2. Dependent Prediction - Here we will take the output of the TARGET_FLAG predictions on the Evaluation dataset and use only those rows that were classified as a "Crash" and use it as the input to the TARGET_AMT prediction. So this is a two step prediction, one for the TARGET_FLAG and using the output to predict TARGET_AMT.
-\
-\
-
-
-\newpage
-
-#2 Logistic Regression for TARGET_FLAG\
-
-
-
-In this section we will use Logistic regression to model the TARGET_FLAG. We will first start with the Data Exploration.\
-\
-
-
-##2.1 Data Exploration Analysis\
-
-In this sub-section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
--Variable Identification / Relationships\
--Data Summary Analysis\
--Missing Values\
--Outliers identification\ 
--Analysis the link function \
-
-
-###2.1.1 Variable Identification\
-
-
-First let's display and examine the data dictionary or the data columns as shown in table 1
-
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
 if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
@@ -113,12 +32,6 @@ insure_train_full <- read.csv("https://raw.githubusercontent.com/kishkp/data621-
 
 kable(read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurevars.csv"), caption = "Variable Description")
 
-```
-\
-We notice that there are 2 dependent variables - TARGET_FLAG and TARGET_AMT. Apart from these 2 dependent variables, we have 23 independent or predictor variables.\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 str(insure_train_full)
 
 levels(insure_train_full$MSTATUS)
@@ -132,37 +45,6 @@ levels(insure_train_full$REVOKED)
 
 summary(insure_train_full)
 
-```
-\
-\
-From the output above we can make the following observations:\
-\
-- some numeric variables like INCOME, HOME_VAL, BLUEBOOK, OLDCLAIM have been converted to Factor variables. This needs to be set right.\
-\
-- Some of the variables like MSTATUS, SEX, EDUCATION, JOB, CAR_TYPE, URBANICITY have some of the values encoded with "z_". Not that this will impact the analysis, but it will look a bit odd. So we will be fixing this.
-\
-\
-- EDUCATION has 2 "High School" values - one starting with "<" and another starting with "z_". It is assumed that both these values are to be converted to "HIGH School".
-\
-\
-- JOB has a "" value. This would indicate that the job is unknown or is not coded. Hence, we will replace this with "Unknown".
-\
-\
-- There are records where CAR_AGE is negative or zero, which is improbable. Upon investigation, we find that there are 4 records that We will remove this record.
-\
-\
-- We will also create dummy variables for all the factors. 
-\
-\
-- Please note that we will not be using INDEX variable as it serves as just an identifier for each row. And has no relationships to other variables. 
-\
-\
-Making the above fixes to the data, we now have a "clean" dataset which can be explored further.
-\
-\
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 #- some numeric variables like INCOME, HOME_VAL, BLUEBOOK, OLDCLAIM have been converted to Factor variables. This needs to be set right.
 
 insure_train_full$INCOME <- as.numeric(str_replace_all(insure_train_full$INCOME, pattern =  "[\\$*,]", replacement = ""))
@@ -215,22 +97,6 @@ insure_train_full <- select(insure_train_full, -INDEX)
 
 insure_orig <- insure_train_full
 
-
-```
-\
-\
-
-
-###2.1.2 Data Summary and Correlation Analysis\
-
-\
-\
-In this section, we will create summary data to better understand the relationship each of the variables have with our dependent variables using correlation, central tendency, and dispersion as shown below:  
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-
 ds <- select(insure_train_full, -PARENT1, -MSTATUS, -SEX, -EDUCATION, -JOB, -CAR_USE, -CAR_TYPE, -RED_CAR, -REVOKED, -URBANICITY, -TARGET_AMT)
 
 ds_stats <- psych::describe(ds, skew = TRUE, na.rm = TRUE)
@@ -242,47 +108,9 @@ kable(ds_stats[8:13], caption= "Data Summary (Cont)")
 fun1 <- function(a, y) cor(y, a , use = 'na.or.complete')
 Correlation_TARGET_FLAG <- sapply(ds, FUN = fun1, y=ds$TARGET_FLAG) 
 
-```
-\
-\
-
-Now we will produce the correlation table between the independent variables and the dependent variable - TARGET_FLAG  
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 Correlation_TARGET_FLAG <- sort(Correlation_TARGET_FLAG, decreasing = TRUE)
 kable(data.frame(Correlation_TARGET_FLAG), caption = "Correlation between TARGET_FLAG and predictor variables")
 
-```
-\
-\
-
-The above table suggests that none of the variables seem to have a very strong correlation with TARGET_FLAG. However, CAR_TYPE_Van, RED_CAR_no, JOB_Home.Maker, SEX_F, JOB_Clerical, CAR_TYPE_SUV, TRAVTIME, CAR_TYPE_Pickup, CAR_TYPE_Sports.Car, JOB_Student, JOB_Blue.Collar, KIDSDRIV, HOMEKIDS, MSTATUS_No, OLDCLAIM, EDUCATION_High.School, CAR_USE_Commercial, REVOKED_Yes, PARENT1_Yes, CLM_FREQ, MVR_PTS, URBANICITY_Highly.Urban..Urban have a positive correlation. 
-\
-\
-Similarly, URBANICITY_Highly.Rural..Rural, HOME_VAL, PARENT1_No, REVOKED_No, CAR_USE_Private, INCOME, CAR_TYPE_Minivan, MSTATUS_Yes, JOB_Manager, BLUEBOOK, AGE, CAR_AGE, TIF, EDUCATION_Masters, YOJ, EDUCATION_PhD, JOB_Lawyer, JOB_Doctor, EDUCATION_Bachelors, JOB_Professional, SEX_M, RED_CAR_yes, CAR_TYPE_Panel.Truck have a negative correlation. 
-\
-\
-Lets now see how values in some of the variable affects the correlation:
-\
-\
-CAR_TYPE - If you drive Minivans and Panel Trucks you have lesser chance of being in a crash as against Pickups, Sports, SUVs and Vans. Since the distiction is clear, we believe that binning this variable accordingly will help strengthen the correlation.
-\
-\
-EDUCATION - If you have only a high school education then you are more likely to crash than if you have a Bachelors, Masters or a Phd. Again binning this variable will strengthen the correlation.
-\
-\
-JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you are more likely to be in a crash against Doctor, Lawyer, Manager, professional or Unknown job.  Again binning this variable will strengthen the correlation.
-\
-\
-
-Lets have a look at the following numeric variables that have 0 as one of their values: INCOME, YOJ, HOME_VAL, OLDCLAIM, CLM_FREQ, MVR_PTS, CAR_AGE, AGE, BLUEBOOK, TIF, TRAVTIME. The goal here is to see if we can bin these variables into zero and non-zero bin values and check the correlations. While doing that we will also see how the variables are distributed vis-a-vis TARGET_FLAG.
-\
-\
-
-
-```{r}
 
 show_hist <- function(var) {
     
@@ -361,73 +189,9 @@ table(insure_train_full$TRAVTIME)
 show_hist("TRAVTIME")
 check_bins("TRAVTIME", c(21, 59, 120))
 
-
-
-```
-
-\
-\
-
-From the outputs above, we can come to the following conclusions:
-\
-\
-
-
-- INCOME - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this at zero value.
-
-- YOJ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-
-- HOME_VAL - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-
-- OLDCLAIM- There is a huge difference in the coorrelation when we transform this vatiable. Binning this variable seems like a good idea.
-
-- CLM_FREQ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-
-- MVR_PTS - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-
-- CAR_AGE - There are quite a few records with a 1 year car age. We will use this bound to generate a binned variable as well as retain the original varible as is. 
-
-- AGE - There is no specific pattern that emerges. We will retain this variable as is.
-
--BLUEBOOK - There is no specific pattern that emerges. We will retain the variable as is.
-
-- TIF - Looking at the plots, values and the correlations with TARGET_FLAG, we can conclude that this is not a good variable for binning. We will retain this variable as is.
-
-- TRAVTIME - from the plot, we can see that there is a clear pattern around the value - 20. We will go ahead and create a binned variable for this.
-
-
-\
-\
-
-
-We will carry out the above transformations in the Data Preparation phase.
-\
-\
-
-
-
-
-###2.1.3 Missing Values\
-
-
-\
-\
-Based on the missing data from the below table, we can see that there are a few missing values for AGE, YOJ, INCOME, HOME_VAL, CAR_AGE variables. 
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 missings<- sapply(insure_train_full,function(x) sum(is.na(x)))
 kable(data.frame(missings), caption = "Missing Values")
 
-```
-
-\
-\
-
-We can try and impute values to AGE, YOJ, INCOME, HOME_VAL, CAR_AGE. Lets look at the distributions for each of the variable to determine the value to use to impute. 
-
-
-```{r}
 
 par(mfrow=c(2,3))
 hist(insure_train_full$AGE)
@@ -435,25 +199,6 @@ hist(insure_train_full$YOJ)
 hist(insure_train_full$INCOME)
 hist(insure_train_full$HOME_VAL)
 hist(insure_train_full$CAR_AGE)
-```
-
-\
-\
-
-Given that Age and YOJ look to be somewhat normally distributed, we can go ahead and use the mean to impute the missing values for these variables. For INCOME, HOME_VAL and CAR_AGE the median seems to be a better value to impute since there are strong right skews. We will carry out these transformation while data preparation.
-\
-\
-
-
-
-###2.1.4 Outliers identification\ 
-
-
-
-In this sub-section, we will look at the boxplots and determine the outliers in variables and decide on whether to act on the outliers. We will do the outliers only on some of the currency and few other variables. Below are the plots:
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
 #
 mdata<- select(insure_train_full, AGE, BLUEBOOK, TIF)
 mdata2 <- melt(mdata)
@@ -462,34 +207,7 @@ p <- ggplot(data = mdata2, aes(x=variable, y=value)) +
   geom_boxplot() + ggtitle("Outliers Identification")
 p + facet_wrap( ~ variable, scales="free", ncol=5)
 
-```
 
-From the "Outliers identification" plot above, we see that we have few outliers that we need to treat. We will treat the outliers in this variable when we do the data preparation for modeling the TARGET_FLAG. 
-\
-\
-
-
-
-###2.1.5 Analysis the link function \
-
-
-
-In this section, we will investigate how our initial data aligns with a typical logistic model plot. 
-
-Recall the Logistic Regression is part of a larger class of algorithms known as Generalized Linear Model (glm).  The fundamental equation of generalized linear model is:
-
-$g(E(y)) = a+ Bx_1+B_2x_2+ B_3x_3+...$   
-
-where, g() is the link function, E(y) is the expectation of target variable and $B_0 + B_1x_1 + B_2x_2+B_3x_3$ is the linear predictor ( $B_0,B_1,B_2, B_3$ to be predicted). The role of link function is to 'link' the expectation of y to linear predictor.
-
-In logistic regression, we are only concerned about the probability of outcome dependent variable ( success or failure). As described above, g() is the link function. This function is established using two things: Probability of Success (p) and Probability of Failure (1-p).  p should meet following criteria:
-It must always be positive (since p >= 0)
-It must always be less than equals to 1 (since p <= 1).
-
-Now let's investigate how our initial data model aligns with the above criteria. In other words, we will plot regression model plots for each variable and compare it to a typical logistic model plot:
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 par(mfrow=c(2,3))
 
 # #fun1 <- function(a, y) cor(y, a , use = 'na.or.complete')
@@ -553,54 +271,6 @@ logi.hist.plot(x$CAR_USE_Commercial,x$TARGET_FLAG,logi.mod = 1, type='hist', box
 logi.hist.plot(x$REVOKED_No,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'REVOKED_No')
 logi.hist.plot(x$CAR_TYPE_Panel.Truck,x$TARGET_FLAG,logi.mod = 1, type='hist', boxp=FALSE,col='gray', mainlabel = 'CAR_TYPE_Panel.Truck')
 
-```
-\
-\
-
-
-
-####2.1.5.1 Interpretation 
-
-
-\
-\
-You can see that the probability of crashing increases as we get closer to the "1" classification for the CAR_TYPE_Van, RED_CAR_no, JOB_Home.Maker, SEX_F, JOB_Clerical, CAR_TYPE_SUV, TRAVTIME, BLUEBOOK, CAR_TYPE_Pickup, CAR_TYPE_Sports.Car, JOB_Student, KIDSDRIV, JOB_Blue.Collar, HOMEKIDS, MSTATUS_No, EDUCATION_High.School, CAR_USE_Commercial, REVOKED_Yes, PARENT1_Yes, OLDCLAIM, CLM_FREQ, MVR_PTS, URBANICITY_Highly.Urban..Urban variables.
-\
-\
-
-You can see that the probability of crashing decreases as we get closer to the "1" classification for the URBANICITY_Highly.Rural..Rural, PARENT1_No, REVOKED_No, HOME_VAL, CAR_USE_Private, CAR_TYPE_Minivan, MSTATUS_Yes, JOB_Manager, AGE, CAR_AGE, TIF, EDUCATION_Masters, YOJ, EDUCATION_PhD, JOB_Lawyer, JOB_Doctor, EDUCATION_Bachelors, JOB_Professional, INCOME, SEX_M, RED_CAR_yes, CAR_TYPE_Panel.Truck variables.  \
-\
-\
-\
-\
-\
-
-
-
-##2.2 Data Preparation\ 
-
-
-\
-Now that we have completed the data exploration / analysis, we will be transforming the data for use in analysis and modeling. \
-\
-\
-We will be following the below steps as guidelines: \
-- Outliers treatment \
-- Missing values treatment \
-- Adding New Variables \
-\
-
-
-
-
-###2.2.1 Outliers treatment\
-
-
-
-In this sub-section, we will check different transformations for AGE, BLUEBOOK and TIF to create the appropriate outlier-handled / transformed variables.  
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 show_charts <- function(x, varlab, ...) {
     xlabel <- varlab
     xlab_log <- paste0(xlabel, '_log')
@@ -619,70 +289,17 @@ show_charts <- function(x, varlab, ...) {
     p + facet_wrap( ~ variable, scales="free", ncol=5)
 }
 
-```
-\
-\
-
-
-
-
-**Transformations for TIF**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 summary(insure_train_full$TIF)
 show_charts(insure_train_full$TIF, 'TIF')
 insure_train_full$TIF_sin <- sin(insure_train_full$TIF)
-```
-\
-\
 
-From the above charts we can see that a log, sqrt, sin or an inverse transformation works well for TIF. However, the sin transformation seems to be better distributed. Hence, We will create this variable.
-\
-\
-
-**Transformations for BLUEBOOK**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 summary(insure_train_full$BLUEBOOK)
 show_charts(insure_train_full$BLUEBOOK, 'BLUEBOOK')
 insure_train_full$BLUEBOOK_sin <- sin(insure_train_full$BLUEBOOK)
-```
-\
-\
 
-From the above charts we can see that a sin transformation works well. Hence, We will create this variable.
-\
-\
-
-**Transformations for AGE**
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 summary(insure_train_full$AGE)
 show_charts(insure_train_full$AGE, 'AGE')
 insure_train_full$AGE_sin <- sin(insure_train_full$AGE)
-```
-\
-\
-
-From the above charts we can see that a sin works well for AGE.Hence, We will create this variable.
-\
-\
-
-
-
-###2.2.2 Missing Values treatment\
-
-
-\
-\
-As we have seen in the data exploration phase, Age and YOJ look to be somewhat normally distributed, we can go ahead and use the mean to impute the missing values for these variables. For INCOME, HOME_VAL and CAR_AGE the median seems to be a better value to impute since there are strong right skews. 
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$AGE[is.na(insure_train_full$AGE)] <- mean(insure_train_full$AGE, na.rm = T) 
 insure_train_full$YOJ[is.na(insure_train_full$YOJ)] <- mean(insure_train_full$YOJ, na.rm = T) 
@@ -696,179 +313,30 @@ T)
 # insure_train_full <- insure_train_full[complete.cases(insure_train_full),]
 # insure_train_crash <- insure_train_crash[complete.cases(insure_train_crash),]
 
-```
-\
-\
-
-
-
-###2.2.3 Adding New Variables\
-
-
-\
-\
-
-
-In this section, we generate some additional variables that we feel will help the correlations. The following were some of the observations we made during the data exploration phase for TARGET_FLAG
-\
-\
-CAR_TYPE - If you drive Minivans and Panel Trucks you have lesser chance of being in a crash as against Pickups, Sports, SUVs and Vans. Since the distiction is clear, we believe that binning this variable accordingly will help strengthen the correlation. Accordingly, we will bin this variable as below:
-\
-\
-CAR_TYPE_FLAG_BIN : \
-\
-- 1 : if CAR_TYPE is Minivans or Panel Trucks \
-- 0 : if CAR_TYPE is Pickups, Sports, SUVs or Vans
-\
-\
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$CAR_TYPE_FLAG_BIN <- ifelse(insure_train_full$CAR_TYPE_Minivan | insure_train_full$CAR_TYPE_Panel.Truck, 1, 0)
 
-```
-\
-\
-EDUCATION - If you have only a high school education then you are more likely to crash than if you have a Bachelors, Masters or a Phd. Again binning this variable will strengthen the correlation:
-\
-\
-EDUCATION_FLAG_BIN : \
-\
-- 0 : if EDUCATION is High School \
-- 1 : if EDUCATION is Bachelors, Masters or Phd
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$EDUCATION_FLAG_BIN <- ifelse(insure_train_full$EDUCATION_High.School, 0, 1)
 
-```
-\
-\
-JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you are more likely to be in a crash against Doctor, Lawyer, Manager or professional.  Again binning this variable will strengthen the correlation:\
-\
-JOB_TYPE_FLAG_BIN : \
-\
-- 1 : if JOB_TYPE is Student, Homemaker, or in a Blue Collar or Clerical \
-- 0 : if JOB_TYPE is Doctor, Lawyer, Manager, professional, Unknown
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$JOB_TYPE_FLAG_BIN <- ifelse(insure_train_full$JOB_Student |  insure_train_full$JOB_Home.Maker | insure_train_full$JOB_Clerical | insure_train_full$JOB_Blue.Collar, 1, 0)
 
-```
-\
-\
-
-- INCOME - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this at zero value.
-\
-\
-
-INCOME_FLAG_BIN : \
-\
-- 1 : if INCOME <= 0 \
-- 0 : if INCOME > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$INCOME_FLAG_BIN <- ifelse(insure_train_full$INCOME <=0, 1, 0)
 
-```
-\
-\
-
-- YOJ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-\
-\
-YOJ_FLAG_BIN : \
-\
-- 1 : if YOJ <= 0 \
-- 0 : if YOJ > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$YOJ_FLAG_BIN <- ifelse(insure_train_full$YOJ <=0, 1, 0)
 
-```
-\
-\
-
-
-- HOME_VAL - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-\
-\
-HOME_VAL_FLAG_BIN : \
-\
-- 1 : if HOME_VAL <= 0 \
-- 0 : if HOME_VAL > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 insure_train_full$HOME_VAL_FLAG_BIN <- ifelse(insure_train_full$HOME_VAL <=0, 1, 0)
 
-```
-\
-\
-
-- OLDCLAIM- There is a huge difference in the coorrelation when we transform this vatiable. Binning this variable seems like a good idea.
-\
-\
-OLDCLAIM_FLAG_BIN : \
-\
-- 1 : if OLDCLAIM <= 0 \
-- 0 : if OLDCLAIM > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 insure_train_full$OLDCLAIM_FLAG_BIN <- ifelse(insure_train_full$OLDCLAIM <=0, 1, 0)
-```
-\
-\
 
-- CLM_FREQ - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-\
-\
-CLM_FREQ_FLAG_BIN : \
-\
-- 1 : if CLM_FREQ <= 0 \
-- 0 : if CLM_FREQ > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 insure_train_full$CLM_FREQ_FLAG_BIN <- ifelse(insure_train_full$CLM_FREQ <=0, 1, 0)
-```
-\
-\
 
-- MVR_PTS - Binning this variable seems to make a difference in the correlation. We will go ahead and create a binned variable for this.
-\
-\
-MVR_PTS_FLAG_BIN : \
-\
-- 1 : if MVR_PTS <= 0 \
-- 0 : if MVR_PTS > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 insure_train_full$MVR_PTS_FLAG_BIN <- ifelse(insure_train_full$MVR_PTS <=0, 1, 0)
-```
-\
-\
 
-- CAR_AGE - There are quite a few records with a 1 year car age. We will use this bound to generate a binned variable as well as retain the original varible as is. 
-\
-\
-CAR_AGE_FLAG_BIN : \
-\
-- 1 : if CAR_AGE <= 1 \
-- 0 : if CAR_AGE > 0
-\
-\
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
 insure_train_full$CAR_AGE_FLAG_BIN <- ifelse(insure_train_full$CAR_AGE <=1, 1, 0)
 ```
 \
