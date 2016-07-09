@@ -93,9 +93,10 @@ To attain our objective, we will be follow the below steps for each modeling exe
 
 
 #2 Data Exploration and Cleanup / Common Transformations
-\
-\
 
+
+\
+\
 
 In this section we go ahead and perform some common cleanup and create additional variables that will be used for modeling both the logistic as well as the linear regressions. We will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
 
@@ -106,7 +107,7 @@ In this section we go ahead and perform some common cleanup and create additiona
 - Create Missing Flags / Impute Missing Values
 
 
-###2.1 Variable Identification\
+##2.1 Variable Identification\
 
 
 First let's display and examine the data dictionary or the data columns as shown in below table:
@@ -124,8 +125,9 @@ We notice that there are 2 dependent variables - TARGET_FLAG and TARGET_AMT. Apa
 \
 
 
+##2.2 Data Cleanup\
 
-###2.2 Data Cleanup\
+
 \
 \
 
@@ -187,7 +189,9 @@ insure_train_full <- insure_train_full[ -which( insure_train_full$CAR_AGE == -3 
 \
 \
 
-###2.3 Common Transformations\
+
+
+##2.3 Common Transformations\
 
 
 - We will also create dummy variables for all the factors. 
@@ -230,7 +234,11 @@ insure_train_full <- select(insure_train_full, -INDEX)
 
 
 
-###2.4 Create Missing Flags / Impute Missing Values
+
+##2.4 Create Missing Flags / Impute Missing Values
+
+
+
 \
 \
 
@@ -269,20 +277,28 @@ insure_train_full$CAR_AGE_MISS  <- ifelse(is.na(insure_train_full$CAR_AGE), 1, 0
 
 # Missing Impute
 
-insure_train_full$AGE_IMPUTE <- insure_train_full$AGE
-insure_train_full$AGE_IMPUTE[is.na(insure_train_full$AGE_IMPUTE)] <- mean(insure_train_full$AGE_IMPUTE, na.rm = T) 
+# insure_train_full$AGE_IMPUTE <- insure_train_full$AGE
+# insure_train_full$AGE_IMPUTE[is.na(insure_train_full$AGE_IMPUTE)] <- mean(insure_train_full$AGE_IMPUTE, na.rm = T) 
+# 
+# insure_train_full$YOJ_IMPUTE <- insure_train_full$YOJ
+# insure_train_full$YOJ_IMPUTE[is.na(insure_train_full$YOJ_IMPUTE)] <- mean(insure_train_full$YOJ_IMPUTE, na.rm = T) 
+# 
+# insure_train_full$INCOME_IMPUTE <- insure_train_full$INCOME
+# insure_train_full$INCOME_IMPUTE[is.na(insure_train_full$INCOME_IMPUTE)] <- median(insure_train_full$INCOME_IMPUTE, na.rm = T) 
+# 
+# insure_train_full$HOME_VAL_IMPUTE <- insure_train_full$HOME_VAL
+# insure_train_full$HOME_VAL_IMPUTE[is.na(insure_train_full$HOME_VAL_IMPUTE)] <- median(insure_train_full$HOME_VAL_IMPUTE, na.rm = T) 
+# 
+# insure_train_full$CAR_AGE_IMPUTE <- insure_train_full$CAR_AGE
+# insure_train_full$CAR_AGE_IMPUTE[is.na(insure_train_full$CAR_AGE_IMPUTE)] <- median(insure_train_full$CAR_AGE_IMPUTE, na.rm = T) 
 
-insure_train_full$YOJ_IMPUTE <- insure_train_full$YOJ
-insure_train_full$YOJ_IMPUTE[is.na(insure_train_full$YOJ_IMPUTE)] <- mean(insure_train_full$YOJ_IMPUTE, na.rm = T) 
+# Direct Impute
 
-insure_train_full$INCOME_IMPUTE <- insure_train_full$INCOME
-insure_train_full$INCOME_IMPUTE[is.na(insure_train_full$INCOME_IMPUTE)] <- median(insure_train_full$INCOME_IMPUTE, na.rm = T) 
-
-insure_train_full$HOME_VAL_IMPUTE <- insure_train_full$HOME_VAL
-insure_train_full$HOME_VAL_IMPUTE[is.na(insure_train_full$HOME_VAL_IMPUTE)] <- median(insure_train_full$HOME_VAL_IMPUTE, na.rm = T) 
-
-insure_train_full$CAR_AGE_IMPUTE <- insure_train_full$CAR_AGE
-insure_train_full$CAR_AGE_IMPUTE[is.na(insure_train_full$CAR_AGE_IMPUTE)] <- median(insure_train_full$CAR_AGE_IMPUTE, na.rm = T) 
+insure_train_full$AGE[is.na(insure_train_full$AGE)] <- mean(insure_train_full$AGE, na.rm = T) 
+insure_train_full$YOJ[is.na(insure_train_full$YOJ)] <- mean(insure_train_full$YOJ, na.rm = T) 
+insure_train_full$INCOME[is.na(insure_train_full$INCOME)] <- median(insure_train_full$INCOME, na.rm = T) 
+insure_train_full$HOME_VAL[is.na(insure_train_full$HOME_VAL)] <- median(insure_train_full$HOME_VAL, na.rm = T) 
+insure_train_full$CAR_AGE[is.na(insure_train_full$CAR_AGE)] <- median(insure_train_full$CAR_AGE, na.rm = T) 
 
 # Save point for Original data set with dummies created
 insure_orig <- insure_train_full
@@ -304,7 +320,11 @@ In this section we will use Logistic regression to model the TARGET_FLAG. We wil
 
 
 
-###3.1 Data Summary and Correlation Analysis\
+##3.1 Data Summary and Correlation Analysis\
+
+
+
+###3.1.1 Data Summary
 
 \
 \
@@ -324,6 +344,11 @@ Correlation_TARGET_FLAG <- sapply(insure_train_full, FUN = fun1, y=insure_train_
 ```
 \
 \
+
+
+###3.1.2 Correlations
+
+
 
 Now we will produce the correlation table between the independent variables and the dependent variable - TARGET_FLAG  
 \
@@ -356,6 +381,13 @@ JOB - If you are a Student, Homemaker, or in a Blue Collar or Clerical job, you 
 \
 \
 
+
+###3.1.3 Binning of Variables
+
+
+
+\
+\
 Lets have a look at the following numeric variables to see how they are distributed vis-a-vis TARGET_FLAG: INCOME, YOJ, HOME_VAL, OLDCLAIM, CLM_FREQ, MVR_PTS, CAR_AGE, AGE, BLUEBOOK, TIF, TRAVTIME. The goal here is to see if we can bin these variables into zero and non-zero bin values and check the correlations. While doing that we will also see how the variables are distributed vis-a-vis TARGET_FLAG.
 \
 \
@@ -483,7 +515,8 @@ We will carry out the above transformations in the Data Preparation phase.
 
 
 
-###3.2 Outliers identification\ 
+###3.1.4 Outliers identification\ 
+
 
 
 In this sub-section, we will look at the boxplots and determine the outliers in variables and decide on whether to act on the outliers. We will do the outliers only on some of the currency and few other variables. Below are the plots:
@@ -506,7 +539,7 @@ From the "Outliers identification" plot above, we see that we have few outliers 
 
 
 
-###2.1.5 Analysis the link function \
+###3.1.5 Analysis of the link function \
 
 
 
@@ -580,7 +613,7 @@ logi.hist.plot(x$CAR_TYPE_Panel.Truck,x$TARGET_FLAG,logi.mod = 1, type='hist', b
 
 
 
-####2.1.5.1 Interpretation 
+####3.1.5.1 Interpretation 
 
 
 \
@@ -611,7 +644,10 @@ We will be following the below steps as guidelines: \
 \
 
 
+
 ###3.2.1 Outliers treatment\
+
+
 
 In this sub-section, we will check different transformations for AGE, BLUEBOOK and TIF to create the appropriate outlier-handled / transformed variables.  
 \
@@ -690,7 +726,7 @@ From the above charts we can see that a sin works well for AGE.Hence, We will cr
 
 
 
-###2.2.2 Adding New Variables\
+###3.2.2 Adding New Variables\
 
 
 \
@@ -890,6 +926,9 @@ insure_train_full$TRAVTIME_FLAG_BIN <- ifelse(insure_train_full$TRAVTIME <=20, 1
 \
 
 
+###3.2.3 Additional Binned Variables\
+
+
 After having prepared the data, we will go ahead and drop some of the variables.
 
 ```{r}
@@ -909,7 +948,9 @@ str(DS_TARGET_FLAG)
 \
 
 
-##2.3 Build Models
+
+
+##3.3 Build Models
 
 
 
@@ -924,7 +965,7 @@ Below is our model definition: \
 \
 
 
-###2.3.1 Prepare TRAIN and VALID datasets
+###3.3.1 Prepare TRAIN and VALID datasets
 
 
 However, prior to that, we hold out a subset of data as a validation dataset to check model performance. This will be useful when we select a model.
@@ -945,7 +986,7 @@ DS_TARGET_FLAG_VALID <- DS_TARGET_FLAG[-train_index, ]
 ```
 
 
-###2.3.2 Model 1
+###3.3.2 Model 1
 
 
 In this model, we will be using all the given variables in train data set.  We will create model using logit function. We will then step thru the model to remove unnecessary variables and generate the refined model. We will highlight the summary of the refined model. \
@@ -965,21 +1006,21 @@ summary(TF_Model1_ref)
 $\newline$
 
 
-- Model 1 has AIC value 4713 after backward selection. -
+- Model 1 has AIC value 5934.6 after backward selection. -
 - Based on the outcome from model_ref, it can be seen that following variables CAR_USE_Commercial, REVOKED_Yes, URBANICITY_Rural, CAR_TYPE_FLAG_BIN,TRAVTIME, OLDCLAIM_FLAG_BIN, MVR_PTS, TIF, KIDSDRIV, PARENT1_Yes, EDUCATION_FLAG_BIN, MSTATUS_Yes, BLUEBOOK, OLDCLAIM, JOB_TYPE_FLAG_BIN, HOME_VAL, INCOME_FLAG_BIN, INCOME are statistically significant. 
 - As for the statistically significant variables, CAR_USE_Commercial,REVOKED_Yes,URBANICITY_Rural have  the lowest p-value suggesting a strong association to the target variable.
 - The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables. For Example:
-  a. For change in KIDSDRIV variable when kids are in car, the log odds of crime rate above median value increases by 0.34310 .\
-  b. When the driver is a Single Parent the log odds of an accident increases by 0.52460\
-  c. with change in marital status the log odds of accident decreases by 0.40660.\
-  d. If the CAR_TYPE is a MiniVan or a Panel Truck the log odds of accident decreases by 0.56620. \
+  a. For change in KIDSDRIV variable when kids are in car, the log odds of having an accident **increases** by 0.4143 .\
+  b. When the driver is a Single Parent the log odds of an accident **increases** by 0.4530\
+  c. with change in marital status the log odds of accident **decreases** by 0.4939\
+  d. If the CAR_TYPE is a MiniVan or a Panel Truck the log odds of accident **decreases** by 0.5573. \
 - No. of iterations are 5 before lowest value of AIC was derived for this model.
 
 \
 \
 
 
-###2.3.3 Model 2
+###3.3.3 Model 2
 
 
 In this model, we will be using original variables; however we use the CART (Classification and Regression Trees) algorithm to train the model. We will then Prune the tree and have a look at the summary of this pruned model.
@@ -1013,25 +1054,25 @@ text(TF_Model2_ref, use.n=TRUE, all=TRUE, cex=.8)
 
 $\newline$
 
-- The following variables have been used for classification - OLD_CLAIM, JOB_TYPE_FLAG_BIN, URBANICITY_Rural, MVR_PTS, REVOKED_Yes, Home_VAL.\
+- The following variables have been used for classification - OLD_CLAIM, JOB_TYPE_FLAG_BIN, URBANICITY_Rural, KIDSDRIV, MVR_PTS, REVOKED_Yes.\
 \
 
-- lowest Cp value and Xerror occured on split 7
+- lowest Cp value and Xerror occured on split 6
 \
 \
 
 
 
-###2.3.4 Model 3
+###3.3.4 Model 3
 
 
 In this model we will be using different set of variables.  Also, we use the Linear Discriminant Analysis to train the model.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-ds <- select(DS_TARGET_FLAG_TRAIN, -AGE, -AGE_IMPUTE, -BLUEBOOK, -CAR_AGE_IMPUTE, -CAR_AGE_MISS, -CLM_FREQ, -HOME_VAL, -HOME_VAL_IMPUTE, -HOME_VAL_MISS, -INCOME, -INCOME_IMPUTE, -INCOME_MISS, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ, -YOJ_IMPUTE,-YOJ_MISS)
+#ds <- select(DS_TARGET_FLAG_TRAIN, -AGE, -AGE_IMPUTE, -BLUEBOOK, -CAR_AGE_IMPUTE, -CAR_AGE_MISS, -CLM_FREQ, -HOME_VAL, -HOME_VAL_IMPUTE, -HOME_VAL_MISS, -INCOME, -INCOME_IMPUTE, -INCOME_MISS, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ, -YOJ_IMPUTE,-YOJ_MISS)
 
-TF_Model3=lda(TARGET_FLAG~.,data=ds)
+TF_Model3=lda(TARGET_FLAG~.,data=DS_TARGET_FLAG_TRAIN)
 TF_Model3
 ```
 
@@ -1041,23 +1082,28 @@ $\newline$
 
 - The Classification boundary equation for Model 3 is below: \
 
-$ 0.2862 * KIDSDRIV + 0.0232 * HOMEKIDS - 0.0021 * CAR_AGE + 0.5721 * CAR_USE_Commercial - 0.2925 * MSTATUS_Yes + 0.5607 * PARENT1_Yes - 0.1136 * RED_CAR_yes + 0.8313 * REVOKED_Yes + 0.0805 * SEX_M - 1.4872 * URBANICITY_Rural + 0.137 * TIF_sin - 0.005 * BLUEBOOK_sin + 0.0119 * AGE_sin - 0.5499 * CAR_TYPE_FLAG_BIN - 0.3787 * EDUCATION_FLAG_BIN + 0.5154 * JOB_TYPE_FLAG_BIN + 2.2199 * INCOME_FLAG_BIN - 1.7828 * YOJ_FLAG_BIN + 0.2537 * HOME_VAL_FLAG_BIN - 0.2888 * OLDCLAIM_FLAG_BIN - 0.2888 * CLM_FREQ_FLAG_BIN - 0.262 * MVR_PTS_FLAG_BIN + 0.0723 * CAR_AGE_FLAG_BIN - 0.3941 * TRAVTIME_FLAG_BIN $
+$0.344 * KIDSDRIV - 0.0039 * AGE + 0.0103 * HOMEKIDS + 0.0111 * YOJ - 0 * INCOME - 0 * HOME_VAL + 0.009 * TRAVTIME - 0 * BLUEBOOK - 0.0403 * TIF - 0 * OLDCLAIM + 0.0736 * CLM_FREQ + 0.1203 * MVR_PTS + 0.0038 * CAR_AGE + 0.6333 * CAR_USE_Commercial - 0.3869 * MSTATUS_Yes + 0.4117 * PARENT1_Yes - 0.0264 * RED_CAR_yes + 0.9784 * REVOKED_Yes - 0.0133 * SEX_M - 1.5283 * URBANICITY_Rural - 0.0451 * YOJ_MISS - 0.067 * INCOME_MISS - 0.0196 * HOME_VAL_MISS + 0.1969 * CAR_AGE_MISS + 0.0314 * TIF_sin - 0.0278 * BLUEBOOK_sin + 0.0169 * AGE_sin - 0.4273 * CAR_TYPE_FLAG_BIN - 0.3207 * EDUCATION_FLAG_BIN + 0.3307 * JOB_TYPE_FLAG_BIN + 0.4485 * INCOME_FLAG_BIN + 0.0037 * YOJ_FLAG_BIN + 0.1432 * HOME_VAL_FLAG_BIN - 0.1942 * OLDCLAIM_FLAG_BIN - 0.1942 * CLM_FREQ_FLAG_BIN + 0.1028 * MVR_PTS_FLAG_BIN + 0.0748 * CAR_AGE_FLAG_BIN - 0.1087 * TRAVTIME_FLAG_BIN$
 
-- From summary table, we also have the prior probability of of not having accident incident in data set is 0.733993 and failure is 0.266007.\
+- From summary table, we also have the prior probability of of not having accident incident in data set is 0.7345594 and failure is 0.2654406.\
 
 - Group means provides mean values for each variable with respect to target variable values 0 and 1.\
 
 - LDA model assumes normality of the variables used in the model and there are some variables which are not completely normally distributed and have outliers that is impacting the result of this model.
 
 
-###2.4.2 Model Evaluation Using VALID Data
+
+##3.4 Model Evaluation Using VALID Data
 
 
 Lets go ahead and apply the above models to the VALID dataset that we had held out. Below is the table of predictions for each of the models:
 \
 \
 
-#### Evaluation of Model 1 
+
+###3.4.1 Evaluation of Model 1
+
+
+
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
 
 
@@ -1099,7 +1145,12 @@ kable(model_comparison,row.names = TRUE, caption = " Model 1 evaluation KPIs")
 ```
 
 
-#### Evaluation of Model 2
+
+
+###3.4.2 Evaluation of Model 2
+
+
+
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
 
 DS_TARGET_FLAG_VALID$M2_TARGET_FLAG <- predict(TF_Model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
@@ -1112,13 +1163,20 @@ kable(model_comparison,row.names = TRUE, caption = " Model 2 evaluation KPIs")
 ```
 
 
-#### Evaluation of Model 3
+
+
+
+###3.4.3 Evaluation of Model 3
+
+
+
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
 
-ds <- select(DS_TARGET_FLAG_VALID, -AGE, -AGE_IMPUTE, -BLUEBOOK, -CAR_AGE_IMPUTE, -CAR_AGE_MISS, -CLM_FREQ, -HOME_VAL, -HOME_VAL_IMPUTE, -HOME_VAL_MISS, -INCOME, -INCOME_IMPUTE, -INCOME_MISS, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ, -YOJ_IMPUTE,-YOJ_MISS)
+#ds <- select(DS_TARGET_FLAG_VALID, -AGE, -AGE_IMPUTE, -BLUEBOOK, -CAR_AGE_IMPUTE, -CAR_AGE_MISS, -CLM_FREQ, -HOME_VAL, -HOME_VAL_IMPUTE, -HOME_VAL_MISS, -INCOME, -INCOME_IMPUTE, -INCOME_MISS, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ, -YOJ_IMPUTE,-YOJ_MISS)
 
-ds$M3_TARGET_FLAG <- as.integer(unlist(data.frame(predict(TF_Model3,newdata=ds))[,1]))
-df_pre_train1<-as.data.frame(table(ds$M3_TARGET_FLAG==1,ds$TARGET_FLAG))
+DS_TARGET_FLAG_VALID$M3_TARGET_FLAG <- as.integer(unlist(data.frame(predict(TF_Model3,newdata=DS_TARGET_FLAG_VALID))[,1]))
+
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$M3_TARGET_FLAG==1,DS_TARGET_FLAG_VALID$TARGET_FLAG))
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 model_comparison[3,]<-Eval(df_pre_train1)
 model_comparison[3,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$TARGET_FLAG, DS_TARGET_FLAG_VALID$M2_TARGET_FLAG))
@@ -1127,7 +1185,11 @@ kable(model_comparison,row.names = TRUE, caption = " Model 2 evaluation KPIs")
 ```
 
 
-###2.4.3 Final Model Selection Summary
+
+
+##3.5 Final Logistic Model Selection Summary
+
+
 
 Following is the comparison of various metrics for above 3 models
 
@@ -1144,7 +1206,7 @@ From the comparison table, we see that Model 1 is quite superior from the accura
 The AUC provides the best score on probability of correctly identifying the patterns at various cut off values. The Accuracy, on the other hand, is calculated as specific cut off value.  For this assignment we will go with cut off value of 0.5 and choose the Model 1 based on Accuracy value for further prediction on evaluation data set.
 
 
-##4.2.1 Detailed Inference for Final Model
+###3.5.1 Detailed Inference for Final Model
 
 The following analysis will be carried out on the final model: \
 
@@ -1155,7 +1217,11 @@ The following analysis will be carried out on the final model: \
  (v) Distribution of prediction\ 
  
  
-##4.2.2 Most important variables in the model
+ 
+###3.5.2 Most important variables in the model
+
+
+
 ```{r best model analysis 1,echo=FALSE}
 
 summary(TF_Model1_ref)
@@ -1171,7 +1237,10 @@ $log(y) = -0.4015 + 0.3431 * KIDSDRIV -0.000001027 * HOME_VAL + 0.01557 * TRAVTI
 
 
 
-##4.2.3 Analysis of odds ratios of variables 95% CI
+###3.5.3 Analysis of odds ratios of variables 95% CI
+
+
+
 ```{r best model analysis 2,echo=FALSE}
 
 exp(cbind(OR = coef(TF_Model1_ref), confint.default(TF_Model1_ref)))
@@ -1183,7 +1252,10 @@ The following points can be made for the important variables in the model: \
 In keeping all other variables same, the odds of an accident increases as follow: 2.1451462 for per unit change in CAR_USE_Commercial, 2.7874004 per unit change in REVOKED_Yes, 0.1085252 for per unit change in URBANICITY_Rural, etc. Any value which is less than 1, it means that there is less chance of an event with the per unit increase of the variable. \
 
 
-##4.2.4 ROC curve for the selected model
+###3.5.4 ROC curve for the selected model
+
+
+
 ```{r,echo=FALSE}
 #AUC
 
@@ -1207,7 +1279,9 @@ plot(myRoc, main="ROC Curve for Classification data")
 ```
 
 
-##4.2.5 Distribution of the Predictions
+###3.5.5 Distribution of the Predictions
+
+
 
 ```{r distribution of prediction, echo=FALSE}
 plot_pred_type_distribution <- function(df, threshold) {
@@ -1241,22 +1315,15 @@ Considering the target has value 1 (accident occurs) and 0 when no accident, the
 
 
 
-#3 Linear Regression for TARGET_AMT\
+#4 Linear Regression for TARGET_AMT\
 
 
 
-In this section we will use Linear regression to model the TARGET_AMT. We will first start with the Data Exploration.\
-\
-
-
-##3.1 Data Exploration Analysis\
-
-
-\
-
-In this analysis, we will be using only those records where the TARGET_FLAG is 1. This indicates that the vehicle crashed. In such a scenario, we will be modeling the cost of repair using Linear Regression. First, lets create the required data set for the "Crashed" data from the existing "clean" full data and look at the structure of the resulting dataset. We will remove from the new "crashed" dataset all those variables that were created specifically for predicting TARGET_FLAG. We will be creating these variables separately for predicting TARGET_AMT.
+In this section we will use Linear regression to model the TARGET_AMT. We will first start with the Data Exploration. We will be using only those records where the TARGET_FLAG is 1. This indicates that the vehicle crashed. In such a scenario, we will be modeling the cost of repair using Linear Regression. First, lets create the required data set for the "Crashed" data from the existing "clean" full data and look at the structure of the resulting dataset. We will remove from the new "crashed" dataset all those variables that were created specifically for predicting TARGET_FLAG. We will be creating these variables separately for predicting TARGET_AMT.
 \
 \
+
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -1282,7 +1349,10 @@ However, we may need to look into the outliers and correlations again since we h
 \
 
 
-###3.1.1 Data Summary and Correlation Analysis\
+##4.1 Data Summary and Correlation Analysis\
+
+
+###4.1.1 Data Summary
 
 
 \
@@ -1303,6 +1373,11 @@ Correlation_TARGET_AMT <- sapply(x, FUN = fun1, y=insure_train_crash$TARGET_AMT)
 ```
 \
 \
+
+
+###4.1.2 Correlations
+
+
 Now we will produce the correlation table between the independent variables and the dependent variable - TARGET_AMT  
 \
 \
@@ -1338,6 +1413,10 @@ EDUCATION - If you have only a high school education then your cost of repair is
 JOB - If you are a Lawyer, Professional, in a Blue Collar job or the job is unknown, you spend more on repairs as compared to a Doctor, Manager, Home Maker, Student, or Clerical job.  Again binning this variable will strengthen the correlation.
 \
 \
+
+
+###4.1.3 Binning of Variables
+
 
 Lets have a look at the following numeric variables that have 0 as one of their values: INCOME, YOJ, HOME_VAL, OLDCLAIM, CLM_FREQ, MVR_PTS, CAR_AGE, AGE, BLUEBOOK, TIF, TRAVTIME. The goal here is to see if we can bin these variables into zero and non-zero bin values and check the correlations. While doing that we will also see how the variables are distributed vis-a-vis TARGET_AMT.
 \
@@ -1452,7 +1531,8 @@ We will carry out the above transformations in the Data Preparation phase.
 \
 
 
-###3.1.3 Outliers identification\ 
+###4.1.4 Outliers identification\ 
+
 
 
 In this sub-section, we will look at the boxplots and determine the outliers in variables and decide on whether to act on the outliers.\
@@ -1485,7 +1565,7 @@ We see thatall the 3 variables need to be treated when we do the data preparatio
 
 
 
-##3.2 Data Preparation\ 
+##4.2 Data Preparation\ 
 
 
 \
@@ -1499,7 +1579,7 @@ We will be following the below steps as guidelines: \
 
 
 
-###3.2.1 Outliers treatment\
+###4.2.1 Outliers treatment\
 
 
 In this sub-section, we will check different transformations for each of the variables - AGE, BLUEBOOK, TIF - and create the appropriate outlier-handled / transformed variables.  
@@ -1574,7 +1654,7 @@ From the above charts we can see that a sin transformation works well for BLUEBO
 \
 
 
-###3.2.2 Adding New Variables\
+###4.2.2 Adding New Variables\
 
 
 \
@@ -1799,6 +1879,10 @@ insure_train_crash$TRAVTIME_AMT_BIN <- ifelse(insure_train_crash$TRAVTIME <=20, 
 \
 \
 
+
+###4.2.3 Additional Binned Variables 
+
+
 Next we will create some more additional binned variables.
 
 \
@@ -1852,7 +1936,7 @@ DS_TARGET_AMT <- insure_train_crash
 \
 
 
-##3.3 Build Models
+##4.3 Build Models
 
 
 Now that we have the dataset in a shape that can be modeled, we will go ahead and train the model for TARGET_AMT. We will train 2 models and select the best among these 2 models. The following will be the model specifications:
@@ -1872,7 +1956,11 @@ We will then generate inferences from these models.\
 \
 \
 
-###3.3.1 Prepare TRAIN and VALID datasets
+
+
+###4.3.1 Prepare TRAIN and VALID datasets
+
+
 
 However, prior to that, we hold out a subset of data as a validation dataset to check model performance. This will be useful when we select a model.
 \
@@ -1891,7 +1979,11 @@ DS_TARGET_AMT_TRAIN<- DS_TARGET_AMT[train_index, ]
 DS_TARGET_AMT_VALID <- DS_TARGET_AMT[-train_index, ]
 ```
 
-###3.3.2 Model 1
+
+
+###4.3.2 Model 1
+
+
 \
 \
 
@@ -1947,7 +2039,9 @@ Since we have already seen this result in our data exploration phase, we will re
 \
 
 
-###3.3.3 Model 2
+
+###4.2.3 Model 2
+
 
 \
 \
@@ -1956,20 +2050,20 @@ In this model, we will be using the rpart package to do a tree based regression.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-# grow tree 
-TA_model2 <- rpart(TARGET_AMT~., method="anova", data=DS_TARGET_AMT_TRAIN)
-
-# prune the tree 
-TA_model2_ref<- prune(TA_model2, cp=TA_model2$cptable[which.min(TA_model2$cptable[,"xerror"]),"CP"]) 
-
-# plot the pruned tree 
- plot(pfit, uniform=TRUE, 
-    main="Pruned Regression Tree for Mileage")
- text(pfit, use.n=TRUE, all=TRUE, cex=.8)
- post(pfit, file = "c:/ptree2.ps", 
-    title = "Pruned Regression Tree for Mileage")
-
-
+# # grow tree 
+# TA_model2 <- rpart(TARGET_AMT~., method="anova", data=DS_TARGET_AMT_TRAIN)
+# 
+# # prune the tree 
+# TA_model2_ref<- prune(TA_model2, cp=TA_model2$cptable[which.min(TA_model2$cptable[,"xerror"]),"CP"]) 
+# 
+# # plot the pruned tree 
+#  plot(pfit, uniform=TRUE, 
+#     main="Pruned Regression Tree for Mileage")
+#  text(pfit, use.n=TRUE, all=TRUE, cex=.8)
+#  post(pfit, file = "c:/ptree2.ps", 
+#     title = "Pruned Regression Tree for Mileage")
+# 
+# 
 
 ```
 
@@ -1992,8 +2086,8 @@ Based on the backward stepwise selection, below are the characteristics of the r
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 #summary(step1)
 
-coef1<- data.frame('Coefficients'= model1_ref$coefficients)
-kable(coef1, caption="Coefficients for the refined model 1")
+# coef1<- data.frame('Coefficients'= model1_ref$coefficients)
+# kable(coef1, caption="Coefficients for the refined model 1")
 
 ```
 \
@@ -2015,21 +2109,24 @@ Since we have already seen this result in our data exploration phase, we will re
 
 
 
+##4.4 Model Evaluation Using VALID Data
 
 
 
-##3.4 Select Models
-
-    
-###3.4.1 Model Evaluation Using TRAIN Data 
-
-###3.4.2 Model Evaluation Using VALID Data
-
-###3.4.3 Selection Summary
+##4.4.1 Evaluation of Model 1
 
 
 
-#4 Prediction Using Evaluation Data
+##4.4.2 Evaluation of Model 2
+
+
+
+###3.4.3 Final Linear Model Selection Summary
+
+
+
+
+#5 Prediction Using Evaluation Data
 \
 \
 
@@ -2042,7 +2139,7 @@ Step 1 - Here we use the transformed evaluation dataset to predict for the TARGE
 Step 2 - Once we have the prediction for the TARGET_FLAG, we will filter this data for only those rows that were predicted for a "CRASH". We then use this smaller dataset to precict for the TARGET_AMT.
 \
 
-##4.1 Tranformation of Evaluation Data 
+##5.1 Tranformation of Evaluation Data 
 
 First we need to transform the evaluation dataset to account for all the predictors that were used in both the models.
 \
@@ -2052,13 +2149,93 @@ First we need to transform the evaluation dataset to account for all the predict
 
 eval_ds <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/insurance-evaluation-data.csv")
 
-# Put all Transform statements here
+eval_ds$INCOME <- as.numeric(str_replace_all(eval_ds$INCOME, pattern =  "[\\$*,]", replacement = ""))
+eval_ds$HOME_VAL <- as.numeric(str_replace_all(eval_ds$HOME_VAL, pattern =  "[\\$*,]", replacement = ""))
+eval_ds$BLUEBOOK <- as.numeric(str_replace_all(eval_ds$BLUEBOOK, pattern =  "[\\$*,]", replacement = ""))
+eval_ds$OLDCLAIM <- as.numeric(str_replace_all(eval_ds$OLDCLAIM, pattern =  "[\\$*,]", replacement = ""))
+
+eval_ds$MSTATUS <- as.factor(str_replace_all(eval_ds$MSTATUS, "z_", ""))
+eval_ds$SEX <- as.factor(str_replace_all(eval_ds$SEX, "z_", ""))
+eval_ds$EDUCATION <- as.factor(str_replace_all(eval_ds$EDUCATION, "z_", ""))
+eval_ds$EDUCATION <- as.factor(str_replace_all(eval_ds$EDUCATION, "<", ""))
+eval_ds$CAR_TYPE <- as.factor(str_replace_all(eval_ds$CAR_TYPE, "z_", ""))
+eval_ds$URBANICITY <- as.factor(str_replace_all(eval_ds$URBANICITY, "z_", ""))
+
+eval_ds$JOB <- as.character(eval_ds$JOB)
+eval_ds$JOB[eval_ds$JOB==""] <- "Unknown"
+eval_ds$JOB <- as.factor(str_replace_all(eval_ds$JOB, "z_", ""))
+
+eval_ds <- eval_ds[ -which( eval_ds$CAR_AGE == -3 | eval_ds$CAR_AGE == 0 ) , ]
+
+# Create Dummy Variable for 2 factor variables 
+eval_ds$CAR_USE_Commercial <- ifelse(eval_ds$CAR_USE=="Commercial", 1, 0)
+eval_ds$MSTATUS_Yes <- ifelse(eval_ds$MSTATUS=="Yes", 1, 0)
+eval_ds$PARENT1_Yes <- ifelse(eval_ds$PARENT1=="Yes", 1, 0)
+eval_ds$RED_CAR_yes <- ifelse(eval_ds$RED_CAR=="yes", 1, 0)
+eval_ds$REVOKED_Yes <- ifelse(eval_ds$REVOKED=="Yes", 1, 0)
+eval_ds$SEX_M <- ifelse(eval_ds$SEX=="M", 1, 0)
+eval_ds$URBANICITY_Rural <- ifelse(eval_ds$URBANICITY=="Highly Rural/ Rural", 1, 0)
+
+# remove original variables
+eval_ds <- select(eval_ds, -CAR_USE, -MSTATUS, -PARENT1, -RED_CAR, -REVOKED, -SEX, -URBANICITY)
+
+#- We will also create dummy variables for all the factors and drop the original variables. 
+dummy_vars<-as.data.frame(sapply(dummy(eval_ds), FUN = as.numeric))
+dummy_vars <- dummy_vars-1
+
+# remove original variables
+eval_ds <- select(eval_ds, -EDUCATION, -JOB, -CAR_TYPE)
+
+eval_ds <- cbind(eval_ds, dummy_vars)
+
+eval_ds$YOJ_MISS  <- ifelse(is.na(eval_ds$YOJ), 1, 0)
+eval_ds$INCOME_MISS  <- ifelse(is.na(eval_ds$INCOME), 1, 0)
+eval_ds$HOME_VAL_MISS  <- ifelse(is.na(eval_ds$HOME_VAL), 1, 0)
+eval_ds$CAR_AGE_MISS  <- ifelse(is.na(eval_ds$CAR_AGE), 1, 0)
+
+# Direct Impute
+
+insure_train_full$AGE[is.na(insure_train_full$AGE)] <- mean(insure_train_full$AGE, na.rm = T) 
+insure_train_full$YOJ[is.na(insure_train_full$YOJ)] <- mean(insure_train_full$YOJ, na.rm = T) 
+insure_train_full$INCOME[is.na(insure_train_full$INCOME)] <- median(insure_train_full$INCOME, na.rm = T) 
+insure_train_full$HOME_VAL[is.na(insure_train_full$HOME_VAL)] <- median(insure_train_full$HOME_VAL, na.rm = T) 
+insure_train_full$CAR_AGE[is.na(insure_train_full$CAR_AGE)] <- median(insure_train_full$CAR_AGE, na.rm = T) 
+
+eval_ds$TIF_sin <- sin(eval_ds$TIF)
+eval_ds$BLUEBOOK_sin <- sin(eval_ds$BLUEBOOK)
+eval_ds$AGE_sin <- sin(eval_ds$AGE)
+
+eval_ds$CAR_TYPE_FLAG_BIN <- ifelse(eval_ds$CAR_TYPE_Minivan | eval_ds$CAR_TYPE_Panel.Truck, 1, 0)
+
+eval_ds$EDUCATION_FLAG_BIN <- ifelse(eval_ds$EDUCATION_High.School, 0, 1)
+
+eval_ds$JOB_TYPE_FLAG_BIN <- ifelse(eval_ds$JOB_Student |  eval_ds$JOB_Home.Maker | eval_ds$JOB_Clerical | eval_ds$JOB_Blue.Collar, 1, 0)
 
 
+eval_ds$INCOME_FLAG_BIN <- ifelse(eval_ds$INCOME <=0, 1, 0)
+
+eval_ds$YOJ_FLAG_BIN <- ifelse(eval_ds$YOJ <=0, 1, 0)
+
+eval_ds$HOME_VAL_FLAG_BIN <- ifelse(eval_ds$HOME_VAL <=0, 1, 0)
+
+eval_ds$OLDCLAIM_FLAG_BIN <- ifelse(eval_ds$OLDCLAIM <=0, 1, 0)
+
+eval_ds$CLM_FREQ_FLAG_BIN <- ifelse(eval_ds$CLM_FREQ <=0, 1, 0)
+
+
+eval_ds$MVR_PTS_FLAG_BIN <- ifelse(eval_ds$MVR_PTS <=0, 1, 0)
+
+eval_ds$CAR_AGE_FLAG_BIN <- ifelse(eval_ds$CAR_AGE <=1, 1, 0)
+
+eval_ds$TRAVTIME_FLAG_BIN <- ifelse(eval_ds$TRAVTIME <=20, 1, 0)
+
+new_ds_full <- eval_ds
+
+#eval_ds <- select(eval_ds, -JOB_Blue.Collar, -JOB_Clerical, -JOB_Doctor, -JOB_Home.Maker, -JOB_Lawyer, -JOB_Manager, -JOB_Professional, -JOB_Student, -JOB_Unknown, -CAR_TYPE_Minivan, -CAR_TYPE_Panel.Truck, -CAR_TYPE_Pickup, -CAR_TYPE_Sports.Car, -CAR_TYPE_SUV, -CAR_TYPE_Van, -EDUCATION_Bachelors, -EDUCATION_High.School, -EDUCATION_Masters, -EDUCATION_PhD) 
 
 ```
 
-##4.2 Model Output for Logistic Regression
+##5.2 Model Output for Logistic Regression
 
 \
 \
@@ -2066,17 +2243,16 @@ We now apply the final Logistic regression model that was trained for predicting
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
-TARGET_FLAG_prob <- predict(model1, type ="response", newdata=eval_ds)
-
+eval_ds$TARGET_FLAG_prob <- predict(TF_Model1_ref, type ="response", newdata=eval_ds)
 eval_ds$TARGET_FLAG <- ifelse(eval_ds$TARGET_FLAG_prob>0.5, 1, 0)
-
+table(eval_ds$TARGET_FLAG)
 kable(eval_ds, caption="Outcome on evaluation data set")
 
 ```
 
 
 
-##4.3 Model Output for Linear Regression
+##5.3 Model Output for Linear Regression
 \
 \
 Next we filter for the "predicted" crashes.
@@ -2084,7 +2260,8 @@ Next we filter for the "predicted" crashes.
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
-eval_ds_TA <- eval_ds[eval_ds$TARGET_FLAG==1,]
+# eval_ds_TA <- filter(eval_ds, TARGET_FLAG == 1)
+
 
 
 ```
@@ -2096,8 +2273,11 @@ Next, we apply the final linear model to this smaller dataset and see the result
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
-eval_ds_TA$TARGET_AMT <- predict(TA_model1, type ="response", newdata=eval_ds_TA)
-kable(eval_ds_TA, caption="Outcome on evaluation data set")
+# eval_ds$TARGET_AMT <- predict(TA_Model1, type ="response", newdata=eval_ds_TA)
+# 
+# 
+# 
+# kable(eval_ds_TA, caption="Outcome on evaluation data set")
 
 ```
 
