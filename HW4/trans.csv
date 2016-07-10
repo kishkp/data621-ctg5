@@ -1,0 +1,13 @@
+Old Variable,Old Value,New Variable ,New Value
+CAR_USE,Commercial,CAR_USE_Commercial,1
+,private,,0
+ MSTATUS,Yes,MSTATUS_Yes,1
+,No,,0
+PARENT1,Yes,PARENT1_Yes,1
+,No,,0
+RED_CAR,Yes,RED_CAR_yes,1
+,No,,0
+SEX,M,SEX_M,1
+,else,,0
+URBANICITY,Highly Rural/ Rural,URBANICITY_Rura,1
+,else,,0
