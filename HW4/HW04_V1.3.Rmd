@@ -959,8 +959,9 @@ In this section, we will create 3 models. Aside from using original and transfor
 \newline
 Below is our model definition: \
 -Model 1- This model will be created using all the variables in train data set with logit function GLM. \
--Model 2- This model will be created using calssification and regression tree. \
--Model 3: this model will be created using original variables using Linear Discriminant Analysis function lda in ISLR  package.\
+-Model 2: This model step function will be used to enhance the model 1. \
+-Model 3- This model will be created using calssification and regression tree. \
+
 \
 \
 
@@ -986,7 +987,7 @@ DS_TARGET_FLAG_VALID <- DS_TARGET_FLAG[-train_index, ]
 ```
 
 
-###3.3.2 Model 1
+###3.3.2 Model 1 and enahncement of Model 1 with step function (Model 2)
 
 
 In this model, we will be using all the given variables in train data set.  We will create model using logit function. We will then step thru the model to remove unnecessary variables and generate the refined model. We will highlight the summary of the refined model. \
@@ -996,31 +997,55 @@ In this model, we will be using all the given variables in train data set.  We w
 ```{r model1, echo = FALSE, warning=FALSE, message=FALSE}
 
 TF_Model1 <- glm(TARGET_FLAG ~ ., data = na.omit(DS_TARGET_FLAG_TRAIN), family = "binomial")
+
 TF_Model1_ref<- step(TF_Model1, direction="backward")
 summary(TF_Model1_ref)
 
 ```
 
-##### Interpretation for the First Model  \
+##### Interpretation for the  TF_Model1 and TF_Model1_ref  \
 
 $\newline$
 
+TF_Model1: \
 
-- Model 1 has AIC value 5934.6 after backward selection. -
-- Based on the outcome from model_ref, it can be seen that following variables CAR_USE_Commercial, REVOKED_Yes, URBANICITY_Rural, CAR_TYPE_FLAG_BIN,TRAVTIME, OLDCLAIM_FLAG_BIN, MVR_PTS, TIF, KIDSDRIV, PARENT1_Yes, EDUCATION_FLAG_BIN, MSTATUS_Yes, BLUEBOOK, OLDCLAIM, JOB_TYPE_FLAG_BIN, HOME_VAL, INCOME_FLAG_BIN, INCOME are statistically significant. 
-- As for the statistically significant variables, CAR_USE_Commercial,REVOKED_Yes,URBANICITY_Rural have  the lowest p-value suggesting a strong association to the target variable.
-- The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variables. For Example:
-  a. For change in KIDSDRIV variable when kids are in car, the log odds of having an accident **increases** by 0.4143 .\
-  b. When the driver is a Single Parent the log odds of an accident **increases** by 0.4530\
-  c. with change in marital status the log odds of accident **decreases** by 0.4939\
-  d. If the CAR_TYPE is a MiniVan or a Panel Truck the log odds of accident **decreases** by 0.5573. \
-- No. of iterations are 5 before lowest value of AIC was derived for this model.
+From model 1 summary we can find following important points-
+
+(i) Variable URBANICITY_Rural has most significant association with lowest p value. negative value of log odd function indicates that chances of accidents ae higher in Urbancity areas compare to rural area. \
+
+(ii) For MSTATUS_Yes variable log odd is negative which indicates married people tend to drive slowly and have less number of accidents. \
+
+(iii) Sex variable has no significant association which means driving patters does not depend on men and women. \ 
+
+(iv) variable REVOKED_Yes has strong association which indicates if person's license has been revoked in last 7 years then chane of end up in accidents are much higher with log odds value of 0.809090. \
+
+(v) If person has a claim in last 5 years then chances of more claims are higher. Variable OLDCLAIM_FLAG_BI indicates that with negative log odds value(1 is here no claim  -0.559409). \
+
+(vi) AIC value of the model is AIC: 6078.7 and number of iteration was 5. \
+
+
+TF_Model1_ref: \ 
+
+Model 1 has AIC value 6078.7 and enhaned model TF_Model1_ref has AIC value 6064.9 slightly better compared to model1. We will look into more details on model1_ref below-
+
+(i) Based on the outcome from model_ref, it can be seen that following variables KIDSDRIV,PARENT1_Yes, MSTATUS_Yes,CAR_USE_Commercial, REVOKED_Yes, TIF_sin , CAR_TYPE_FLAG_BIN , EDUCATION_FLAG_BIN, JOB_TYPE_FLAG_BIN, INCOME_FLAG_BIN , HOME_VAL_FLAG_BIN,OLDCLAIM_FLAG_BIN,MVR_PTS_FLAG_BIN,TRAVTIME_FLAG_BIN , URBANICITY_Rural are only statistically significant. Most of the variables are having similar association as above model 1. \
+
+(ii)As for the statistically significant variables, URBANICITY_Rural has the lowest p-value suggesting a strong association of the URBANICITY_Rural to the target variable.Implication is also same negative value indicate lower chances of accidents in rural areas.\
+
+(iii) One interesting outcome is when childrens are dirivng your car then more chances of accidents with log odd value of 0.41327 for variable KIDSDRIV. \
+
+  (iv) For variable CAR_TYPE_FLAG_BIN there is high negative corelation is there with log odds value of -0.65867 that means Mnivan and Panel truck has higher chance of getting into an accident. \
+  
+  (v) Variable EDUCATION_FLAG_BIN has negative log odds value of -0.46755 indicaating that people with higher education above high school has less chance of an accident comared to the other group. \
+  
+ (iv) No. of iterations are 5 before lowest value of AIC was derived for this model. \
 
 \
 \
+\
 
 
-###3.3.3 Model 2
+###3.3.3 Model 3
 
 
 In this model, we will be using original variables; however we use the CART (Classification and Regression Trees) algorithm to train the model. We will then Prune the tree and have a look at the summary of this pruned model.
@@ -1030,6 +1055,7 @@ In this model, we will be using original variables; however we use the CART (Cla
 
  # grow tree 
 TF_Model2 <- rpart(TARGET_FLAG~., data=DS_TARGET_FLAG_TRAIN, method = "class")
+plotcp(TF_Model2)
 
 # plot tree 
 # plot(model2, uniform=TRUE, main="Classification Tree for TARGET_FLAG")
@@ -1040,9 +1066,11 @@ TF_Model2 <- rpart(TARGET_FLAG~., data=DS_TARGET_FLAG_TRAIN, method = "class")
 
 TF_Model2_ref <- prune(TF_Model2, cp = TF_Model2$cptable[which.min(TF_Model2$cptable[,"xerror"]),"CP"])
 
+
 printcp(TF_Model2_ref) # display the results 
 
 # plot the pruned tree 
+par(mfrow=c(1,1))
 plot(TF_Model2_ref, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
 text(TF_Model2_ref, use.n=TRUE, all=TRUE, cex=.8)
 #plotcp(TF_Model2_ref)
@@ -1050,46 +1078,19 @@ text(TF_Model2_ref, use.n=TRUE, all=TRUE, cex=.8)
 #post(pfit, file = "c:/ptree.ps",    title = "Pruned Classification Tree for Kyphosis") 
 ```
 
-#####  Interpretation for Second Model\
+#####  Interpretation for Model 3\
 
 $\newline$
 
-- The following variables have been used for classification - OLD_CLAIM, JOB_TYPE_FLAG_BIN, URBANICITY_Rural, KIDSDRIV, MVR_PTS, REVOKED_Yes.\
+Following analysis can be drawn from this model:\
+(i)The following variables have been used for classification - OLD_CLAIM, JOB_TYPE_FLAG_BIN, URBANICITY_Rural, KIDSDRIV, MVR_PTS, REVOKED_Yes.\
 \
 
-- lowest Cp value and Xerror occured on split 6
+(ii)lowest Cp value and Xerror occured on split 7. \
 \
+
+(iii) OLDCLAIM_FLAG_BIN is the first variable used to split the classification based on its value 0 and 1. When there is claim (1 in abobe variable) branch is further split to other branches by variable JOB_TYPE_FLAG_BIN (based on value 0 and 1). Based on value of JOB_TYPE_FLAG_BIN (0 and 1) there is two different routes in calssification. one Split (774/323) is based on variable KIDSDRIV and the other one (738/675) is based on URBANICITY_Rural variable. Using the above variable total 7 splits have been performed for classification. 
 \
-
-
-
-###3.3.4 Model 3
-
-
-In this model we will be using different set of variables.  Also, we use the Linear Discriminant Analysis to train the model.
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-#ds <- select(DS_TARGET_FLAG_TRAIN, -AGE, -AGE_IMPUTE, -BLUEBOOK, -CAR_AGE_IMPUTE, -CAR_AGE_MISS, -CLM_FREQ, -HOME_VAL, -HOME_VAL_IMPUTE, -HOME_VAL_MISS, -INCOME, -INCOME_IMPUTE, -INCOME_MISS, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ, -YOJ_IMPUTE,-YOJ_MISS)
-
-TF_Model3=lda(TARGET_FLAG~.,data=DS_TARGET_FLAG_TRAIN)
-TF_Model3
-```
-
-#####  Interpretation for the Third Model  \
-
-$\newline$
-
-- The Classification boundary equation for Model 3 is below: \
-
-$0.344 * KIDSDRIV - 0.0039 * AGE + 0.0103 * HOMEKIDS + 0.0111 * YOJ - 0 * INCOME - 0 * HOME_VAL + 0.009 * TRAVTIME - 0 * BLUEBOOK - 0.0403 * TIF - 0 * OLDCLAIM + 0.0736 * CLM_FREQ + 0.1203 * MVR_PTS + 0.0038 * CAR_AGE + 0.6333 * CAR_USE_Commercial - 0.3869 * MSTATUS_Yes + 0.4117 * PARENT1_Yes - 0.0264 * RED_CAR_yes + 0.9784 * REVOKED_Yes - 0.0133 * SEX_M - 1.5283 * URBANICITY_Rural - 0.0451 * YOJ_MISS - 0.067 * INCOME_MISS - 0.0196 * HOME_VAL_MISS + 0.1969 * CAR_AGE_MISS + 0.0314 * TIF_sin - 0.0278 * BLUEBOOK_sin + 0.0169 * AGE_sin - 0.4273 * CAR_TYPE_FLAG_BIN - 0.3207 * EDUCATION_FLAG_BIN + 0.3307 * JOB_TYPE_FLAG_BIN + 0.4485 * INCOME_FLAG_BIN + 0.0037 * YOJ_FLAG_BIN + 0.1432 * HOME_VAL_FLAG_BIN - 0.1942 * OLDCLAIM_FLAG_BIN - 0.1942 * CLM_FREQ_FLAG_BIN + 0.1028 * MVR_PTS_FLAG_BIN + 0.0748 * CAR_AGE_FLAG_BIN - 0.1087 * TRAVTIME_FLAG_BIN$
-
-- From summary table, we also have the prior probability of of not having accident incident in data set is 0.7345594 and failure is 0.2654406.\
-
-- Group means provides mean values for each variable with respect to target variable values 0 and 1.\
-
-- LDA model assumes normality of the variables used in the model and there are some variables which are not completely normally distributed and have outliers that is impacting the result of this model.
-
 
 
 ##3.4 Model Evaluation Using VALID Data
@@ -1135,15 +1136,17 @@ model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensit
 
 #confusion matrix
 
-DS_TARGET_FLAG_VALID$M1_TARGET_FLAG <- predict(TF_Model1_ref, newdata=DS_TARGET_FLAG_VALID, type="response")
+DS_TARGET_FLAG_VALID$M1_TARGET_FLAG <- predict(TF_Model1, newdata=DS_TARGET_FLAG_VALID, type="response")
 df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$M1_TARGET_FLAG>0.5,DS_TARGET_FLAG_VALID$TARGET_FLAG))
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 model_comparison[1,]<-Eval(df_pre_train1)
 model_comparison[1,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$TARGET_FLAG, DS_TARGET_FLAG_VALID$M1_TARGET_FLAG))
-kable(model_comparison,row.names = TRUE, caption = " Model 1 evaluation KPIs")
+kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
+\
 
+Model 1 has good accuracy value close to 78.3%. sensitivity value is lower than the specificity value.
 
 
 
@@ -1153,17 +1156,17 @@ kable(model_comparison,row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
 
-DS_TARGET_FLAG_VALID$M2_TARGET_FLAG <- predict(TF_Model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
+DS_TARGET_FLAG_VALID$M2_TARGET_FLAG <- predict(TF_Model1_ref,newdata=DS_TARGET_FLAG_VALID)
 df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$M2_TARGET_FLAG>0.5,DS_TARGET_FLAG_VALID$TARGET_FLAG))
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 model_comparison[2,]<-Eval(df_pre_train1)
 model_comparison[2,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$TARGET_FLAG, DS_TARGET_FLAG_VALID$M2_TARGET_FLAG))
-kable(model_comparison,row.names = TRUE, caption = " Model 2 evaluation KPIs")
+kable(model_comparison[2,],row.names = TRUE, caption = " Model 2 evaluation KPIs")
 
 ```
+\
 
-
-
+Model 2 has good accuracy value close to 77.3% and very close to model1. sensitivity value is lower than the specificity value.
 
 
 ###3.4.3 Evaluation of Model 3
@@ -1174,18 +1177,15 @@ kable(model_comparison,row.names = TRUE, caption = " Model 2 evaluation KPIs")
 
 #ds <- select(DS_TARGET_FLAG_VALID, -AGE, -AGE_IMPUTE, -BLUEBOOK, -CAR_AGE_IMPUTE, -CAR_AGE_MISS, -CLM_FREQ, -HOME_VAL, -HOME_VAL_IMPUTE, -HOME_VAL_MISS, -INCOME, -INCOME_IMPUTE, -INCOME_MISS, -MVR_PTS, -OLDCLAIM, -TIF, -TRAVTIME, -YOJ, -YOJ_IMPUTE,-YOJ_MISS)
 
-DS_TARGET_FLAG_VALID$M3_TARGET_FLAG <- as.integer(unlist(data.frame(predict(TF_Model3,newdata=DS_TARGET_FLAG_VALID))[,1]))
-
-df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$M3_TARGET_FLAG==1,DS_TARGET_FLAG_VALID$TARGET_FLAG))
+DS_TARGET_FLAG_VALID$M2_TARGET_FLAG <- predict(TF_Model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$M2_TARGET_FLAG>0.5,DS_TARGET_FLAG_VALID$TARGET_FLAG))
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 model_comparison[3,]<-Eval(df_pre_train1)
 model_comparison[3,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$TARGET_FLAG, DS_TARGET_FLAG_VALID$M2_TARGET_FLAG))
-kable(model_comparison,row.names = TRUE, caption = " Model 2 evaluation KPIs")
-
+kable(model_comparison,row.names = TRUE, caption = " Model 3 evaluation KPIs")
 ```
-
-
-
+\
+This model has accuracy value of 75.4%. AUC for this model is 67.4 % and less compared to the other two models. 
 
 ##3.5 Final Logistic Model Selection Summary
 
@@ -1196,8 +1196,7 @@ Following is the comparison of various metrics for above 3 models
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
 
 model_comparison$Model_No<-c(1:3)
-kable(model_comparison[,c("Model_No","Accuracy","Error_Rate","AUC","Precision","sensitivity","specificity","F1_Score")],
-      caption = "Model Performance Metrics Comparison")
+kable(model_comparison[,c("Model_No","Accuracy","Error_Rate","AUC","Precision","sensitivity","specificity","F1_Score")],caption = "Model Performance Metrics Comparison")
 
 ```
 
@@ -1211,7 +1210,7 @@ The AUC provides the best score on probability of correctly identifying the patt
 The following analysis will be carried out on the final model: \
 
  (i) Relevant variables in the model\
-(ii)  Estimate confidence interval for coefficient\
+(ii) Estimate confidence interval for coefficient\
 (iii) odds ratios and 95% CI\
 (iv) AUC curve\
  (v) Distribution of prediction\ 
@@ -1224,11 +1223,11 @@ The following analysis will be carried out on the final model: \
 
 ```{r best model analysis 1,echo=FALSE}
 
-summary(TF_Model1_ref)
+summary(TF_Model1)
 
 ```
 
-Following are the most relevant variables for the model: CAR_USE_Commercial, REVOKED_Yes, URBANICITY_Rural, CAR_TYPE_FLAG_BIN,TRAVTIME, OLDCLAIM_FLAG_BIN, MVR_PTS, TIF, KIDSDRIV, PARENT1_Yes, EDUCATION_FLAG_BIN, MSTATUS_Yes, BLUEBOOK, OLDCLAIM, JOB_TYPE_FLAG_BIN, HOME_VAL, INCOME_FLAG_BIN. \
+Following are the most relevant variables for the model: CAR_USE_Commercial, REVOKED_Yes, URBANICITY_Rural, CAR_TYPE_FLAG_BIN,TRAVTIME, OLDCLAIM_FLAG_BIN, MVR_PTS, TIF_SIN, KIDSDRIV, PARENT1_Yes, EDUCATION_FLAG_BIN, MSTATUS_Yes, BLUEBOOK, OLDCLAIM, JOB_TYPE_FLAG_BIN, HOME_VAL, INCOME_FLAG_BIN. \
 \
 
 we can write the equation of the Model 1 as:\
@@ -1243,13 +1242,13 @@ $log(y) = -0.4015 + 0.3431 * KIDSDRIV -0.000001027 * HOME_VAL + 0.01557 * TRAVTI
 
 ```{r best model analysis 2,echo=FALSE}
 
-exp(cbind(OR = coef(TF_Model1_ref), confint.default(TF_Model1_ref)))
+exp(cbind(OR = coef(TF_Model1), confint.default(TF_Model1)))
 
 ```
 
 The following points can be made for the important variables in the model: \
 
-In keeping all other variables same, the odds of an accident increases as follow: 2.1451462 for per unit change in CAR_USE_Commercial, 2.7874004 per unit change in REVOKED_Yes, 0.1085252 for per unit change in URBANICITY_Rural, etc. Any value which is less than 1, it means that there is less chance of an event with the per unit increase of the variable. \
+In keeping all other variables same, the odds of an accident increases as follow: 1.8449962 for per unit change in CAR_USE_Commercial, 2.2458626 per unit change in REVOKED_Yes, 0.1104633 for per unit change in URBANICITY_Rural, etc. Any value which is less than 1, it means that there is less chance of an event with the per unit increase of the variable. \
 
 
 ###3.5.4 ROC curve for the selected model
@@ -2115,7 +2114,7 @@ Since we have already seen this result in our data exploration phase, we will re
 
 ##4.4.1 Evaluation of Model 1
 
-
+```
 
 ##4.4.2 Evaluation of Model 2
 
@@ -2241,12 +2240,15 @@ new_ds_full <- eval_ds
 \
 We now apply the final Logistic regression model that was trained for predicting the TARGET_FLAG. Below are the predictions.
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
+```{ r , echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
-eval_ds$TARGET_FLAG_prob <- predict(TF_Model1_ref, type ="response", newdata=eval_ds)
-eval_ds$TARGET_FLAG <- ifelse(eval_ds$TARGET_FLAG_prob>0.5, 1, 0)
-table(eval_ds$TARGET_FLAG)
-kable(eval_ds, caption="Outcome on evaluation data set")
+eval_ds$TARGET_FLAG_prob <- unlist(data.frame(predict(TF_Model1, type ="response", newdata=eval_ds)))
+eval_ds$TARGET_FLAG<-ifelse(eval_ds$TARGET_FLAG_prob>0.5,1,0)
+
+
+# eval_ds$TARGET_FLAG <- ifelse(eval_ds$TARGET_FLAG_prob>0.5, 1, 0)
+#table(eval_ds$TARGET_FLAG)
+#kable(eval_ds[eval_ds$TARGET_FLAG_prob="NA",c(1,61,62)], caption="Outcome on evaluation data set")
 
 ```
 
@@ -2260,7 +2262,7 @@ Next we filter for the "predicted" crashes.
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
-# eval_ds_TA <- filter(eval_ds, TARGET_FLAG == 1)
+ eval_ds_TA <- filter(eval_ds, TARGET_FLAG == 1)
 
 
 
@@ -2273,11 +2275,11 @@ Next, we apply the final linear model to this smaller dataset and see the result
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
-# eval_ds$TARGET_AMT <- predict(TA_Model1, type ="response", newdata=eval_ds_TA)
+eval_ds_TA$TARGET_AMT <- predict(TA_Model1, newdata=eval_ds_TA)
 # 
 # 
 # 
-# kable(eval_ds_TA, caption="Outcome on evaluation data set")
+kable(eval_ds_TA[1:10,c(1,2,61,3)], caption="Outcome on evaluation data set")
 
 ```
 
