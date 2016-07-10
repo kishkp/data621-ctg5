@@ -1,4 +1,4 @@
-VARIABLE_NAME,DEFINITION,THEORETICAL_EFFECT
+VARIABLE,DEFINITION,THEORETICAL_EFFECT
 INDEX ,Identification Variable (do not use) ,None
 TARGET_FLAG ,Was Car in a crash? 1=YES 0=NO ,None
 TARGET_AMT ,"If car was in a crash, what was the cost ",None
