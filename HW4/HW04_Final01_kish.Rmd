@@ -2046,7 +2046,7 @@ Distribution of residual values are random around base line and do not show any 
 
 ###Evaluate homoscedasticity:
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
 
 library(car)
 
@@ -2350,10 +2350,11 @@ eval_ds$TARGET_AMT <- 0
 
 eval_ds_TA <- filter(eval_ds, TARGET_FLAG == 1)
 eval_ds_TA$TARGET_FLAG<-as.numeric(eval_ds_TA$TARGET_FLAG)
+
 eval_ds_TA$TARGET_AMT <- predict(TA_Model1, newdata=eval_ds_TA)
 
 x<-arrange(eval_ds_TA, (TARGET_AMT))
-
+x<-x[-c(1:2),]
 kable(x[1:10,c(1,2,94,3)], caption="Linear Regression Results")
 
 
@@ -2373,6 +2374,7 @@ abline(Class_Expense,col="red")
 
 ```
 
-Outcome from regression model and outcome from linear model was plotted in the chart above.It can be seen from the chart above that probability associated with classification and predicted amount from linear model are linearly related though those two outcome came from two ompletely different models. Relationship between those two are linear which indicates with the increase in probabilty for accident outcome, expense amount for repair also goes up with given data set. One key reason for that is there are number of variables in given data set which is common and playing important roles both the models such as- URBANICITY_Rural, MSTATUS_Yes,  PARENT1_Yes, REVOKED_Yes,TRAVTIME,KIDSDRIV. \ 
+Outcome from regression model and outcome from linear model was plotted in the chart above.It can be seen from the chart above that probability associated with classification and predicted amount from linear model 
+does not show any specific patterns. From insurance business standpoint cases where probability of incident  and repair expense amount is high will be the focus area top right side corner of the chart.\
 
 
