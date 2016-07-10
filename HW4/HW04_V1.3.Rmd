@@ -2262,8 +2262,8 @@ Next we filter for the "predicted" crashes.
 \
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
- eval_ds_TA <- filter(eval_ds, TARGET_FLAG == 1)
-
+eval_ds_TA <- filter(eval_ds, TARGET_FLAG == 1)
+eval_ds_TA$TARGET_FLAG<-as.numeric(eval_ds_TA$TARGET_FLAG)
 
 
 ```
@@ -2276,6 +2276,7 @@ Next, we apply the final linear model to this smaller dataset and see the result
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
 
 eval_ds_TA$TARGET_AMT <- predict(TA_Model1, newdata=eval_ds_TA)
+
 # 
 # 
 # 
