@@ -16,7 +16,7 @@ if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRU
 if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
 if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
 if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
-if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
 if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
 if (!require("dummy",character.only = TRUE)) (install.packages("dummy",dep=TRUE))
 if (!require("reshape2",character.only = TRUE)) (install.packages("reshape2",dep=TRUE))
@@ -32,7 +32,7 @@ library(xtable)
 library(dplyr)
 library(psych)
 library(stringr)
-library(car)
+#library(car)
 library(faraway)
 library(dummy)
 library(reshape2)
@@ -2278,5 +2278,21 @@ eval_ds_TA$TARGET_AMT <- predict(TA_Model1, newdata=eval_ds_TA)
 kable(eval_ds_TA[1:10,c(1,2,61,3)], caption="Outcome on evaluation data set")
 
 ```
+
+##5.4 Conclusion
+
+```{r , echo=FALSE,message=FALSE}
+
+
+Class_Expense<-lm(TARGET_AMT~TARGET_FLAG_prob,data=eval_ds_TA)
+
+plot(eval_ds_TA$TARGET_FLAG_prob,eval_ds_TA$TARGET_AMT)
+abline(Class_Expense,col="red")
+
+
+
+```
+
+Outcome from regression model and outcome from linear model was plotted in the chart above.It can be seen from the chart above that probability associated with classification and predicted amount from linear model are linearly related though those two outcome came from two ompletely different models. Relationship between those two are linear which indicates with the increase in probabilty for accident outcome, expense amount for repair also goes up with given data set. One key reason for that is there are number of variables in given data set which is common and playing important roles both the models such as- URBANICITY_Rural, MSTATUS_Yes,  PARENT1_Yes, REVOKED_Yes,TRAVTIME,KIDSDRIV. \ 
 
 
