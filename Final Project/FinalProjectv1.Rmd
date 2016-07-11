@@ -7,9 +7,9 @@ author:
 - Shazia Khan
 - Kishore Prasad
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
@@ -47,6 +47,7 @@ if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=T
 if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
 if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
 if (!require("gdata",character.only = TRUE)) (install.packages("gdata",dep=TRUE))
+if (!require("reshape",character.only = TRUE)) (install.packages("reshape",dep=TRUE))
 
 
 #install.packages("fancyvrb")
@@ -69,6 +70,8 @@ library(ROCR)
 library(Amelia)
 library(popbio)
 library(gdata)
+library(reshape)
+library(gridExtra)
 
 bank_train <- read.table(
   "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional-full.csv",
@@ -117,7 +120,7 @@ uniques<- data.frame(sapply(bank_train, function(x) length(unique(x))))
 names(uniques)[1]<- paste("Unique Values")
 kable(uniques, caption = "Unique Values")
 
-#str(bank_train)
+str(bank_train)
 
 #prop.table(table(bank_train$y))
 
@@ -151,6 +154,7 @@ bank_train2<-bank_train
 #levels(bank_train2$y)
 levels(bank_train2$y) <- c(0, 1)
 bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
+str(bank_train2)
 
 ```
 
@@ -160,37 +164,59 @@ bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
 Now we need to create dummy variables to find out the relationship between y variables and dependent variables, for all categorical variables.\
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-#job has 12 unique values, therefore we will need k-1 dummy variables 11
+#create dummy variables for job values
 for(level in unique(bank_train2$job)){
   bank_train2[paste("job", level, sep = "_")] <- ifelse(bank_train2$job == level, 1, 0)
 }
-#bank_train2$job_unemployed <- NULL
+#Delete original catagorical variable
 bank_train2$job <- NULL
 #head(bank_train2)
 
-# Marital has 3 levels - 2 variables are required
+#create dummy variables for marital values
 #levels(bank_train2$marital)
 for(level in unique(bank_train2$marital)){
   bank_train2[paste("marital", level, sep = "_")] <- ifelse(bank_train2$marital == level, 1, 0)
 }
-#bank_train2$marital_divorced <- NULL
+#Delete original catagorical variable
 bank_train2$marital <- NULL
 #head(bank_train2)
 
-# education has 7 levels - 6 variables are required
-#levels(bank_train2$education)
-for(level in unique(bank_train2$education)){
-  bank_train2[paste("education", level, sep = "_")] <- ifelse(bank_train2$education == level, 1, 0)
-}
-#bank_train2$education_illiterate <- NULL
+
+#education dummy variables primary, secondary tertiary, unknown and illiterate
+
+#education_None
+bank_train2$education_illiterate <- as.numeric(ifelse(bank_train2$education == "illiterate", 1, 0))
+#table(bank_train2$education_Illiterate)
+
+#education_Unknown
+bank_train2$education_unknown <-as.numeric(ifelse(bank_train2$education == "unknown", 1, 0))
+#table(bank_train2$education_Unknown)
+
+#education_Primary
+bank_train2$education_primary <- as.numeric(ifelse(bank_train2$education == "basic.4y" 
+                                        | bank_train2$education == "basic.6y", 1, 0))
+#table(bank_train2$education_Primary)
+
+#education_Secondary
+bank_train2$education_secondary <- as.numeric(ifelse(bank_train2$education == "basic.9y" 
+                                        | bank_train2$education == "high.school", 1, 0))
+#table(bank_train2$education_Secondary)
+
+#education_Tertiary
+bank_train2$education_tertiary <- as.numeric(ifelse(bank_train2$education == "professional.course" 
+                                        | bank_train2$education == "university.degree", 1, 0))
+#table(bank_train2$education_Tertiary)
+
+#Delete original catagorical variable
 bank_train2$education <- NULL
-#head(bank_train2)
+
 
 # contact has 2 levels - 1 variable is required
 #levels(bank_train2$contact)
 for(level in unique(bank_train2$contact)){
   bank_train2[paste("contact", level, sep = "_")] <- ifelse(bank_train2$contact == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$contact <- NULL
 
 # contact has 2 levels - 1 variable is required
@@ -198,6 +224,7 @@ bank_train2$contact <- NULL
 for(level in unique(bank_train2$default)){
   bank_train2[paste("default", level, sep = "_")] <- ifelse(bank_train2$default == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$default <- NULL
 
 
@@ -205,35 +232,56 @@ bank_train2$default <- NULL
 for(level in unique(bank_train2$housing)){
   bank_train2[paste("housing", level, sep = "_")] <- ifelse(bank_train2$housing == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$housing <- NULL
 
 #levels(bank_train2$loan)
 for(level in unique(bank_train2$loan)){
   bank_train2[paste("loan", level, sep = "_")] <- ifelse(bank_train2$loan == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$loan <- NULL
 
 #levels(bank_train2$poutcome)
 for(level in unique(bank_train2$poutcome)){
   bank_train2[paste("poutcome", level, sep = "_")] <- ifelse(bank_train2$poutcome == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$poutcome <- NULL
 
 #levels(bank_train2$month)
 for(level in unique(bank_train2$month)){
   bank_train2[paste("month", level, sep = "_")] <- ifelse(bank_train2$month == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$month <- NULL
 
 #levels(bank_train2$day_of_week)
 for(level in unique(bank_train2$day_of_week)){
   bank_train2[paste("day_of_week", level, sep = "_")] <- ifelse(bank_train2$day_of_week == level, 1, 0)
 }
+#Delete original catagorical variable
 bank_train2$day_of_week <- NULL
 
 #dummy variable for previous contact yes or no ; 1 or 0 
 bank_train2$previous_contact <- as.numeric(ifelse(bank_train2$pdays == 999, 0, 1))
-#head(bank_train2)
+#Delete original numeric variable
+bank_train2$pdays <- NULL
+
+
+#Dummy variables that are k and not required based on correlations
+bank_train2$contact_telephone <- NULL
+bank_train2$default_unknown <- NULL
+bank_train2$marital_married <- NULL
+bank_train2$education_secondary <- NULL
+bank_train2$poutcome_nonexistent <- NULL
+bank_train2$day_of_week_mon <- NULL
+bank_train2$month_may <- NULL
+bank_train2$`job_blue-collar`<- NULL
+bank_train2$housing_no <- NULL
+
+
+
 
 ```
 
@@ -254,7 +302,6 @@ fun1 <- function(a, y) cor(y, a)
 x<-bank_train2[,]
 Correlation <- sapply(x, FUN = fun1, y=bank_train2$y) 
 
-#kable(data.frame(Correlation), caption = "Correlation between target and predictor variable")
 ```
 
 ##2.4 Correlation of Variables with y 
@@ -267,6 +314,71 @@ Correlation <- sort(Correlation, decreasing = TRUE)
 kable(Correlation, caption = "Variable Correlation")
 
 #str(bank_train2)
+#str(bank_train)
 #summary(bank_train2)
 
 ```
+
+##2.5 # Outliers
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+mdata<- select(bank_train2,  age, previous, duration, campaign, emp.var.rate, cons.price.idx, euribor3m,nr.employed)
+mdata2 <- melt(mdata)
+
+# Output the boxplot
+p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
+  geom_boxplot() + ggtitle("Outliers Identification")
+p + facet_wrap( ~ variable, scales="free", ncol=4)
+
+
+
+```
+
+##2.6 Analysis the link function \
+
+In this section, we will investigate how our initial data aligns with a typical logistic model plot.
+
+Recall the Logistic Regression is part of a larger class of algorithms known as Generalized Linear Model (glm). The fundamental equation of generalized linear model is:
+
+$g(E(y)) = a+ Bx_1+B_2x_2+ B_3x_3+...$
+
+where, g() is the link function, E(y) is the expectation of target variable and $B_0 + B_1x_1 + B_2x_2+B_3x_3$ is the linear predictor ( $B_0,B_1,B_2, B_3$ to be predicted). The role of link function is to 'link' the expectation of y to linear predictor.
+
+In logistic regression, we are only concerned about the probability of outcome dependent variable ( success or failure). As described above, g() is the link function. This function is established using two things: Probability of Success (p) and Probability of Failure (1-p). p should meet following criteria: It must always be positive (since p >= 0) It must always be less than equals to 1 (since p <= 1).
+
+Now let's investigate how our initial data model aligns with the above criteria. In other words, we will plot regression model plots for each variable and compare it to a typical logistic model plot:
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#move y to the last column
+bank_train2 <- bank_train2 %>%
+  select(-y, everything())
+
+vars <- names(Correlation)
+
+par(mfrow=c(2,4))
+#Show in the order of Correlation
+p = list()
+#for (i in 2:ncol(bank_train2)) p[[i]] <- qplot(bank_train2[,i], xlab=names(bank_train2)[[i]])
+for (i in 2:ncol(bank_train2)) {
+  p[[i]] <- logi.hist.plot(bank_train2[,vars[i]],bank_train2$y,logi.mod = 1, type='hist', boxp=FALSE,col='gray', 
+                           mainlabel = vars[i])
+  
+}
+#do.call(grid.arrange, p)
+#plot(p)
+#plot(p[[1]], p[[2]])
+#plot (p$your.x.coordinate, p$your.y.coordinate)
+#head(bank_train2)
+
+```
+
+
+##2.7 Interpretation 
+
+You can see that the probability of y increases as age increases, duration of the call increses
+
+
+You can see that the probability of crashing decreases as we get closer to the "1" classification for the URBANICITY_Highly.Rural..Rural, PARENT1_No, REVOKED_No, HOME_VAL, CAR_USE_Private, CAR_TYPE_Minivan, MSTATUS_Yes, JOB_Manager, AGE, CAR_AGE, TIF, EDUCATION_Masters, YOJ, EDUCATION_PhD, JOB_Lawyer, JOB_Doctor, EDUCATION_Bachelors, JOB_Professional, INCOME, SEX_M, RED_CAR_yes, CAR_TYPE_Panel.Truck variables.  \
