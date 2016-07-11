@@ -21,7 +21,7 @@ if (!require("xtable",character.only = TRUE)) (install.packages("xtable",repos =
 if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("psych",character.only = TRUE)) (install.packages("psych",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("stringr",character.only = TRUE)) (install.packages("stringr",repos = "http://cran.us.r-project.org", dep=TRUE))
-if (!require("car",character.only = TRUE)) (install.packages("car",repos = "http://cran.us.r-project.org", dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("faraway",character.only = TRUE)) (install.packages("faraway",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("aod",character.only = TRUE)) (install.packages("aod",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("ISLR",character.only = TRUE)) (install.packages("ISLR",repos = "http://cran.us.r-project.org", dep=TRUE))
@@ -41,7 +41,7 @@ library(xtable)
 library(dplyr)
 library(psych)
 library(stringr)
-library(car)
+#library(car)
 library(faraway)
 library(dummy)
 library(reshape2)
@@ -1026,22 +1026,24 @@ In this model, we will be using all the given variables in train data set.  We w
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
 
 TF_Model1 <- glm(TARGET_FLAG ~ ., data = na.omit(DS_TARGET_FLAG_TRAIN), family = "binomial")
+summary(TF_Model1)
 #TF_Model1_ref<- TF_Model1
 TF_Model1_ref<- step(TF_Model1, direction="backward")
 
 
 ```
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-summary(TF_Model1_ref)
-```
-
 ##### Interpretation for the  TF_Model1 and TF_Model1_ref  
 
-
-
 TF_Model1: 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+summary(TF_Model1)
+```
+
+
 
 From model 1 summary we can find following important points-
 
@@ -1051,16 +1053,23 @@ From model 1 summary we can find following important points-
 
 (iii) Sex variable has no significant association which means driving patters does not depend on men and women.  
 
-(iv) variable REVOKED_Yes has strong association which indicates if person's license has been revoked in last 7 years then chane of end up in accidents are much higher with log odds value of 1.053. 
+(iv) variable REVOKED_Yes has strong association which indicates if person's license has been revoked in last 7 years then chane of end up in accidents are much higher with log odds value of 1.052. 
 
-(v) If person has a claim in last 5 years then chances of more claims are higher. Variable OLDCLAIM_FLAG_BI indicates that with negative log odds value(1 is here no claim  -.6378). 
+(v) If person has a claim in last 5 years then chances of more claims are higher. Variable OLDCLAIM_FLAG_BI indicates that with negative log odds value(1 is here no claim  -.4899). 
 
-(vi) AIC value of the model is AIC: 5934.6 and number of iteration was 5. 
+(vi) AIC value of the model is AIC: 5962.1 and number of iteration was 5. 
 
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+summary(TF_Model1_ref)
+```
 
 TF_Model1_ref:  
 
-Model 1 has AIC value 6078.7 and enhaned model TF_Model1_ref has AIC value 6064.9 slightly better compared to model1. We will look into more details on model1_ref below-
+Model 1 has AIC value 5962.1 and enhaned model TF_Model1_ref has same AIC value  5962.1. We will look into more details on model1_ref below-
 
 (i) Based on the outcome from model_ref, it can be seen that following variables KIDSDRIV,PARENT1_Yes, \
 MSTATUS_Yes,CAR_USE_Commercial, REVOKED_Yes, TIF_sin , CAR_TYPE_FLAG_BIN , EDUCATION_FLAG_BIN, JOB_TYPE_FLAG_BIN, \
@@ -1070,11 +1079,11 @@ Most of the variables are having similar association as above model 1. \
 
 (ii)As for the statistically significant variables, URBANICITY_Rural has the lowest p-value suggesting a strong association of the URBANICITY_Rural to the target variable.Implication is also same negative value indicate lower chances of accidents in rural areas.
 
-(iii) One interesting outcome is when childrens are dirivng your car then more chances of accidents with log odd value of 0.41327 for variable KIDSDRIV. 
+(iii) One interesting outcome is when childrens are dirivng your car then more chances of accidents with log odd value of 0.3979 for variable KIDSDRIV. 
 
-  (iv) For variable CAR_TYPE_FLAG_BIN there is high negative corelation is there with log odds value of -0.65867 that means Mnivan and Panel truck has higher chance of getting into an accident. 
+  (iv) For variable CAR_TYPE_FLAG_BIN there is high negative corelation is there with log odds value of -0.5584 that means Mnivan and Panel truck has higher chance of getting into an accident. 
   
-  (v) Variable EDUCATION_FLAG_BIN has negative log odds value of -0.46755 indicaating that people with higher education above high school has less chance of an accident comared to the other group. 
+  (v) Variable EDUCATION_FLAG_BIN has negative log odds value of -0.3764 indicaating that people with higher education above high school has less chance of an accident comared to the other group. 
   
  (iv) No. of iterations are 5 before lowest value of AIC was derived for this model. 
 
