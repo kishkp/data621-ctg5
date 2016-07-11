@@ -1023,13 +1023,18 @@ In this model, we will be using all the given variables in train data set.  We w
 
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
 
 TF_Model1 <- glm(TARGET_FLAG ~ ., data = na.omit(DS_TARGET_FLAG_TRAIN), family = "binomial")
-TF_Model1_ref<- TF_Model1
-#TF_Model1_ref<- step(TF_Model1, direction="backward")
-summary(TF_Model1_ref)
+#TF_Model1_ref<- TF_Model1
+TF_Model1_ref<- step(TF_Model1, direction="backward")
 
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+summary(TF_Model1_ref)
 ```
 
 ##### Interpretation for the  TF_Model1 and TF_Model1_ref  
@@ -1046,11 +1051,11 @@ From model 1 summary we can find following important points-
 
 (iii) Sex variable has no significant association which means driving patters does not depend on men and women.  
 
-(iv) variable REVOKED_Yes has strong association which indicates if person's license has been revoked in last 7 years then chane of end up in accidents are much higher with log odds value of 0.809090. 
+(iv) variable REVOKED_Yes has strong association which indicates if person's license has been revoked in last 7 years then chane of end up in accidents are much higher with log odds value of 1.053. 
 
-(v) If person has a claim in last 5 years then chances of more claims are higher. Variable OLDCLAIM_FLAG_BI indicates that with negative log odds value(1 is here no claim  -0.559409). 
+(v) If person has a claim in last 5 years then chances of more claims are higher. Variable OLDCLAIM_FLAG_BI indicates that with negative log odds value(1 is here no claim  -.6378). 
 
-(vi) AIC value of the model is AIC: 6078.7 and number of iteration was 5. 
+(vi) AIC value of the model is AIC: 5934.6 and number of iteration was 5. 
 
 
 TF_Model1_ref:  
@@ -2090,15 +2095,15 @@ score<-predict(TA_Model1,type="response")
 #plot(score, step4.res,  ylab="Residuals", xlab="Predicted Cost of Repair", main="Residual vs Predicted values") 
 #abline(0, 0) 
 
-df3<- data.frame(score, step4.res)
-ggplot(df3, aes(score, step4.res)) +
-  geom_point() +
-  geom_smooth()+
-  ggtitle("Residual vs Predicted values ") +
-  labs(x="Predicted Cost of Repair",y="Residuals") 
+#df3<- data.frame(score, step4.res)
+#ggplot(df3, aes(score, step4.res)) +
+ # geom_point() +
+#  geom_smooth()+
+ # ggtitle("Residual vs Predicted values ") +
+  #labs(x="Predicted Cost of Repair",y="Residuals") 
 ```
 
-Distribution of residual values are random around base line and do not show any pattern around base line.
+
 
 ###Evaluate homoscedasticity:
 
@@ -2426,8 +2431,7 @@ ggplot(Class_Expense, aes(TARGET_FLAG_prob, TARGET_AMT)) +
   labs(x="Probability of Crash",y="Amount Paid") 
 ```
 
-Outcome from regression model and outcome from linear model was plotted in the chart above.It can be seen from the chart above that probability associated with classification and predicted amount from linear model 
-does not show any specific patterns. From insurance business standpoint cases where probability of incident  and repair expense amount is high will be the focus area top right side corner of the chart.
+The outcome from the logistical regression model and the linear regression model was plotted in the chart above. It can be seen that probability associated with the classification and the predicted amount from linear model does not show any specific patterns. From insurance business perspective, cases where the probability of incident and the repair expense amount are high will be the focus area; which is the top right side corner of the chart above.
 
 \newpage
 
@@ -2435,5 +2439,4 @@ does not show any specific patterns. From insurance business standpoint cases wh
 
 
 ```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/HW04_Group5.Rmd', documentation = 0)), eval = FALSE}
-
 ```
