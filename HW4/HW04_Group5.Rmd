@@ -29,14 +29,11 @@ if (!require("AUC",character.only = TRUE)) (install.packages("AUC",repos = "http
 if (!require("ROCR",character.only = TRUE)) (install.packages("ROCR",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("leaps",character.only = TRUE)) (install.packages("leaps",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("pander",character.only = TRUE)) (install.packages("pander",repos = "http://cran.us.r-project.org", dep=TRUE))
-
 if (!require("dummy",character.only = TRUE)) (install.packages("dummy",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("reshape2",character.only = TRUE)) (install.packages("reshape2",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("popbio",character.only = TRUE)) (install.packages("popbio",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("rpart",character.only = TRUE)) (install.packages("rpart",repos = "http://cran.us.r-project.org", dep=TRUE))
 if (!require("pROC)",character.only = TRUE)) (install.packages("pROC)",repos = "http://cran.us.r-project.org", dep=TRUE))
-
-
 library(ggplot2)
 library(MASS)
 library(knitr)
@@ -52,10 +49,10 @@ library(popbio)
 library(rpart)
 library(pROC)
 library(pander)
-
 ```
 
 \newpage
+
 
 #1 Overview 
 The data set contains approximately 8161 records. Each record represents a customer profile at an auto insurance company. Each record has two response variables. 
@@ -1026,7 +1023,7 @@ In this model, we will be using all the given variables in train data set.  We w
 
 
 
-```{r model1, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 TF_Model1 <- glm(TARGET_FLAG ~ ., data = na.omit(DS_TARGET_FLAG_TRAIN), family = "binomial")
 TF_Model1_ref<- TF_Model1
@@ -1060,7 +1057,11 @@ TF_Model1_ref:
 
 Model 1 has AIC value 6078.7 and enhaned model TF_Model1_ref has AIC value 6064.9 slightly better compared to model1. We will look into more details on model1_ref below-
 
-(i) Based on the outcome from model_ref, it can be seen that following variables KIDSDRIV,PARENT1_Yes, MSTATUS_Yes,CAR_USE_Commercial, REVOKED_Yes, TIF_sin , CAR_TYPE_FLAG_BIN , EDUCATION_FLAG_BIN, JOB_TYPE_FLAG_BIN, INCOME_FLAG_BIN , HOME_VAL_FLAG_BIN,OLDCLAIM_FLAG_BIN,MVR_PTS_FLAG_BIN,TRAVTIME_FLAG_BIN , URBANICITY_Rural are only statistically significant. Most of the variables are having similar association as above model 1. 
+(i) Based on the outcome from model_ref, it can be seen that following variables KIDSDRIV,PARENT1_Yes, \
+MSTATUS_Yes,CAR_USE_Commercial, REVOKED_Yes, TIF_sin , CAR_TYPE_FLAG_BIN , EDUCATION_FLAG_BIN, JOB_TYPE_FLAG_BIN, \
+INCOME_FLAG_BIN, HOME_VAL_FLAG_BIN,OLDCLAIM_FLAG_BIN,MVR_PTS_FLAG_BIN, \
+TRAVTIME_FLAG_BIN , URBANICITY_Rural are only statistically significant. \ 
+Most of the variables are having similar association as above model 1. \
 
 (ii)As for the statistically significant variables, URBANICITY_Rural has the lowest p-value suggesting a strong association of the URBANICITY_Rural to the target variable.Implication is also same negative value indicate lower chances of accidents in rural areas.
 
@@ -1265,7 +1266,7 @@ The following analysis will be carried out on the final model:
 
 
 
-```{r best model analysis 1,echo=FALSE}
+```{r ,echo=FALSE}
 
 summary(TF_Model1)
 
@@ -1287,7 +1288,7 @@ $log(y) = -0.4015 + 0.3431 * KIDSDRIV -0.000001027 * HOME_VAL + 0.01557 * TRAVTI
 
 
 
-```{r best model analysis 2,echo=FALSE}
+```{r ,echo=FALSE}
 
 exp(cbind(OR = coef(TF_Model1), confint.default(TF_Model1)))
 
@@ -1329,7 +1330,7 @@ plot(myRoc, main="ROC Curve for Classification data")
 
 
 
-```{r distribution of prediction, echo=FALSE}
+```{r , echo=FALSE}
 plot_pred_type_distribution <- function(df, threshold) {
   v <- rep(NA, nrow(df))
   v <- ifelse(DS_TARGET_FLAG_VALID$M1_TARGET_FLAG >= threshold & DS_TARGET_FLAG_VALID$TARGET_FLAG == 1, "TP", v)
@@ -2086,8 +2087,15 @@ Based on the normality plot it appears that residual distribution is nearly norm
 step4.res <- resid(TA_Model1)
 score<-predict(TA_Model1,type="response")
 
-plot(score, step4.res,  ylab="Residuals", xlab="Predicted Cost of Repair", main="Residual vs Predicted values") 
-abline(0, 0) 
+#plot(score, step4.res,  ylab="Residuals", xlab="Predicted Cost of Repair", main="Residual vs Predicted values") 
+#abline(0, 0) 
+
+df3<- data.frame(score, step4.res)
+ggplot(df3, aes(score, step4.res)) +
+  geom_point() +
+  geom_smooth()+
+  ggtitle("Residual vs Predicted values ") +
+  labs(x="Predicted Cost of Repair",y="Residuals") 
 ```
 
 Distribution of residual values are random around base line and do not show any pattern around base line.
@@ -2404,22 +2412,18 @@ eval_ds_TA$TARGET_AMT <- predict(TA_Model1, newdata=eval_ds_TA)
 x<-arrange(eval_ds_TA, (TARGET_AMT))
 x<-x[-c(1:2),]
 kable(x[1:10,c(1,2,94,3)], caption="Linear Regression Results")
-
-
 ```
+
 
 ##5.4 Conclusion
 
-```{r , echo=FALSE,message=FALSE}
-
-
+```{r , echo=FALSE,message=FALSE, warning=FALSE}
 Class_Expense<-lm(TARGET_AMT~TARGET_FLAG_prob,data=eval_ds_TA)
-
-plot(eval_ds_TA$TARGET_FLAG_prob,eval_ds_TA$TARGET_AMT)
-abline(Class_Expense,col="red")
-
-
-
+ggplot(Class_Expense, aes(TARGET_FLAG_prob, TARGET_AMT)) +
+  geom_point() +
+  geom_smooth()+
+  ggtitle("Amount Paid vs Probability of Crash ") +
+  labs(x="Probability of Crash",y="Amount Paid") 
 ```
 
 Outcome from regression model and outcome from linear model was plotted in the chart above.It can be seen from the chart above that probability associated with classification and predicted amount from linear model 
@@ -2430,6 +2434,6 @@ does not show any specific patterns. From insurance business standpoint cases wh
 #Appendix A: DATA621 Homework 04 R Code 
 
 
-```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW1/HW1_Final_03.Rmd', documentation = 0)), eval = FALSE}
+```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW4/HW04_Group5.Rmd', documentation = 0)), eval = FALSE}
 
 ```
