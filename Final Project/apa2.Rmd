@@ -1,0 +1,92 @@
+---
+title: "How to have an Effective and Sucessful Bank Telemarketing "
+shorttitle: "Predictive Modeling with Losgistic Regression "
+author: 
+  - name: Arindam Barman
+    affiliation: "1"
+    corresponding: no    # Define only one corresponding author
+    address: New York, NY
+    email: my@email.com
+  - name: Mohamed Elmoudni
+    affiliation: "1"
+  - name: Shazia Khan
+    affiliation: "1"
+  - name: Kishore Prasad
+    affiliation: "1"
+affiliation:
+  - id: 1
+    institution: City University of New York (CUNY)
+
+abstract: |
+  An abstract is a self-contained, short, and powerful statement that describes a larger work. Components vary according to discipline. An abstract of a social science or scientific work may contain the scope, purpose, results, and contents of the work. An abstract of a humanities work may contain the thesis, background, and conclusion of the larger work. An abstract is not a review, nor does it evaluate the work being abstracted. While it contains key words found in the larger work, the abstract is an original document rather than an excerpted passage.
+  
+  Even though direct marketing is a standard method for banks to utilize in the face of global competition and financial unstability, it has, however, been shown to exhibit poor performance. The telemearketing calls are simply not answered or answered and immediately disconnected. It is however welcomed by the right person who is in need of the the financial relief. The aim of this exercise is to target clients more effectively and effeciently based on the data from a portuguese bank telelmarketing effort. 
+  
+  
+note: |  
+  Complete departmental affiliations for each author (note the indentation, if you start a new paragraph).
+
+  Enter author note here.
+  
+keywords: "logistic regression model, predictive modeling, bank telemarketing, direct marketing"
+
+wordcount: X
+
+class: man
+lang: english
+figsintext: no
+lineno: no
+bibliography:
+  - r-references.bib
+
+output: papaja::apa6_pdf
+---
+
+```{r message = FALSE, warning = FALSE}
+library("papaja")
+apa_prepare_doc() # Prepare document for rendering
+```
+
+# Introduction
+  describe the background and motivation of your problem
+
+# Literature Review
+  discuss how other researchers have addressed similar problems, what their achievements are, and what the advantage and drawbacks of each reviewed approach are.  Explain how your investigation is similar or different to the state-of-the-art.  Please do not discuss paper one at a time, instead, identify key characteristics of your topic, and discuss them in a whole. Please cite the relevant papers where appropriate.  
+  
+# Methodology
+  discuss the key aspects of your problem, data set and regression model(s). Given that you are working on real-world data, explain at a high-level your exploratory data analysis, how you prepared the data for regression modeling, your process for building regression models, and your model selection. . <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+# Experimentation and Results
+  describe the specifics of what you did (data exploration, data preparation, model building, selection, evalutation) and what you found out (statistical analysis, inter pretation and discussion of the results)
+   
+## Data Exploration
+
+## Data Preparation
+
+## Model Building
+
+## Model Selection
+
+## Model Evaluation
+
+## Statistical analysis
+We used `r cite_r("r-references.bib")` for all our analyses.
+
+## Interpretation and Disussion of Results
+
+# Discussion and Conclusions
+   conclude your findings, limitations, and suggest areas for future work
+
+# References
+   be sure to cite all references used in the report (APA format). 
+```{r create_r-references}
+r_refs(file = "r-references.bib")
+```
+
+# Appendix
+  Supplemental tables and/or figures.
+  R statistical programming code. 
+
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+\setlength{\parskip}{11pt}
