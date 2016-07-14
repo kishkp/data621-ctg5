@@ -7,9 +7,9 @@ author:
 - Shazia Khan
 - Kishore Prasad
 output:
-  html_document:
-    toc: yes
   pdf_document:
+    toc: yes
+  html_document:
     toc: yes
 ---
 
@@ -582,17 +582,136 @@ We will explore the Linear models Using original data with replacing all missing
 lmod5 = lm(TARGET ~ ., data = winedata_orig)
 summary(lmod5)
 
+x <- summary(lmod5) 
+
+y<- as.data.frame(coef(x))
+
+PositiveImpact <- ""
+NegativeImpact <- ""
+Lin_eq <- as.character(round(y[1,1],4))
+Sig_Impact <- "" 
+
+for(i in 2:nrow(y)) {
+
+    if(y[i,1] >= 0)
+        
+        PositiveImpact <- paste0(rownames(y)[i], ", ", PositiveImpact)
+    else 
+        NegativeImpact <- paste0(rownames(y)[i], ", ", NegativeImpact)
+
+    
+    if(y[i,4] <= 0.05 ) 
+        Sig_Impact <- paste0(rownames(y)[i], ", ", Sig_Impact)
+
+
+    Lin_eq <- paste0(Lin_eq, ifelse(y[i,1]>=0, " + ", " - "), as.character(abs(round(y[i,1],6))), " * ", rownames(y)[i])
+}
+
+PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
+NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
+Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
+
+
+# PositiveImpact
+# NegativeImpact
+# Lin_eq
+# Sig_Impact
+
+
+
 ```
+
+*** Interpretation of Linear Model 5***
+
+
+Based on the summary for Linear Model 5, below are the characteristics :
+
+- The Residual standard error is `r x$sigma`
+- Multiple R-squared: `r x$r.squared`
+- Adjusted R-squared: `r x$adj.r.squared`
+- F-statistic: `r x$fstatistic[1]` on `r x$fstatistic[2]` and `r x$fstatistic[3]` DF
+- p-value: < 2.2e-16
+
+
+
+Based on the available coefficients, we can make the following observations:  
+
+- Positive Impact - The following variables have a positive impact on TARGET, meaning an increase in the values of these variables leads to an increase in the number of cases sold: `r PositiveImpact`
+
+- Negative Impact - The following variables have a negative impact on TARGET, meaning an increase in the values of these variables leads to an decrease in the number of cases sold: `r NegativeImpact`
+
+- The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
+
+- Finally, the Linear Model equation is given by the following: `r Lin_eq`
+
+
+
 
 ##3.3.1 Linear Regression Model 6 \
 
 In this model we will be using the Linear Regression model; however using transformed data. 
 
 ```{r}
-#transformed data. Linear Regression
+lmod6 = lm(TARGET ~ ., data = winedata_trans)
+summary(lmod6)
 
+x <- summary(lmod6) 
+
+y<- as.data.frame(coef(x))
+
+PositiveImpact <- ""
+NegativeImpact <- ""
+Lin_eq <- as.character(round(y[1,1],4))
+Sig_Impact <- "" 
+
+for(i in 2:nrow(y)) {
+
+    if(y[i,1] >= 0)
+        
+        PositiveImpact <- paste0(rownames(y)[i], ", ", PositiveImpact)
+    else 
+        NegativeImpact <- paste0(rownames(y)[i], ", ", NegativeImpact)
+
+    
+    if(y[i,4] <= 0.05 ) 
+        Sig_Impact <- paste0(rownames(y)[i], ", ", Sig_Impact)
+
+
+    Lin_eq <- paste0(Lin_eq, ifelse(y[i,1]>=0, " + ", " - "), as.character(abs(round(y[i,1],6))), " * ", rownames(y)[i])
+}
+
+PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
+NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
+Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
+
+
+# PositiveImpact
+# NegativeImpact
+# Lin_eq
+# Sig_Impact
 
 ```
 
-***Interpretation Linear Regression Model 6***
+*** Interpretation of Linear Model 5***
+
+
+Based on the summary for Linear Model 5, below are the characteristics :
+
+- The Residual standard error is `r x$sigma`
+- Multiple R-squared: `r x$r.squared`
+- Adjusted R-squared: `r x$adj.r.squared`
+- F-statistic: `r x$fstatistic[1]` on `r x$fstatistic[2]` and `r x$fstatistic[3]` DF
+- p-value: < 2.2e-16
+
+
+
+Based on the available coefficients, we can make the following observations:  
+
+- Positive Impact - The following variables have a positive impact on TARGET, meaning an increase in the values of these variables leads to an increase in the number of cases sold: `r PositiveImpact`
+
+- Negative Impact - The following variables have a negative impact on TARGET, meaning an increase in the values of these variables leads to an decrease in the number of cases sold: `r NegativeImpact`
+
+- The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
+
+- Finally, the Linear Model equation is given by the following: `r Lin_eq`
 
