@@ -330,5 +330,5 @@ In this model we will be using the Linear Regression model; however using transf
 
 ```
 
-##3.3.2 Linear Regression Model 6
+***Interpretation Linear Regression Model 6***
 
