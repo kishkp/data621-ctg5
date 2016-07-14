@@ -1,0 +1,18 @@
+---
+title: "coplots"
+author: "Kishore Prasad"
+date: "July 13, 2016"
+output: html_document
+---
+
+```{r}
+winedata <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5//wine-training-data.csv")
+
+for(i in 3:15){
+    for(j in 3:15){
+        coplot(TARGET~winedata[,i]|winedata[,j], winedata, rows = 1)
+    }
+}
+
+```
+
