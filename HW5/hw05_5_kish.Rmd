@@ -578,18 +578,25 @@ Although it is highly recommended for continuous variables instead of count vari
 
 We will explore the Linear models Using original data with replacing all missing data with the means. 
 
-```{r}
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
 lmod5 = lm(TARGET ~ ., data = winedata_orig)
 summary(lmod5)
 
 x <- summary(lmod5) 
 
+rse <- round(x$sigma, 4)
+r2 <- round(x$r.squared, 4)
+ar2 <- round(x$adj.r.squared,4)
+fstat <- paste0(round(x$fstatistic[1],0), " on ", x$fstatistic[2], " and ", x$fstatistic[3]," DF")
+
+
 y<- as.data.frame(coef(x))
 
-PositiveImpact <- ""
-NegativeImpact <- ""
+PositiveImpact <- ''
+NegativeImpact <- ''
 Lin_eq <- as.character(round(y[1,1],4))
-Sig_Impact <- "" 
+Sig_Impact <- '' 
 
 for(i in 2:nrow(y)) {
 
@@ -611,27 +618,17 @@ PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
 NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
 Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
 
-
-# PositiveImpact
-# NegativeImpact
-# Lin_eq
-# Sig_Impact
-
-
-
 ```
 
 *** Interpretation of Linear Model 5***
 
-
 Based on the summary for Linear Model 5, below are the characteristics :
 
-- The Residual standard error is `r x$sigma`
-- Multiple R-squared: `r x$r.squared`
-- Adjusted R-squared: `r x$adj.r.squared`
-- F-statistic: `r x$fstatistic[1]` on `r x$fstatistic[2]` and `r x$fstatistic[3]` DF
+- The Residual standard error is `r rse`
+- Multiple R-squared: `r r2`
+- Adjusted R-squared: `r ar2`
+- F-statistic: `r fstat`
 - p-value: < 2.2e-16
-
 
 
 Based on the available coefficients, we can make the following observations:  
@@ -642,8 +639,9 @@ Based on the available coefficients, we can make the following observations:
 
 - The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
 
-- Finally, the Linear Model equation is given by the following: `r Lin_eq`
+- Finally, the Linear Model equation is given by the following: 
 
+`r Lin_eq`
 
 
 
@@ -651,18 +649,25 @@ Based on the available coefficients, we can make the following observations:
 
 In this model we will be using the Linear Regression model; however using transformed data. 
 
-```{r}
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
 lmod6 = lm(TARGET ~ ., data = winedata_trans)
 summary(lmod6)
 
 x <- summary(lmod6) 
 
+
+rse <- round(x$sigma, 4)
+r2 <- round(x$r.squared, 4)
+ar2 <- round(x$adj.r.squared,4)
+fstat <- paste0(round(x$fstatistic[1],0), " on ", x$fstatistic[2], " and ", x$fstatistic[3]," DF")
+
+
 y<- as.data.frame(coef(x))
 
-PositiveImpact <- ""
-NegativeImpact <- ""
+PositiveImpact <- ''
+NegativeImpact <- ''
 Lin_eq <- as.character(round(y[1,1],4))
-Sig_Impact <- "" 
+Sig_Impact <- '' 
 
 for(i in 2:nrow(y)) {
 
@@ -692,15 +697,15 @@ Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
 
 ```
 
-*** Interpretation of Linear Model 5***
+*** Interpretation of Linear Model 6***
 
 
-Based on the summary for Linear Model 5, below are the characteristics :
+Based on the summary for Linear Model 6, below are the characteristics :
 
-- The Residual standard error is `r x$sigma`
-- Multiple R-squared: `r x$r.squared`
-- Adjusted R-squared: `r x$adj.r.squared`
-- F-statistic: `r x$fstatistic[1]` on `r x$fstatistic[2]` and `r x$fstatistic[3]` DF
+- The Residual standard error is `r rse`
+- Multiple R-squared: `r r2`
+- Adjusted R-squared: `r ar2`
+- F-statistic: `r fstat`
 - p-value: < 2.2e-16
 
 
@@ -713,5 +718,7 @@ Based on the available coefficients, we can make the following observations:
 
 - The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
 
-- Finally, the Linear Model equation is given by the following: `r Lin_eq`
+- Finally, the Linear Model equation is given by the following: 
+
+`r Lin_eq`
 
