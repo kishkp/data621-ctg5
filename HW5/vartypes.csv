@@ -1,0 +1,17 @@
+Variable,Datatype,Role
+INDEX,int  ,none
+TARGET,int,response
+FixedAcidity,num,predictor
+VolatileAcidity,num,predictor
+CitricAcid,num,predictor
+ResidualSugar,num,predictor
+Chlorides,num,predictor
+FreeSulfurDioxide,num,predictor
+TotalSulfurDioxide,num,predictor
+Density,num,predictor
+pH,num,predictor
+Sulphates,num,predictor
+Alcohol,num,predictor
+LabelAppeal,int,predictor
+AcidIndex,int,predictor
+STARS,int,predictor
