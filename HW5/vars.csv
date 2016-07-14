@@ -1,0 +1,17 @@
+VARIABLE,DEFINITION,THEORETICAL EFFECT
+INDEX ,Identification Variable (do not use) None,None
+TARGET ,Number of Cases Purchased None,None
+AcidIndex,Proprietary method of testing total acidity of wine by using a weighted average,
+Alcohol,Alcohol Content,
+Chlorides,Chloride content of wine,
+CitricAcid,Citric Acid Content,
+Density,Density of Wine,
+FixedAcidity,Fixed Acidity of Wine,
+FreeSulfurDioxide,Sulfur Dioxide content of wine,
+LabelAppeal,Marketing Score indicating the appeal of label design for consumers. High numbers suggest customers like the label design. Negative numbers suggest customes don't like the design.,Many consumers purchase based on the visual appeal of the wine label design. Higher numbers suggest better sales.
+ResidualSugar,Residual Sugar of wine,
+STARS ,"Wine rating by a team of experts. 4 Stars = Excellent, 1 Star = Poor ",A high number of stars suggests high sales
+Sulphates,Sulfate conten of wine,
+TotalSulfurDioxide ,Total Sulfur Dioxide of Wine,
+VolatileAcidity,Volatile Acid content of wine,
+pH,pH of wine,
