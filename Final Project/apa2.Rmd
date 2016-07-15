@@ -28,7 +28,7 @@ note: |
 
   Enter author note here.
   
-keywords: "logistic regression model, predictive modeling, bank telemarketing, direct marketing"
+keywords: "logistic regression model, linear discriminant analysis (LDA), predictive modeling, bank telemarketing, direct marketing, Data Mining"
 
 wordcount: X
 
@@ -48,18 +48,57 @@ apa_prepare_doc() # Prepare document for rendering
 ```
 
 # Introduction
-  describe the background and motivation of your problem
+  --describe the background and motivation of your problem--
+  
+  "Regression analysis is one of the most commonly used statistical techniques in social and behavioral sciences as well as in physical sciences. Its main objective is to explore the relationship between a dependent variable and one or more independent variables (which are also called predictor or explanatory variables)." This is the definition provided by www.unesco.org for Regression Analysis
+  
+  The most successful direct marketing is to predict the customers that have a higher probability to do business. Data exploration technique, is crucial to understand customer behavior. Many banks are moving to adopt the predictive technique based on the data mining to predict the customer profile before targeting them. The prediction or classification is the most important task in the data exploration and model building that is usually applied to classify the group of data. In classification, the outcome is a categorical variable and several combinations of input variable are used to build a model and the model that gives a better prediction with the best accuracy is chosen to target the prospective customers.
+
 
 # Literature Review
   discuss how other researchers have addressed similar problems, what their achievements are, and what the advantage and drawbacks of each reviewed approach are.  Explain how your investigation is similar or different to the state-of-the-art.  Please do not discuss paper one at a time, instead, identify key characteristics of your topic, and discuss them in a whole. Please cite the relevant papers where appropriate.  
   
+  
 # Methodology
   discuss the key aspects of your problem, data set and regression model(s). Given that you are working on real-world data, explain at a high-level your exploratory data analysis, how you prepared the data for regression modeling, your process for building regression models, and your model selection. . <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+  
+  The data is available on website for UC Irvine Machine Learning Repository. There are two different data sets available. The "bank" data has 45,211 records with 16 attributes and 1 response variable. The "bank-additional" data has 41,188 records with additional attributes added to "bank" data, it has 20 attributes and 1 response variable. We chose to use the data with additional attributes.
+  
+  The data consists of four groups of information.
+  - Client's personalInfomation
+  - Client's bank information
+  - Bank's telemarketing campaign information
+  - Social and economic information
+  
+  The main problem with the dataset is that it consists of many missing values which are labeled "Unknown". The missing data consists of 26% of the data. We decided to retain the missing data to help with our regression modeling. The other problem with the data is that only 
+  
 
 # Experimentation and Results
   describe the specifics of what you did (data exploration, data preparation, model building, selection, evalutation) and what you found out (statistical analysis, inter pretation and discussion of the results)
    
 ## Data Exploration
+   1 - age (numeric)
+   2 - job (categorical) Dummy variables created k-1
+   3 - marital (categorical) Dummy variables created k-1
+   4 - education (categorical) Dummy variables in group primary, secondary and tertiary
+   5 - default (categorical) Dummy variables created k-1
+   6 - housing (categorical) Dummy variables created k-1
+   7 - loan (categorical) Dummy variables created k-1
+   8 - contact (categorical) Dummy variables created k-1
+   9 - month (categorical) Dummy variables created k-1
+  10 - day_of_week (categorical) Dummy variables created k-1
+  11 - duration (numeric). Important note:  this attribute highly affects the output target (e.g., if duration=0 then y="no"). Yet, the duration is not known before a call is performed. Also, after the end of the call y is obviously known. Thus, this input should only be included for benchmark purposes and should be discarded if the intention is to have a realistic predictive model.
+  12 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+  13 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)
+  14 - previous: number of contacts performed before this campaign and for this client (numeric)
+  15 - poutcome: outcome of the previous marketing campaign (categorical: "failure","nonexistent","success")
+   # social and economic context attributes
+  16 - emp.var.rate: employment variation rate - quarterly indicator (numeric)
+  17 - cons.price.idx: consumer price index - monthly indicator (numeric)     
+  18 - cons.conf.idx: consumer confidence index - monthly indicator (numeric)     
+  19 - euribor3m: euribor 3 month rate - daily indicator (numeric)
+  20 - nr.employed: number of employees - quarterly indicator (numeric)
+  
 
 ## Data Preparation
 

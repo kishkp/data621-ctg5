@@ -1,0 +1,518 @@
+---
+title: "Business Analytics - Final Project"
+author:
+- Critical Thinking Group 5
+- Arindam Barman
+- Mohamed Elmoudni
+- Shazia Khan
+- Kishore Prasad
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+# Overview 
+
+The data set contains approximately 41188 obs. of 21 variables. \
+
+This dataset is based on "Bank Marketing" UCI dataset (please check the description at: http://archive.ics.uci.edu/ml/datasets/Bank+Marketing).
+   The data is enriched by the addition of five new social and economic features/attributes (national wide indicators from a ~10M population country), published by the Banco de Portugal and publicly available at: https://www.bportugal.pt/estatisticasweb.\
+   
+The binary classification goal is to predict if the client will subscribe a bank term deposit (variable y).
+
+This dependent variable tells whether the client will subscribe a bank term deposit or not. This is a binary variable and as such we will be using a Logistic Regression Model.
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Missing values and Unique Values \
+
+
+##1.1	Variable identification
+
+First let's display and examine the data dictionary or the data columns as shown in table 1
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
+if (!require("gdata",character.only = TRUE)) (install.packages("gdata",dep=TRUE))
+if (!require("reshape",character.only = TRUE)) (install.packages("reshape",dep=TRUE))
+
+
+#install.packages("fancyvrb")
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+#library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(Amelia)
+library(popbio)
+library(gdata)
+library(reshape)
+library(gridExtra)
+
+bank_train <- read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional-full.csv",
+           sep = ";",
+           header = TRUE)
+
+variables<- read.csv(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Variable%20Description.csv")
+kable(variables, caption = "Variable Description") 
+
+
+bank_test <-read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional.csv",
+           sep = ";",
+           header = TRUE)
+# head(bank_test)
+
+
+```
+
+We notice that the variables are numerical, categorical and binary. The responce variable y is binary.
+
+Based on the original dataset, our predictor input has 21 variables. And our response variable is 1 variable called y. 
+
+Binomial Logistic regression is the appropriate regression analysis to conduct when the dependent variable is dichotomous (binary).  Like all regression analyses, the logistic regression is a predictive analysis.  Logistic regression is used to describe data and to explain the relationship between one dependent binary variable and one or more metric (interval or ratio scale) independent variables.
+
+
+##1.2 Missing values and Unique Values
+
+We see that there are no missing values in our dataset as shown in table 2 and graph format.
+The unique values are given in the table 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,1))
+#finding missing values
+missings<- data.frame(sapply(bank_train,function(x) sum(is.na(x))))
+names(missings)[1]<- paste("Missing Values")
+kable(missings, caption = "Missing Values")
+
+# missing values graph
+#missmap(bank_train, main = "Missing values vs observed")
+
+### finding unique values
+uniques<- data.frame(sapply(bank_train, function(x) length(unique(x))))
+names(uniques)[1]<- paste("Unique Values")
+kable(uniques, caption = "Unique Values")
+
+str(bank_train)
+
+#round(prop.table(table(bank_train$y, bank_train$age),2)*100,2)  #student, retired
+ggplot(bank_train, aes(age)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$job),2)*100,2)  #student, retired
+ggplot(bank_train, aes(job)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$marital),2)*100,2) #unknown
+ggplot(bank_train, aes(marital)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$education),2)*100,2) #illeterate
+ggplot(bank_train, aes(education)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$default),2)*100,2) #no
+ggplot(bank_train, aes(default)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$housing),2)*100,2) #no
+ggplot(bank_train, aes(housing)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$loan),2)*100,2) #no
+ggplot(bank_train, aes(loan)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$contact),2)*100,2) #cellular
+ggplot(bank_train, aes(contact)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$month),2)*100,2) #march, dec, sep, oct
+ggplot(bank_train, aes(month)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$day_of_week),2)*100,2) #Thursday
+ggplot(bank_train, aes(day_of_week)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$duration),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(duration)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+ xlim(0, 2200)
+
+#round(prop.table(table(bank_train$y, bank_train$campaign),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(campaign)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$pdays),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(pdays)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+#round(prop.table(table(bank_train$y, bank_train$previous),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(previous)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+  #round(prop.table(table(bank_train$y, bank_train$poutcome),2)*100,2) #success
+ggplot(bank_train, aes(poutcome)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+ #round(prop.table(table(bank_train$y, bank_train$emp.var.rate),2)*100,2) #success
+ggplot(bank_train, aes(emp.var.rate)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+ #round(prop.table(table(bank_train$y, bank_train$cons.price.idx),2)*100,2) #success
+ggplot(bank_train, aes(cons.price.idx)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+ #round(prop.table(table(bank_train$y, bank_train$cons.conf.idx),2)*100,2) #success
+ggplot(bank_train, aes(cons.conf.idx)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+ #round(prop.table(table(bank_train$y, bank_train$euribor3m),2)*100,2) #success
+ggplot(bank_train, aes(euribor3m)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+ #round(prop.table(table(bank_train$y, bank_train$nr.employed),2)*100,2) #success
+ggplot(bank_train, aes(nr.employed)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+
+coplot(loan~housing|y, bank_train, rows = 1)
+```
+
+#2	Data Preparation
+
+-Convert Binary to 0 and 1\
+-Create dummy variables\
+-Data Summary Analysis \
+-Correlation of Variables with y\
+
+```{r}
+```
+
+##2.1 Convert Binary yes and no to 0 and 1
+
+Now in order to prepare the data for modeling, we need to update Yes = 1 and No = 0. \
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+bank_train2<-bank_train
+
+#update response variable to binary values of 0 and 1
+#levels(bank_train2$y)
+levels(bank_train2$y) <- c(0, 1)
+bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
+str(bank_train2)
+
+```
+
+##2.2 Create dummy variables
+
+Now we need to create dummy variables to find out the relationship between y variables and dependent variables, for all categorical variables.\
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+# age is numeric 
+
+#create dummy variables for job values
+for(level in unique(bank_train2$job)){
+  bank_train2[paste("job", level, sep = "_")] <- ifelse(bank_train2$job == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$job <- NULL
+#head(bank_train2)
+
+#create dummy variables for marital values
+#levels(bank_train2$marital)
+for(level in unique(bank_train2$marital)){
+  bank_train2[paste("marital", level, sep = "_")] <- ifelse(bank_train2$marital == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$marital <- NULL
+#head(bank_train2)
+
+#--------------------------------------------------------------------------
+#education dummy variables primary, secondary tertiary, unknown and illiterate
+
+#education_None
+bank_train2$education_illiterate <- as.numeric(ifelse(bank_train2$education == "illiterate", 1, 0))
+#table(bank_train2$education_Illiterate)
+
+#education_Unknown
+bank_train2$education_unknown <-as.numeric(ifelse(bank_train2$education == "unknown", 1, 0))
+#table(bank_train2$education_Unknown)
+
+#education_Primary
+bank_train2$education_primary <- as.numeric(ifelse(bank_train2$education == "basic.4y" 
+                                        | bank_train2$education == "basic.6y", 1, 0))
+#table(bank_train2$education_Primary)
+
+#education_Secondary
+bank_train2$education_secondary <- as.numeric(ifelse(bank_train2$education == "basic.9y" 
+                                        | bank_train2$education == "high.school", 1, 0))
+#table(bank_train2$education_Secondary)
+
+#education_Tertiary
+bank_train2$education_tertiary <- as.numeric(ifelse(bank_train2$education == "professional.course" 
+                                        | bank_train2$education == "university.degree", 1, 0))
+#table(bank_train2$education_Tertiary)
+
+#Delete original catagorical variable
+bank_train2$education <- NULL
+#---------------------------------------------------
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_train2$default)
+for(level in unique(bank_train2$default)){
+  bank_train2[paste("default", level, sep = "_")] <- ifelse(bank_train2$default == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$default <- NULL
+
+
+#levels(bank_train2$housing)
+for(level in unique(bank_train2$housing)){
+  bank_train2[paste("housing", level, sep = "_")] <- ifelse(bank_train2$housing == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$housing <- NULL
+
+#levels(bank_train2$loan)
+for(level in unique(bank_train2$loan)){
+  bank_train2[paste("loan", level, sep = "_")] <- ifelse(bank_train2$loan == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$loan <- NULL
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_train2$contact)
+for(level in unique(bank_train2$contact)){
+  bank_train2[paste("contact", level, sep = "_")] <- ifelse(bank_train2$contact == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$contact <- NULL
+
+#levels(bank_train2$month)
+for(level in unique(bank_train2$month)){
+  bank_train2[paste("month", level, sep = "_")] <- ifelse(bank_train2$month == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$month <- NULL
+
+#levels(bank_train2$day_of_week)
+for(level in unique(bank_train2$day_of_week)){
+  bank_train2[paste("day_of_week", level, sep = "_")] <- ifelse(bank_train2$day_of_week == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$day_of_week <- NULL
+
+#duration is numeric
+#campaign is numeric
+
+#pdays is numeric
+#dummy variable for pdays -previous contact yes or no ; 1 or 0  when 999
+bank_train2$previous_contact <- as.numeric(ifelse(bank_train2$pdays == 999, 0, 1))
+
+#previous is numeric
+
+#levels(bank_train2$poutcome)
+for(level in unique(bank_train2$poutcome)){
+  bank_train2[paste("poutcome", level, sep = "_")] <- ifelse(bank_train2$poutcome == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$poutcome <- NULL
+
+# emp.var.rate is numeric
+# cons.price.idx is numeric
+# cons.conf.idx  is numeric
+# euribor3m is numeric
+# nr.employed is numeric
+
+
+```
+
+##2.3 Data Summary Analysis 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#str(bank_train2)
+
+ds_stats <- psych::describe(bank_train2, skew = TRUE, na.rm = TRUE)
+#ds_stats
+kable(ds_stats[1:7], caption= "Data Summary")
+kable(ds_stats[8:13], caption= "Data Summary (Cont)")
+
+#head(bank_train2)
+
+fun1 <- function(a, y) cor(y, a)
+x<-bank_train2[,]
+Correlation <- sapply(x, FUN = fun1, y=bank_train2$y) 
+
+```
+
+##2.4 Correlation of Variables with y 
+Now we will produce the correlation table between the independent variables and the dependent variable
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+Correlation <- sort(Correlation, decreasing = TRUE)
+#head(Correlation)
+kable(Correlation, caption = "Variable Correlation")
+
+#str(bank_train2)
+#str(bank_train)
+#summary(bank_train2)
+
+```
+
+##2.5 # Outliers
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+mdata<- select(bank_train2,  age, previous, duration, campaign, emp.var.rate, cons.price.idx, euribor3m,nr.employed)
+mdata2 <- melt(mdata)
+
+# Output the boxplot
+p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
+  geom_boxplot() + ggtitle("Outliers Identification")
+p + facet_wrap( ~ variable, scales="free", ncol=4)
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+bank_train2 <- bank_train2 %>%
+  select(-y, everything())
+
+vars <- names(Correlation)
+
+
+par(mfrow=c(2,4))
+for (i in 2:ncol(bank_train2)) {
+  hist(bank_train2[,vars[i]], main = vars[i], xlab = "")
+}
+
+```
+
+##2.6 Analysis the link function \
+
+In this section, we will investigate how our initial data aligns with a typical logistic model plot.
+
+Recall the Logistic Regression is part of a larger class of algorithms known as Generalized Linear Model (glm). The fundamental equation of generalized linear model is:
+
+$g(E(y)) = a+ Bx_1+B_2x_2+ B_3x_3+...$
+
+where, g() is the link function, E(y) is the expectation of target variable and $B_0 + B_1x_1 + B_2x_2+B_3x_3$ is the linear predictor ( $B_0,B_1,B_2, B_3$ to be predicted). The role of link function is to 'link' the expectation of y to linear predictor.
+
+In logistic regression, we are only concerned about the probability of outcome dependent variable ( success or failure). As described above, g() is the link function. This function is established using two things: Probability of Success (p) and Probability of Failure (1-p). p should meet following criteria: It must always be positive (since p >= 0) It must always be less than equals to 1 (since p <= 1).
+
+Now let's investigate how our initial data model aligns with the above criteria. In other words, we will plot regression model plots for each variable and compare it to a typical logistic model plot:
+
+
+The main objective in the transformations is to achieve linear relationships with the dependent variable (or, really, with its logit).
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#move y to the last column
+
+
+par(mfrow=c(2,4))
+#Show in the order of Correlation
+p = list()
+#for (i in 2:ncol(bank_train2)) p[[i]] <- qplot(bank_train2[,i], xlab=names(bank_train2)[[i]])
+for (i in 2:ncol(bank_train2)) {
+  p[[i]] <- logi.hist.plot(bank_train2[,vars[i]],bank_train2$y,logi.mod = 1, type='hist', boxp=FALSE,col='gray', 
+                           mainlabel = vars[i])
+}
+#do.call(grid.arrange, p)
+#plot(p)
+#plot(p[[1]], p[[2]])
+#plot (p$your.x.coordinate, p$your.y.coordinate)
+#head(bank_train2)
+
+ 
+```
+
+#3 Build Models
+
+In this section, we will create 3 models. Aside from using original and transformed data, we will also be using different methods and functions such as Linear Discriminant Analysis, step function, and logit function to enhance our models. 
+
+Below is our model definition: 
+
+-Model 1- This model will be created using all the variables in train data set with logit function GLM. 
+
+-Model 2: This model step function will be used to enhance the model 1. 
+
+-Model 3- This model will be created using calssification and regression tree. 
+
+## 3.1 Model 1
+
+Taking the treated data and splitting into 80/20 to train model and validate the data.
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+smp_size <- floor(0.80 * nrow(bank_train2))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+
+train_index <- sample(seq_len(nrow(bank_train2)), size = smp_size)
+
+DS_TARGET_FLAG_TRAIN<- bank_train2[train_index, ]
+DS_TARGET_FLAG_VALID <- bank_train2[-train_index, ]
+
+```
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+model1 <- glm(y ~.,family=binomial(link='logit'),data=DS_TARGET_FLAG_TRAIN)
+summary(model1)
+anova(model1, test="Chisq")
+
+library(pscl)
+#the McFadden R^2 index can be used to assess the model fit.
+pR2(model1)
+
+fitted.results <- predict(model1,newdata=DS_TARGET_FLAG_VALID,type='response')
+fitted.results <- ifelse(fitted.results > 0.5,1,0)
+
+misClasificError <- mean(fitted.results != DS_TARGET_FLAG_VALID$y)
+print(paste('Accuracy',1-misClasificError))
+
+
+```
+
+## 3.2 Model 2
+
+## 3.3 Model 3
+
+#4 Evaluate Models
+
+#5 Select Models
+
