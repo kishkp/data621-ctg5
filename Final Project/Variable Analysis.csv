@@ -1,0 +1,22 @@
+Variable,Data Type,Analysis
+age,Numeric,"No significant trend with responses variable, better response with age grp<30 & >55"
+job,Catagorical,"12 levels, proportion of responses from admin and blue collar job profiles are higher"
+marital,Catagorical,"4 levels, % response from marital status from single is greater compare to other grp"
+education,Catagorical,"8 levels, responses from education with university degree are higher "
+default,Binary,"3 levels, response is from no default group is dominant and some responses from unknown"
+housing,Binary,"3 levels, no significant difference in association for three different groups"
+loan,Binary,"4 levels, no significant difference in association for three different groups"
+contact,Catagorical,"2 levels, responses from cellular contact is higher"
+day_of_week,Catagorical,"5 levels, response from customer is better on Wed,Thu, Tue"
+month,Catagorical,"10 levels, there is significant variations of responses from Customers"
+duration,Numeric,closely associated with response variable with threshold for positive response
+campaign,Numeric,Number of campaign has impact on positive response of the campaign
+pdays,Numeric,This variable does not seem to have strong relationship with response variable
+previous,Numeric,previous contacts seems to have influence on the positive response of the campaign
+poutcome,Catagorical," have relationship with campaign outcome, earlier success has better response to positive outcome"
+emp.var.rate,Numeric,lower the variation rates higher the number of positive outcome
+cons.price.idx,Numeric,lower consumer price index seems to have higher positive response rate
+cons.conf.idx,Numeric,lower confidence index brings more success to the campaign as people tend to spend less that time
+euribor3m,Numeric,lower rate has association with more number of positive cases
+nr.employed,Numeric,lower the number of employee higher the number of positive responses
+y,Binary,
