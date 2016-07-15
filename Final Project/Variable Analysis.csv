@@ -19,4 +19,3 @@ cons.price.idx,Numeric,lower consumer price index seems to have higher positive 
 cons.conf.idx,Numeric,lower confidence index brings more success to the campaign as people tend to spend less that time
 euribor3m,Numeric,lower rate has association with more number of positive cases
 nr.employed,Numeric,lower the number of employee higher the number of positive responses
-y,Binary,
