@@ -1,0 +1,724 @@
+---
+title: "Homework Assignment - 05"
+author:
+- Critical Thinking Group 5
+- Arindam Barman
+- Mohamed Elmoudni
+- Shazia Khan
+- Kishore Prasad
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+\newpage
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+# changed lib path... 
+
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("car",character.only = TRUE)) (install.packages("car",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("aod",character.only = TRUE)) (install.packages("aod",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("ISLR",character.only = TRUE)) (install.packages("ISLR",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("AUC",character.only = TRUE)) (install.packages("AUC",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("ROCR",character.only = TRUE)) (install.packages("ROCR",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("leaps",character.only = TRUE)) (install.packages("leaps",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("pander",character.only = TRUE)) (install.packages("pander",repos = "http://cran.us.r-project.org", dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(pander)
+
+```
+
+# Overview \
+
+In this homework assignment, we will explore, analyze and model a data set containing information on approximately 12795 commercially available wines using 16 variables. The variables are mostly related to the chemical properties of the wine being sold. The response variable is the number of sample cases of wine that were purchased by wine distribution companies after sampling a wine. These cases would be used to provide tasting samples to restaurants and wine stores around the United States. The more sample cases purchased, the more likely is a wine to be sold at a high end restaurant. A large wine manufacturer is studying the data in order to predict the number of wine cases ordered based upon the wine characteristics. If the wine manufacturer can predict the number of cases, then that manufacturer will be able to adjust their wine offering to maximize sales.
+
+
+# Objective \
+
+Our objective is to build a count regression model to predict the number of cases of wine that will be sold given certain properties of the wine. Using the training data set, we will build at least two different Poisson regression models, at least two different negative binomial regression models, and at least two multiple linear regression models, using different variables (or the same variables with different transformations).
+ 
+To attain our objective, we will be following the below best practice steps and guidelines:
+
+1 -Data Exploration \
+2 -Data Preparation \
+3 -Build Models \
+4 -Select Models \
+
+
+#1 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+##1.1	Variable identification
+
+
+First we look the variables' datatypes and their roles.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+vartypes<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/vartypes.csv")
+kable(vartypes)
+```
+
+From the Table 1 above, we see that that all variables are quantitative mainly of numeric and integer datatype. 
+Also, we will ignore the INDEX variable as it is just a unique identifier for each row.  However, we will use the TARTGET variable as response variable and the remaining variables as predictors. 
+
+
+##1.2 Variable Relationships \
+
+Next let's display and examine the variable relationships as shown in table 2. \
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+winedata <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/wine-training-data.csv")
+variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/vars.csv")
+#kable(variables, caption = "Variable Description")
+
+pander::pander(variables, split.cells = c(20, 60, 40), split.table = Inf, justify = 'left', caption = "Variable Description")
+
+```
+
+
+At first glance, we can easily deduce that that the FreeSulfurDioxide (Sulfur Dioxide content of wine) can be derived from the TotalSulfurDioxide (Total Sulfur Dioxide of Wine). However, looking closer at the role of the sulfur dioxide $SO_2$, as it is used as a preservative because of its anti-oxidative and anti-microbial properties in wine and also as a cleaning agent for barrels and winery facilities, we realize that when a winemaker says his/her wine has 100 ppm (part per million) of $SO_2$, he/she is most probably referring to the total amount of $SO_2$ in his wine, and that means: \
+total SO2 = free $SO_2$ + bound $SO_2$. \
+free $SO_2$: molecular $SO_2$ + bisulfites + sulfites \
+bound $SO_2$: sulfites attached to either sugars, acetaldehyde or phenolic compounds \
+
+In this case the  free $SO_2$  portion (not associated with wine molecules) is effectively the buffer against microbes and oxidation... Hence without knowing the bound $SO_2$, we won't be able to derive  FreeSulfurDioxide from TotalSulfurDioxide.  
+
+Also, looking breifly at the VolatileAcidity (Volatile Acid content of wine) and FixedAcidity (Fixed Acidity of Wine), we can easily deduce AcidIndex as the Acid index = Total acid (g/L) - pH. where Total acidity = Volatile Acid + Fixed Acidity. However, in our case the index is weighted average and we don't know the weighted average of either Volatile Acid or Fixed Acidity. Hence we will assume these variable do not have strict arithmetic relationships.
+
+##1.3 Data summary analysis \
+
+In this section, we will create summary data to better understand the initial relationship variables have with
+our dependent variable using correlation, central tendency, and dispersion As shown in table 3.
+
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+library(dplyr)
+
+winedata<- select(winedata, -(ï..INDEX))
+str(winedata)
+ds_stats <- psych::describe(winedata, skew = FALSE, na.rm = TRUE)[c(3:6)]
+
+ds_stats0<- ds_stats
+ds_stats <- cbind(VARIABLE_NAME = rownames(ds_stats), ds_stats)
+kable(ds_stats0, caption = "Data Summary")
+
+```
+
+\newpage
+Below is the missing values and correlation table of the predictor variables to the response variables.   
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+Variable<- rownames(ds_stats)
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(winedata[Variable], FUN = fun) 
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(winedata[Variable], FUN = fun, y=winedata$TARGET) 
+ds_stats2 <- data.frame(cbind( Missing, Correlation))
+kable(ds_stats2, caption = "Missing Data and Data Correlation")
+```
+
+***Missing Values and Correlation Interpretation***
+
+From tables 3 and 4 above, we observe the followings:
+
+- Variable ResidualSugar has 616 and 0.0164913 correlation.  Given the low correlation we will try try some imputation techniques to handle the missing the values and replace missing values with their respective value. 
+- variable Chlorides 638 -0.0382631 correlation. .  Given the low negative correlation we will try we would replace missing values with their respective value 
+- Variable FreeSulfurDioxide 647 0.0438241. Given the low correlation we will impute the missing values with their respective value
+- Variable TotalSulfurDioxide has 682 missing values with 0.0514784 correlation. Given the low correlation we will impute the missing values with their respective value.
+- Variable Alcohol has 682 missing values with 0.0620616 correlation. Given the low correlation we will impute the missing values with their respective value. \
+
+
+Please note that ResidualSugar, Chlorides, FreeSulfurDioxide, Alcohol, and TotalSulfurDioxide variables have similar number of missing values.  They are chemically related. However, we don't think they are arithmetically related. 
+
+- In addition, variable pH has 395 missing values with negative correlation of  -0.0094448. Again we may just ignore these missing values especially that it has very low negative correlation to the target variable. 
+- Variable Sulphates has much higher missing values of 1210 with low negative correlation of -0.0388496.  We will be imputing this values with their respective value 
+- Now, variable STARS has the highest missing values of 3359 and highest correlation of 0.5587938. This is very important variable and it drives sales and consequently heavily impacts our response variable. 
+We have to be careful in fixing the missing values as this variable STARS is rating score variable with 1 being the lowest and 4 the highest  
+
+
+##1.4 Outliers Identification \
+
+In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the
+outliers.
+Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect
+outliers if any and treat it accordingly.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+}
+
+
+
+```
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+show_charts(winedata$FixedAcidity)
+show_charts(winedata$VolatileAcidity)
+show_charts(winedata$CitricAcid)
+show_charts(winedata$ResidualSugar)
+show_charts(winedata$Chlorides)
+show_charts(winedata$FreeSulfurDioxide)
+show_charts(winedata$TotalSulfurDioxide)
+show_charts(winedata$Density)
+show_charts(winedata$pH)
+show_charts(winedata$Sulphates)
+show_charts(winedata$Alcohol)
+show_charts(winedata$LabelAppeal)
+show_charts(winedata$AcidIndex)
+show_charts(winedata$STARS)
+
+```
+
+
+#2. Data Preparation 
+
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+- Missing Flags \
+- Missing values treatment \
+- Outliers treatment \
+- Dummy Variables
+
+
+##2.1 Missing Flags
+
+We create flag variables to indicate whether some of the fields are missing any values. If the value is missing, we code it with 1 and if the value is present we code it with 0. The following are the variables that are created: 
+
+- ResidualSugar_MISS
+- Chlorides_MISS
+- FreeSulfurDioxide_MISS
+- TotalSulfurDioxide_MISS
+- pH_MISS
+- Sulphates_MISS
+- Alcohol_MISS
+- STARS_MISS
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+winedata$ResidualSugar_MISS <- ifelse(is.na(winedata$ResidualSugar), 1, 0)
+winedata$Chlorides_MISS <- ifelse(is.na(winedata$Chlorides), 1, 0)
+winedata$FreeSulfurDioxide_MISS <- ifelse(is.na(winedata$FreeSulfurDioxide), 1, 0)
+winedata$TotalSulfurDioxide_MISS <- ifelse(is.na(winedata$TotalSulfurDioxide), 1, 0)
+winedata$pH_MISS <- ifelse(is.na(winedata$pH), 1, 0)
+winedata$Sulphates_MISS <- ifelse(is.na(winedata$Sulphates), 1, 0)
+winedata$Alcohol_MISS <- ifelse(is.na(winedata$Alcohol), 1, 0)
+winedata$STARS_MISS <- ifelse(is.na(winedata$STARS), 1, 0)
+
+```
+
+
+
+##2.2 Missing values treatment
+
+Next we impute missing values. We can go ahead and use the mean as impute values. We will replace the missing values in the original variables. However, for STARS, we will code the missing value as a '0' instead of a mean. The following are the variables that are impacted:
+
+- ResidualSugar
+- Chlorides
+- FreeSulfurDioxide
+- TotalSulfurDioxide
+- pH
+- Sulphates
+- Alcohol
+- STARS
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+winedata$ResidualSugar[is.na(winedata$ResidualSugar)] <- mean(winedata$ResidualSugar, na.rm = T) 
+winedata$Chlorides[is.na(winedata$Chlorides)] <- mean(winedata$Chlorides, na.rm = T) 
+winedata$FreeSulfurDioxide[is.na(winedata$FreeSulfurDioxide)] <- mean(winedata$FreeSulfurDioxide, na.rm = T) 
+winedata$TotalSulfurDioxide[is.na(winedata$TotalSulfurDioxide)] <- mean(winedata$TotalSulfurDioxide, na.rm = T) 
+winedata$pH[is.na(winedata$pH)] <- mean(winedata$pH, na.rm = T) 
+winedata$Sulphates[is.na(winedata$Sulphates)] <- mean(winedata$Sulphates, na.rm = T) 
+winedata$Alcohol[is.na(winedata$Alcohol)] <- mean(winedata$Alcohol, na.rm = T) 
+winedata$STARS[is.na(winedata$STARS)] <- 0 
+
+```
+
+
+##2.3 Outliers treatment
+
+For outliers, we will use the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables. 
+
+
+- FixedAcidity_CAP
+- VolatileAcidity_CAP
+- CitricAcid_CAP
+- ResidualSugar_CAP
+- Chlorides_CAP
+- FreeSulfurDioxide_CAP
+- TotalSulfurDioxide_CAP
+- Density_CAP
+- pH_CAP
+- Sulphates_CAP
+- Alcohol_CAP
+- AcidIndex_CAP
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+winedata$FixedAcidity_CAP <- treat_outliers(winedata$FixedAcidity)
+winedata$VolatileAcidity_CAP <- treat_outliers(winedata$VolatileAcidity)
+winedata$CitricAcid_CAP <- treat_outliers(winedata$CitricAcid)
+winedata$ResidualSugar_CAP <- treat_outliers(winedata$ResidualSugar)
+winedata$Chlorides_CAP <- treat_outliers(winedata$Chlorides)
+winedata$FreeSulfurDioxide_CAP <- treat_outliers(winedata$FreeSulfurDioxide)
+winedata$TotalSulfurDioxide_CAP <- treat_outliers(winedata$TotalSulfurDioxide)
+winedata$Density_CAP <- treat_outliers(winedata$Density)
+winedata$pH_CAP <- treat_outliers(winedata$pH)
+winedata$Sulphates_CAP <- treat_outliers(winedata$Sulphates)
+winedata$Alcohol_CAP <- treat_outliers(winedata$Alcohol)
+winedata$AcidIndex_CAP <- treat_outliers(winedata$AcidIndex)
+
+```
+
+
+\newpage
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#Lets see how the new variables look in boxplots.
+
+# par(mfrow=c(2,3))
+# 
+# boxplot(winedata$FixedAcidity_CAP)
+# boxplot(winedata$VolatileAcidity_CAP)
+# boxplot(winedata$ResidualSugar_CAP)
+# boxplot(winedata$Chlorides_CAP)
+# boxplot(winedata$FreeSulfurDioxide_CAP)
+# boxplot(winedata$TotalSulfurDioxide_CAP)
+# boxplot(winedata$Density_CAP)
+# boxplot(winedata$pH_CAP)
+# boxplot(winedata$Sulphates_CAP)
+# boxplot(winedata$Alcohol_CAP)
+# boxplot(winedata$AcidIndex_CAP)
+
+
+# In the second set, we will use the sin transformation as identified in the data exploration and create the following variables:
+# 
+# - FixedAcidity_SIN
+# - VolatileAcidity_SIN
+# - CitricAcid_SIN
+# - ResidualSugar_SIN
+# - Chlorides_SIN
+# - FreeSulfurDioxide_SIN
+# - TotalSulfurDioxide_SIN
+# - Density_SIN
+# - pH_SIN
+# - Sulphates_SIN
+# - Alcohol_SIN
+# - AcidIndex_SIN
+# 
+# winedata$FixedAcidity_SIN <- sin(winedata$FixedAcidity)
+# winedata$VolatileAcidity_SIN <- sin(winedata$VolatileAcidity)
+# winedata$CitricAcid_SIN <- sin(winedata$CitricAcid)
+# winedata$ResidualSugar_SIN <- sin(winedata$ResidualSugar)
+# winedata$Chlorides_SIN <- sin(winedata$Chlorides)
+# winedata$FreeSulfurDioxide_SIN <- sin(winedata$FreeSulfurDioxide)
+# winedata$TotalSulfurDioxide_SIN <- sin(winedata$TotalSulfurDioxide)
+# winedata$Density_SIN <- sin(winedata$Density)
+# winedata$pH_SIN <- sin(winedata$pH)
+# winedata$Sulphates_SIN <- sin(winedata$Sulphates)
+# winedata$Alcohol_SIN <- sin(winedata$Alcohol)
+# winedata$AcidIndex_SIN <- sin(winedata$AcidIndex)
+
+
+# par(mfrow=c(2,3))
+# 
+# boxplot(winedata$FixedAcidity_SIN)
+# boxplot(winedata$VolatileAcidity_SIN)
+# boxplot(winedata$ResidualSugar_SIN)
+# boxplot(winedata$Chlorides_SIN)
+# boxplot(winedata$FreeSulfurDioxide_SIN)
+# boxplot(winedata$TotalSulfurDioxide_SIN)
+# boxplot(winedata$Density_SIN)
+# boxplot(winedata$pH_SIN)
+# boxplot(winedata$Sulphates_SIN)
+# boxplot(winedata$Alcohol_SIN)
+# boxplot(winedata$AcidIndex_SIN)
+
+```
+
+
+
+##2.4 Dummy Variables
+
+\
+
+Finally, we will also create dummy variables for the following variables: 
+
+- LabelAppeal : For this variable, we create a dummy variable to indicate if the value is Zero / Positive or Negative. 
+- STARS - We create a Dummy Variable for each of the star ratings - 1,2,3,4. The value is 1 in the respective variable based on the STARS value. A Zero value in all of the STARS dummy vars indicate that the value was missing in the original variable.  
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+winedata$LabelAppeal_Positive <- ifelse(winedata$FreeSulfurDioxide >=0, 1, 0)
+
+winedata$STARS_1 <- ifelse(winedata$STARS == 1, 1, 0)
+winedata$STARS_2 <- ifelse(winedata$STARS == 2, 1, 0)
+winedata$STARS_3 <- ifelse(winedata$STARS == 3, 1, 0)
+winedata$STARS_4 <- ifelse(winedata$STARS == 4, 1, 0)
+
+
+#write.csv(winedata, file = "D:/CUNY/Courses/Business Analytics and Data Mining/Assignments/data621-ctg5/HW5/final.csv")
+
+```
+
+##2.5 Correlation for new variables
+
+\
+
+Lets see how the new variables stack up against the TARGET. 
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(winedata[, 16:ncol(winedata)], FUN = fun, y=winedata$TARGET) 
+Correlation <- sort(Correlation, decreasing = TRUE)
+
+#colnames(Correlation) <- c("Correlation")
+#Correlation <- cbind(variable = rownames(Correlation), Correlation)
+#rownames(Correlation) <- NULL
+
+kable(data.frame(Correlation), caption = "Correlation between TARGET and predictor variables")
+
+#kable(Correlation, caption = "New variables Correlation ")
+#Correlation
+
+```
+
+\
+
+
+From the above Correlations, we can make the following observations:
+
+
+- The following variables have a positive correlation with TARGET: STARS_3, STARS_4, STARS_2, Alcohol_CAP, TotalSulfurDioxide_CAP, FreeSulfurDioxide_CAP, LabelAppeal_Positive, ResidualSugar_CAP, CitricAcid_CAP, ResidualSugar_MISS, TotalSulfurDioxide_MISS, Chlorides_MISS, Alcohol_MISS.
+
+- The following variables have a negative correlation with TARGET: FreeSulfurDioxide_MISS, pH_MISS, pH_CAP, Sulphates_MISS, Chlorides_CAP, Density_CAP, Sulphates_CAP, FixedAcidity_CAP, VolatileAcidity_CAP, STARS_1, AcidIndex_CAP, STARS_MISS.
+
+
+- Not all variable have a strong correlation in either direction. However, the following stand out for having a stronger correlation:  STARS_MISS, STARS_3, STARS_4, STARS_2, AcidIndex_CAP, STARS_1, VolatileAcidity_CAP, Alcohol_CAP, FixedAcidity_CAP, TotalSulfurDioxide_CAP.
+
+ 
+
+
+#3. Build Models
+
+Since we are dealing with count variables, our modeling technique will mainly focus on using variation of the Generalized Linear Model (GLM) family functions. We will start with the classical Poisson regression; then we will enhance it using model Negative binominal model.   
+In addition, we will also create models using linear regression. 
+
+Using original and transformed datasets, we will build at least ten models as follow: \
+
+- Two Poisson models \
+- Two Quasi-Poisson models \
+- Two Negative binomial models \
+- Two Zero-inflated models \
+- Two Linear regression models 
+
+
+Below is a summary table showing models and their respective variables. \
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/ModelVars.csv")
+kable(modelvars, caption = 'Models and their Respective Variables')
+
+winedata_orig <- winedata[,c(1:15)]
+winedata_trans <- winedata[,c(1, 16:40)]
+
+
+```
+
+\newpage 
+
+
+##3.1 Poisson models \
+
+Our first attempt to capture the relationship between the wine chemical properties and number of cases of the wine being sold in a parametric regression model, we fit the basic Poisson regression model
+
+###3.1.1 Poisson Model 1  
+
+We will explore the Poisson regression model Using original data with replacing all missing data with the means.
+
+```{r}
+#winedata <- read.csv("C:/CUNY/Courses/IS621/Assignment602/Assignment05/wine-training-data.csv")
+#dim(winedata)
+#winedata <- select(winedata, (-(INDEX)))
+#str(winedata)
+## all zeros
+# winedata[is.na(winedata)] <- 0
+
+poismod1 <- glm(TARGET ~ ., data=winedata_orig, family=poisson)
+summary(poismod1)
+```
+
+*** Interpretation Poisson Model 1***
+
+###3.1.2 Poisson Model 2 \
+
+In this model we will be using the basic Poisson regression model; however using transformed data. 
+
+```{r}
+# transformed data. Poisson Model 2
+
+```
+
+
+
+*** Interpretation Poisson Model 2***
+
+
+##3.2 Negative Binomial models
+
+A more formal way to accommodate over-dispersion in a count data regression model is to
+use a negative binomial model. Hence we will explore the negative binomial model both in original data as well as transformed data. 
+
+###3.2.1 Negative Binomial model 3   
+
+We will explore the Negative Binomial model Using original data with replacing all missing data with the means. 
+
+```{r}
+nbmod3 = glm.nb(TARGET ~ ., data = winedata_orig)
+summary(nbmod3)
+        
+
+```
+
+*** Interpretation Negative Binomial Model 3***
+
+###3.2.1 Negative Binomial model 4   
+
+In this model we will be using the basic Negative Binomial model; however using transformed data. 
+
+```{r}
+
+#transformed data. Negative Binomial model 4 
+
+```
+
+*** Interpretation Negative Binomial Model 4***
+
+##3.3  Linear Regression models
+
+Although it is highly recommended for continuous variables instead of count variables, we will also create two linear regression models. 
+
+##3.3.1 Linear Regression Model 5
+
+We will explore the Linear models Using original data with replacing all missing data with the means. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+lmod5 = lm(TARGET ~ ., data = winedata_orig)
+summary(lmod5)
+
+x <- summary(lmod5) 
+
+rse <- round(x$sigma, 4)
+r2 <- round(x$r.squared, 4)
+ar2 <- round(x$adj.r.squared,4)
+fstat <- paste0(round(x$fstatistic[1],0), " on ", x$fstatistic[2], " and ", x$fstatistic[3]," DF")
+
+
+y<- as.data.frame(coef(x))
+
+PositiveImpact <- ''
+NegativeImpact <- ''
+Lin_eq <- as.character(round(y[1,1],4))
+Sig_Impact <- '' 
+
+for(i in 2:nrow(y)) {
+
+    if(y[i,1] >= 0)
+        
+        PositiveImpact <- paste0(rownames(y)[i], ", ", PositiveImpact)
+    else 
+        NegativeImpact <- paste0(rownames(y)[i], ", ", NegativeImpact)
+
+    
+    if(y[i,4] <= 0.05 ) 
+        Sig_Impact <- paste0(rownames(y)[i], ", ", Sig_Impact)
+
+
+    Lin_eq <- paste0(Lin_eq, ifelse(y[i,1]>=0, " + ", " - "), as.character(abs(round(y[i,1],6))), " * ", rownames(y)[i])
+}
+
+PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
+NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
+Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
+
+```
+
+*** Interpretation of Linear Model 5***
+
+Based on the summary for Linear Model 5, below are the characteristics :
+
+- The Residual standard error is `r rse`
+- Multiple R-squared: `r r2`
+- Adjusted R-squared: `r ar2`
+- F-statistic: `r fstat`
+- p-value: < 2.2e-16
+
+
+Based on the available coefficients, we can make the following observations:  
+
+- Positive Impact - The following variables have a positive impact on TARGET, meaning an increase in the values of these variables leads to an increase in the number of cases sold: `r PositiveImpact`
+
+- Negative Impact - The following variables have a negative impact on TARGET, meaning an increase in the values of these variables leads to an decrease in the number of cases sold: `r NegativeImpact`
+
+- The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
+
+- Finally, the Linear Model equation is given by the following: 
+
+`r Lin_eq`
+
+
+
+##3.3.1 Linear Regression Model 6 \
+
+In this model we will be using the Linear Regression model; however using transformed data. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+lmod6 = lm(TARGET ~ ., data = winedata_trans)
+summary(lmod6)
+
+x <- summary(lmod6) 
+
+
+rse <- round(x$sigma, 4)
+r2 <- round(x$r.squared, 4)
+ar2 <- round(x$adj.r.squared,4)
+fstat <- paste0(round(x$fstatistic[1],0), " on ", x$fstatistic[2], " and ", x$fstatistic[3]," DF")
+
+
+y<- as.data.frame(coef(x))
+
+PositiveImpact <- ''
+NegativeImpact <- ''
+Lin_eq <- as.character(round(y[1,1],4))
+Sig_Impact <- '' 
+
+for(i in 2:nrow(y)) {
+
+    if(y[i,1] >= 0)
+        
+        PositiveImpact <- paste0(rownames(y)[i], ", ", PositiveImpact)
+    else 
+        NegativeImpact <- paste0(rownames(y)[i], ", ", NegativeImpact)
+
+    
+    if(y[i,4] <= 0.05 ) 
+        Sig_Impact <- paste0(rownames(y)[i], ", ", Sig_Impact)
+
+
+    Lin_eq <- paste0(Lin_eq, ifelse(y[i,1]>=0, " + ", " - "), as.character(abs(round(y[i,1],6))), " * ", rownames(y)[i])
+}
+
+PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
+NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
+Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
+
+
+# PositiveImpact
+# NegativeImpact
+# Lin_eq
+# Sig_Impact
+
+```
+
+*** Interpretation of Linear Model 6***
+
+
+Based on the summary for Linear Model 6, below are the characteristics :
+
+- The Residual standard error is `r rse`
+- Multiple R-squared: `r r2`
+- Adjusted R-squared: `r ar2`
+- F-statistic: `r fstat`
+- p-value: < 2.2e-16
+
+
+
+Based on the available coefficients, we can make the following observations:  
+
+- Positive Impact - The following variables have a positive impact on TARGET, meaning an increase in the values of these variables leads to an increase in the number of cases sold: `r PositiveImpact`
+
+- Negative Impact - The following variables have a negative impact on TARGET, meaning an increase in the values of these variables leads to an decrease in the number of cases sold: `r NegativeImpact`
+
+- The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
+
+- Finally, the Linear Model equation is given by the following: 
+
+`r Lin_eq`
+

@@ -1,0 +1,41 @@
+Variable,Model 1,Model 2,Comments
+TARGET,Y,Y,The TARGET variable
+FixedAcidity,Y,,Imputed with Mean
+VolatileAcidity,Y,,Imputed with Mean
+CitricAcid,Y,,Imputed with Mean
+ResidualSugar,Y,,Imputed with Mean
+Chlorides,Y,,Imputed with Mean
+FreeSulfurDioxide,Y,,Imputed with Mean
+TotalSulfurDioxide,Y,,Imputed with Mean
+Density,Y,,Imputed with Mean
+pH,Y,,Imputed with Mean
+Sulphates,Y,,Imputed with Mean
+Alcohol,Y,,Imputed with Mean
+LabelAppeal,Y,,Original Variable
+AcidIndex,Y,,Imputed with Mean
+STARS,Y,,Original Variable
+ResidualSugar_MISS,,Y,Missing Flag
+Chlorides_MISS,,Y,Missing Flag
+FreeSulfurDioxide_MISS,,Y,Missing Flag
+TotalSulfurDioxide_MISS,,Y,Missing Flag
+pH_MISS,,Y,Missing Flag
+Sulphates_MISS,,Y,Missing Flag
+Alcohol_MISS,,Y,Missing Flag
+STARS_MISS,,Y,Missing Flag
+FixedAcidity_CAP,,Y,Imputed with Mean and Outliers capped
+VolatileAcidity_CAP,,Y,Imputed with Mean and Outliers capped
+CitricAcid_CAP,,Y,Imputed with Mean and Outliers capped
+ResidualSugar_CAP,,Y,Imputed with Mean and Outliers capped
+Chlorides_CAP,,Y,Imputed with Mean and Outliers capped
+FreeSulfurDioxide_CAP,,Y,Imputed with Mean and Outliers capped
+TotalSulfurDioxide_CAP,,Y,Imputed with Mean and Outliers capped
+Density_CAP,,Y,Imputed with Mean and Outliers capped
+pH_CAP,,Y,Imputed with Mean and Outliers capped
+Sulphates_CAP,,Y,Imputed with Mean and Outliers capped
+Alcohol_CAP,,Y,Imputed with Mean and Outliers capped
+AcidIndex_CAP,,Y,Imputed with Mean and Outliers capped
+LabelAppeal_Positive,,Y,Positive or Negative Dummy Variable
+STARS_1,,Y,Dummy Variable 
+STARS_2,,Y,Dummy Variable 
+STARS_3,,Y,Dummy Variable 
+STARS_4,,Y,Dummy Variable 
