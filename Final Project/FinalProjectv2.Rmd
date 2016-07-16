@@ -7,13 +7,18 @@ author:
 - Shazia Khan
 - Kishore Prasad
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
-# Overview 
+# 1 Abstract:
+
+
+# 2 Key words:
+
+# 3 Introduction:
 
 The data set contains approximately 41188 obs. of 21 variables. \
 
@@ -24,7 +29,11 @@ The binary classification goal is to predict if the client will subscribe a bank
 
 This dependent variable tells whether the client will subscribe a bank term deposit or not. This is a binary variable and as such we will be using a Logistic Regression Model.
 
-#1 Data Exploration Analysis
+# 4 Literature review:
+
+# 5 Methodology:
+
+## 5.1 Data Exploration 
 
 In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
 -Variable identification \
@@ -32,7 +41,7 @@ In section we will explore and gain some insights into the dataset by pursuing t
 -Missing values and Unique Values \
 
 
-##1.1	Variable identification 
+##5.1.2	Variable identification 
 
 First let's display and examine the data dictionary or the data columns as shown in table 1
 
@@ -73,6 +82,10 @@ library(popbio)
 library(gdata)
 library(reshape)
 library(gridExtra)
+library(rpart)
+library(pROC)
+library(pscl)
+library(randomForest)
 
 bank_train <- read.table(
   "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional-full.csv",
@@ -93,9 +106,9 @@ Based on the original dataset, our predictor input has 21 variables. And our res
 Binomial Logistic regression is the appropriate regression analysis to conduct when the dependent variable is dichotomous (binary).  Like all regression analyses, the logistic regression is a predictive analysis.  Logistic regression is used to describe data and to explain the relationship between one dependent binary variable and one or more metric (interval or ratio scale) independent variables.
 
 
-##1.2 Preliminary Data Analysis
+##5.1.3 Preliminary Data Analysis
 
-##1.2.1 Analysis of Predictor variable 
+##5.1.4 Analysis of Predictor variable 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -106,7 +119,7 @@ kable(variable_analysis, caption = "Variable Analysis")
 ```
 
 
-##1.2.2 Missing values 
+##5.1.4 Missing values 
 
 We see that there are no missing values in our dataset as shown in table 2 and graph format.
 The unique values are given in the table 
@@ -117,7 +130,7 @@ The unique values are given in the table
 
 ```
 
-##1.2.3 Proportion of Response Variables 
+##5.1.5 Proportion of Response Variables 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -127,7 +140,7 @@ The unique values are given in the table
 
 
 
-#2	Data Preparation
+#5.2	Data Preparation
 
 -Convert Binary to 0 and 1\
 -Create dummy variables\
@@ -135,7 +148,7 @@ The unique values are given in the table
 -Correlation of Variables with y\
 
 
-##2.1 Convert Binary yes and no to 0 and 1
+##5.2.1 Convert Binary yes and no to 0 and 1
 
 Now in order to prepare the data for modeling, we need to update Yes = 1 and No = 0. \
 
@@ -151,7 +164,7 @@ bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
 
 ```
 
-##2.2 Create dummy variables
+##5.2.2 Create dummy variables
 
 Now we need to create dummy variables to find out the relationship between y variables and dependent variables, for all categorical variables.\
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -275,10 +288,10 @@ bank_train2$poutcome <- NULL
 
 ```
 
-##2.3 Data Summary with Dummy variables
+##5.2.3 Data Summary with Dummy variables
 
 
-##2.4 Correlation between Response and Predictor of Variables
+##5.2.4 Correlation between Response and Predictor of Variables
 Now we will produce the correlation table between the independent variables and the dependent variable
 
 
@@ -291,7 +304,7 @@ Now we will produce the correlation table between the independent variables and 
 
 ```
 
-##2.6 Analysis the link function for given variables \
+##5.2.6 Analysis the link function for given variables \
 
 In this section, we will investigate how our initial data aligns with a typical logistic model plot.
 
@@ -314,7 +327,9 @@ The main objective in the transformations is to achieve linear relationships wit
  
 ```
 
-#3 Build Models
+#3 Experimentation and Results: 
+
+#3.1 Build Models
 
 In this section, we will create 3 models. Aside from using original and transformed data, we will also be using different methods and functions such as Linear Discriminant Analysis, step function, and logit function to enhance our models. 
 
@@ -322,11 +337,11 @@ Below is our model definition:
 
 -Model 1- This model will be created using all the variables in train data set with logit function GLM. 
 
--Model 2: This model step function will be used to enhance the model 1. 
+-Model 2: This model calssification and regression tree function  
 
--Model 3- This model will be created using calssification and regression tree. 
+-Model 3- This model will be created using RandomForests model. 
 
-## 3.1 Model 1
+
 
 Taking the treated data and splitting into 80/20 to train model and validate the data.
 
@@ -342,38 +357,184 @@ train_index <- sample(seq_len(nrow(bank_train2)), size = smp_size)
 DS_TARGET_FLAG_TRAIN<- bank_train2[train_index, ]
 DS_TARGET_FLAG_VALID <- bank_train2[-train_index, ]
 
+# remove"-" from variable
+colnames(DS_TARGET_FLAG_TRAIN)[15]<-c("job_blue_collar")
+colnames(DS_TARGET_FLAG_TRAIN)[20]<-c("job_self_employed")
+colnames(DS_TARGET_FLAG_VALID)[15]<-c("job_blue_collar")
+colnames(DS_TARGET_FLAG_VALID)[20]<-c("job_self_employed")
+
 ```
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
+## 3.1.1 Model 1
+
+\
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 
 model1 <- glm(y ~.,family=binomial(link='logit'),data=DS_TARGET_FLAG_TRAIN)
 summary(model1)
-anova(model1, test="Chisq")
 
-library(pscl)
-#the McFadden R^2 index can be used to assess the model fit.
-pR2(model1)
+#anova(model1, test="Chisq")
 
-fitted.results <- predict(model1,newdata=DS_TARGET_FLAG_VALID,type='response')
-fitted.results <- ifelse(fitted.results > 0.5,1,0)
 
-misClasificError <- mean(fitted.results != DS_TARGET_FLAG_VALID$y)
-print(paste('Accuracy',1-misClasificError))
+```
+\
+
+
+## 3.1.2 Model 2
+
+```{r }
+
+model2 <- rpart(y~., data=DS_TARGET_FLAG_TRAIN, method = "class")
+
+plotcp(model2)
+
+
+model2_ref <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
+
+
+printcp(model2_ref) # display the results 
+
+# plot the pruned tree 
+par(mfrow=c(1,1))
+plot(model2_ref, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
+text(model2_ref, use.n=TRUE, all=TRUE, cex=.8)
+
 
 
 ```
 
-## 3.2 Model 2
+## 3.1.3 Model 3
 
-## 3.3 Model 3
+\
+```{r }
+
+# Random Forest prediction of Kyphosis data
+
+model3 <- randomForest(as.factor(y) ~ .,data=DS_TARGET_FLAG_TRAIN,importance=TRUE, ntree=50)
+print(model3) # view results 
+importance(model3) # importance of each predictor
+
+```
+
 
 #4 Evaluate Models
 
-#5 Select Models
 
-#6 Appendix
+## 4.1 Model 1 Evaluation
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+
+#the McFadden R^2 index can be used to assess the model fit.
+pR2(model1)
+
+# Predict result from the model 1
+
+results1 <- predict(model1,newdata=DS_TARGET_FLAG_VALID,type='response')
+
+DS_TARGET_FLAG_VALID$TARGET_FLAG<-results1
+
+results1 <- ifelse(results1 > 0.5,1,0)
+
+misClasificError <- mean(results1 != DS_TARGET_FLAG_VALID$y)
+
+print(paste('Accuracy',1-misClasificError))
+
+
+# sensivity vs Specificity
+
+pr <- prediction(results1, DS_TARGET_FLAG_VALID$y)
+
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+
+plot(prf)
+
+
+# Area under curve
+
+myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG) 
+
+plot(myRoc, main="ROC Curve for Classification data") 
+
+```
+
+
+## 4.2 Model 2 Evaluation
+
+
+\
+```{r }
+
+results2 <- predict(model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
+
+DS_TARGET_FLAG_VALID$TARGET_FLAG2<- predict(model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
+
+results2 <- ifelse(results2 > 0.5,1,0)
+
+misClasificError <- mean(results2 != DS_TARGET_FLAG_VALID$y)
+
+print(paste('Accuracy',1-misClasificError))
+
+
+# Specificity vs Sensivity
+
+
+pr <- prediction(results2, DS_TARGET_FLAG_VALID$y)
+
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+
+plot(prf)
+
+
+# ROC curve
+
+myRoc2 <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG2, DS_TARGET_FLAG_VALID)
+plot(myRoc2, main="ROC Curve for Classification data") 
+
+
+```
+
+## 4.3 Model 3 Evaluation
+
+\
+```{r }
+
+# results from model 3
+
+results3 <- as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))
+
+DS_TARGET_FLAG_VALID$TARGET_FLAG3<-results3
+
+
+misClasificError <- as.numeric(mean(results3 != DS_TARGET_FLAG_VALID$y))
+print(paste('Accuracy',1-misClasificError))
+
+
+# specificty vs sensitivity
+
+pr <- prediction(results3, DS_TARGET_FLAG_VALID$y)
+
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+
+
+# ROC curve
+
+myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG3) 
+plot(myRoc, main="ROC Curve for Classification data") 
+
+```
+\
+\
+# 5 Discussion and Conclusions:
+
+#5.1 Select Models
+
+# References:
+
+# 6 Appendix
 
 
 
