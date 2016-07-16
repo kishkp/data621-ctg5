@@ -283,7 +283,7 @@ Now we will produce the correlation table between the independent variables and 
 
 
 
-##2.5 # Outliers Handling
+##2.5 Outliers Handling
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
