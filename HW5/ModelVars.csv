@@ -1,4 +1,4 @@
-Variable,Model 1,Model 2,Comments
+Variable,Original ,Transformed,Comments
 TARGET,Y,Y,The TARGET variable
 FixedAcidity,Y,,Imputed with Mean
 VolatileAcidity,Y,,Imputed with Mean

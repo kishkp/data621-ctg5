@@ -1,0 +1,666 @@
+*** Interpretation Quasi-Poisson model (Model 2) - fm_qpois ***
+
+##3.1.2.1 Interpretation for "From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}$$
+"
+
+where \
+
+$B_0 = 1.526\
+$B_1 = -0.0003\
+$B_2 = -0.03343\
+$B_3 = 0.00777\
+$B_4 = 0.00006\
+$B_5 = -0.04141\
+$B_6 = 0.00013\
+$B_7 = 0.00008\
+$B_8 = -0.2823\
+$B_9 = -0.01572\
+$B_10 = -0.01267\
+$B_11 = 0.0022\
+$B_12 = 0.1332\
+$B_13 = -0.08705\
+$B_14 = 0.3113\
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = FixedAcidity\
+$x_2 = VolatileAcidity\
+$x_3 = CitricAcid\
+$x_4 = ResidualSugar\
+$x_5 = Chlorides\
+$x_6 = FreeSulfurDioxide\
+$x_7 = TotalSulfurDioxide\
+$x_8 = Density\
+$x_9 = pH\
+$x_10 = Sulphates\
+$x_11 = Alcohol\
+$x_12 = LabelAppeal\
+$x_13 = AcidIndex\
+$x_14 = STARS\
+
+
+
+*** Coefficient Analysis ***
+
+
+The coefficient for VolatileAcidity, FreeSulfurDioxide, TotalSulfurDioxide, LabelAppeal, AcidIndex, STARS are highly significant.  For a unit increase in our highly significant variables: \
+
+- VolatileAcidity, we expect  a decrease of $e^{(-0.03343)} = 0.967123$ in the number of cases of wine that will be sold \
+- FreeSulfurDioxide, we expect  an increase of $e^{(0.0001254)} = 1.000125$ in the number of cases of wine that will be sold \
+- TotalSulfurDioxide, we expect  an increase of $e^{(0.00008296)} = 1.000083$ in the number of cases of wine that will be sold \
+- LabelAppeal, we expect  an increase of $e^{(0.1332)} = 1.142478$ in the number of cases of wine that will be sold \
+- AcidIndex, we expect  a decrease of $e^{(-0.08705)} = 0.916631$ in the number of cases of wine that will be sold \
+- STARS, we expect  an increase of $e^{(0.3113)} = 1.365199$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+*** Interpretation for Zero Inflation model (Model 3) - mod1zip ***
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}$$
+"
+
+where \
+
+$B_0 = 1.443\
+$B_1 = 0.00034\
+$B_2 = -0.01211\
+$B_3 = 0.00049\
+$B_4 = -0.00008\
+$B_5 = -0.02241\
+$B_6 = 0.00003\
+$B_7 = -0.00002\
+$B_8 = -0.2845\
+$B_9 = 0.00593\
+$B_10 = 0.00017\
+$B_11 = 0.00689\
+$B_12 = 0.233\
+$B_13 = -0.01858\
+$B_14 = 0.1009\
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = FixedAcidity\
+$x_2 = VolatileAcidity\
+$x_3 = CitricAcid\
+$x_4 = ResidualSugar\
+$x_5 = Chlorides\
+$x_6 = FreeSulfurDioxide\
+$x_7 = TotalSulfurDioxide\
+$x_8 = Density\
+$x_9 = pH\
+$x_10 = Sulphates\
+$x_11 = Alcohol\
+$x_12 = LabelAppeal\
+$x_13 = AcidIndex\
+$x_14 = STARS\
+
+
+*** Coefficient Analysis ***
+
+The coefficient for Alcohol, LabelAppeal, AcidIndex, STARS are highly significant.  For a unit increase in our highly significant variables: \
+
+- Alcohol, we expect  an increase of $e^{(0.006886)} = 1.00691$ in the number of cases of wine that will be sold \
+- LabelAppeal, we expect  an increase of $e^{(0.233)} = 1.262381$ in the number of cases of wine that will be sold \
+- AcidIndex, we expect  a decrease of $e^{(-0.01858)} = 0.981592$ in the number of cases of wine that will be sold \
+- STARS, we expect  an increase of $e^{(0.1009)} = 1.106166$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+*** Interpretation for Poisson Model 2 (Model 4) - poismod2 ***
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}$$
+"
+
+where \
+
+$B_0 = 2.57\
+$B_1 = 0.02283\
+$B_2 = 0.00302\
+$B_3 = 0.023\
+$B_4 = 0.01883\
+$B_5 = -0.03495\
+$B_6 = -0.00676\
+$B_7 = 0.02136\
+$B_8 = -1.471\
+$B_9 = -0.00057\
+$B_10 = -0.0355\
+$B_11 = 0.00743\
+$B_12 = 0.00013\
+$B_13 = -0.02664\
+$B_14 = 0.00016\
+$B_15 = 0.00008\
+$B_16 = -0.2848\
+$B_17 = -0.01361\
+$B_18 = -0.01194\
+$B_19 = 0.00396\
+$B_20 = -0.07801\
+$B_21 = -0.0256\
+$B_22 = -0.7179\
+$B_23 = -0.3427\
+$B_24 = -0.1734\
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = ResidualSugar_MISS\
+$x_2 = Chlorides_MISS\
+$x_3 = FreeSulfurDioxide_MISS\
+$x_4 = TotalSulfurDioxide_MISS\
+$x_5 = pH_MISS\
+$x_6 = Sulphates_MISS\
+$x_7 = Alcohol_MISS\
+$x_8 = STARS_MISS\
+$x_9 = FixedAcidity_CAP\
+$x_10 = VolatileAcidity_CAP\
+$x_11 = CitricAcid_CAP\
+$x_12 = ResidualSugar_CAP\
+$x_13 = Chlorides_CAP\
+$x_14 = FreeSulfurDioxide_CAP\
+$x_15 = TotalSulfurDioxide_CAP\
+$x_16 = Density_CAP\
+$x_17 = pH_CAP\
+$x_18 = Sulphates_CAP\
+$x_19 = Alcohol_CAP\
+$x_20 = AcidIndex_CAP\
+$x_21 = LabelAppeal_Positive\
+$x_22 = STARS_1\
+$x_23 = STARS_2\
+$x_24 = STARS_3\
+
+
+*** Coefficient Analysis ***
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.471)} = 0.229696$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.0355)} = 0.965123$ in the number of cases of wine that will be sold \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.07801)} = 0.924955$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.7179)} = 0.487776$ in the number of cases of wine that will be sold \
+- STARS_2, we expect  a decrease of $e^{(-0.3427)} = 0.709851$ in the number of cases of wine that will be sold \
+- STARS_3, we expect  a decrease of $e^{(-0.1734)} = 0.840801$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+
+*** Interpretation for Quasi Poisson Model 2 (Model 5) - mod2qpois ***
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}$$
+"
+
+where \
+
+$B_0 = 2.57\
+$B_1 = 0.02283\
+$B_2 = 0.00302\
+$B_3 = 0.023\
+$B_4 = 0.01883\
+$B_5 = -0.03495\
+$B_6 = -0.00676\
+$B_7 = 0.02136\
+$B_8 = -1.471\
+$B_9 = -0.00057\
+$B_10 = -0.0355\
+$B_11 = 0.00743\
+$B_12 = 0.00013\
+$B_13 = -0.02664\
+$B_14 = 0.00016\
+$B_15 = 0.00008\
+$B_16 = -0.2848\
+$B_17 = -0.01361\
+$B_18 = -0.01194\
+$B_19 = 0.00396\
+$B_20 = -0.07801\
+$B_21 = -0.0256\
+$B_22 = -0.7179\
+$B_23 = -0.3427\
+$B_24 = -0.1734\
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = ResidualSugar_MISS\
+$x_2 = Chlorides_MISS\
+$x_3 = FreeSulfurDioxide_MISS\
+$x_4 = TotalSulfurDioxide_MISS\
+$x_5 = pH_MISS\
+$x_6 = Sulphates_MISS\
+$x_7 = Alcohol_MISS\
+$x_8 = STARS_MISS\
+$x_9 = FixedAcidity_CAP\
+$x_10 = VolatileAcidity_CAP\
+$x_11 = CitricAcid_CAP\
+$x_12 = ResidualSugar_CAP\
+$x_13 = Chlorides_CAP\
+$x_14 = FreeSulfurDioxide_CAP\
+$x_15 = TotalSulfurDioxide_CAP\
+$x_16 = Density_CAP\
+$x_17 = pH_CAP\
+$x_18 = Sulphates_CAP\
+$x_19 = Alcohol_CAP\
+$x_20 = AcidIndex_CAP\
+$x_21 = LabelAppeal_Positive\
+$x_22 = STARS_1\
+$x_23 = STARS_2\
+$x_24 = STARS_3\
+
+
+*** Coefficient Analysis ***
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.471)} = 0.229696$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.0355)} = 0.965123$ in the number of cases of wine that will be sold \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.07801)} = 0.924955$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.7179)} = 0.487776$ in the number of cases of wine that will be sold \
+- STARS_2, we expect  a decrease of $e^{(-0.3427)} = 0.709851$ in the number of cases of wine that will be sold \
+- STARS_3, we expect  a decrease of $e^{(-0.1734)} = 0.840801$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+
+*** Interpretation for Zero Inflation Model 2 (Model 6) - mod2zip ***
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}$$
+"
+
+where \
+
+$B_0 = 2.474\
+$B_1 = 0.02186\
+$B_2 = 0.00739\
+$B_3 = 0.02014\
+$B_4 = 0.02353\
+$B_5 = -0.0277\
+$B_6 = -0.00618\
+$B_7 = 0.01696\
+$B_8 = -1.36\
+$B_9 = -0.00045\
+$B_10 = -0.03032\
+$B_11 = 0.00559\
+$B_12 = 0.00008\
+$B_13 = -0.02118\
+$B_14 = 0.00015\
+$B_15 = 0.00006\
+$B_16 = -0.2951\
+$B_17 = -0.00806\
+$B_18 = -0.0094\
+$B_19 = 0.00478\
+$B_20 = -0.06702\
+$B_21 = -0.02722\
+$B_22 = -0.6212\
+$B_23 = -0.3267\
+$B_24 = -0.173\
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = ResidualSugar_MISS\
+$x_2 = Chlorides_MISS\
+$x_3 = FreeSulfurDioxide_MISS\
+$x_4 = TotalSulfurDioxide_MISS\
+$x_5 = pH_MISS\
+$x_6 = Sulphates_MISS\
+$x_7 = Alcohol_MISS\
+$x_8 = STARS_MISS\
+$x_9 = FixedAcidity_CAP\
+$x_10 = VolatileAcidity_CAP\
+$x_11 = CitricAcid_CAP\
+$x_12 = ResidualSugar_CAP\
+$x_13 = Chlorides_CAP\
+$x_14 = FreeSulfurDioxide_CAP\
+$x_15 = TotalSulfurDioxide_CAP\
+$x_16 = Density_CAP\
+$x_17 = pH_CAP\
+$x_18 = Sulphates_CAP\
+$x_19 = Alcohol_CAP\
+$x_20 = AcidIndex_CAP\
+$x_21 = LabelAppeal_Positive\
+$x_22 = STARS_1\
+$x_23 = STARS_2\
+$x_24 = STARS_3\
+
+
+*** Coefficient Analysis ***
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.36)} = 0.256661$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.03032)} = 0.970135$ in the number of cases of wine that will be sold \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.06702)} = 0.935176$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.6212)} = 0.537299$ in the number of cases of wine that will be sold \
+- STARS_2, we expect  a decrease of $e^{(-0.3267)} = 0.7213$ in the number of cases of wine that will be sold \
+- STARS_3, we expect  a decrease of $e^{(-0.173)} = 0.841138$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+
+*** Interpretation Negative Binomial Model 3 - nbmod3 ***
+
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}$$
+"
+
+where \
+
+$B_0 = 1.526\
+$B_1 = -0.0003\
+$B_2 = -0.03343\
+$B_3 = 0.00777\
+$B_4 = 0.00006\
+$B_5 = -0.04142\
+$B_6 = 0.00013\
+$B_7 = 0.00008\
+$B_8 = -0.2824\
+$B_9 = -0.01572\
+$B_10 = -0.01267\
+$B_11 = 0.0022\
+$B_12 = 0.1332\
+$B_13 = -0.08705\
+$B_14 = 0.3113\
+
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = FixedAcidity\
+$x_2 = VolatileAcidity\
+$x_3 = CitricAcid\
+$x_4 = ResidualSugar\
+$x_5 = Chlorides\
+$x_6 = FreeSulfurDioxide\
+$x_7 = TotalSulfurDioxide\
+$x_8 = Density\
+$x_9 = pH\
+$x_10 = Sulphates\
+$x_11 = Alcohol\
+$x_12 = LabelAppeal\
+$x_13 = AcidIndex\
+$x_14 = STARS\
+
+
+
+*** Coefficient Analysis ***
+
+The coefficient for VolatileAcidity, FreeSulfurDioxide, TotalSulfurDioxide, LabelAppeal, AcidIndex, STARS are highly significant.  For a unit increase in our highly significant variables: \
+
+- VolatileAcidity, we expect  a decrease of $e^{(-0.03343)} = 0.967123$ in the number of cases of wine that will be sold \
+- FreeSulfurDioxide, we expect  an increase of $e^{(0.0001254)} = 1.000125$ in the number of cases of wine that will be sold \
+- TotalSulfurDioxide, we expect  an increase of $e^{(0.00008296)} = 1.000083$ in the number of cases of wine that will be sold \
+- LabelAppeal, we expect  an increase of $e^{(0.1332)} = 1.142478$ in the number of cases of wine that will be sold \
+- AcidIndex, we expect  a decrease of $e^{(-0.08705)} = 0.916631$ in the number of cases of wine that will be sold \
+- STARS, we expect  an increase of $e^{(0.3113)} = 1.365199$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+
+*** Interpretation Zero Inflation Negative Binomial Model - nbmod3zip ***
+
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}$$
+"
+
+where \
+
+$B_0 = 1.444\
+$B_1 = 0.00034\
+$B_2 = -0.01211\
+$B_3 = 0.00049\
+$B_4 = -0.00008\
+$B_5 = -0.02241\
+$B_6 = 0.00003\
+$B_7 = -0.00002\
+$B_8 = -0.2847\
+$B_9 = 0.00593\
+$B_10 = 0.00017\
+$B_11 = 0.00689\
+$B_12 = 0.233\
+$B_13 = -0.01858\
+$B_14 = 0.1009\
+
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = FixedAcidity\
+$x_2 = VolatileAcidity\
+$x_3 = CitricAcid\
+$x_4 = ResidualSugar\
+$x_5 = Chlorides\
+$x_6 = FreeSulfurDioxide\
+$x_7 = TotalSulfurDioxide\
+$x_8 = Density\
+$x_9 = pH\
+$x_10 = Sulphates\
+$x_11 = Alcohol\
+$x_12 = LabelAppeal\
+$x_13 = AcidIndex\
+$x_14 = STARS\
+
+
+
+*** Coefficient Analysis ***
+
+The coefficient for Alcohol, LabelAppeal, AcidIndex, STARS, Log(theta) are highly significant.  For a unit increase in our highly significant variables: \
+
+- Alcohol, we expect  an increase of $e^{(0.006886)} = 1.00691$ in the number of cases of wine that will be sold \
+- LabelAppeal, we expect  an increase of $e^{(0.233)} = 1.262381$ in the number of cases of wine that will be sold \
+- AcidIndex, we expect  a decrease of $e^{(-0.01858)} = 0.981592$ in the number of cases of wine that will be sold \
+- STARS, we expect  an increase of $e^{(0.1009)} = 1.106166$ in the number of cases of wine that will be sold \
+- Log(theta), we expect  an increase of $e^{(16.96)} = 23207823.508859$ in the number of cases of wine that will be sold \
+
+
+
+##################################################################################################
+
+
+*** Interpretation Negative Binomial Model 4 - nbmod4 ***
+
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}$$
+"
+
+where \
+
+$B_0 = 2.57\
+$B_1 = 0.02283\
+$B_2 = 0.00302\
+$B_3 = 0.023\
+$B_4 = 0.01883\
+$B_5 = -0.03496\
+$B_6 = -0.00676\
+$B_7 = 0.02136\
+$B_8 = -1.471\
+$B_9 = -0.00057\
+$B_10 = -0.0355\
+$B_11 = 0.00743\
+$B_12 = 0.00013\
+$B_13 = -0.02664\
+$B_14 = 0.00016\
+$B_15 = 0.00008\
+$B_16 = -0.2848\
+$B_17 = -0.01361\
+$B_18 = -0.01194\
+$B_19 = 0.00396\
+$B_20 = -0.07801\
+$B_21 = -0.0256\
+$B_22 = -0.7179\
+$B_23 = -0.3427\
+$B_24 = -0.1734\
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = ResidualSugar_MISS\
+$x_2 = Chlorides_MISS\
+$x_3 = FreeSulfurDioxide_MISS\
+$x_4 = TotalSulfurDioxide_MISS\
+$x_5 = pH_MISS\
+$x_6 = Sulphates_MISS\
+$x_7 = Alcohol_MISS\
+$x_8 = STARS_MISS\
+$x_9 = FixedAcidity_CAP\
+$x_10 = VolatileAcidity_CAP\
+$x_11 = CitricAcid_CAP\
+$x_12 = ResidualSugar_CAP\
+$x_13 = Chlorides_CAP\
+$x_14 = FreeSulfurDioxide_CAP\
+$x_15 = TotalSulfurDioxide_CAP\
+$x_16 = Density_CAP\
+$x_17 = pH_CAP\
+$x_18 = Sulphates_CAP\
+$x_19 = Alcohol_CAP\
+$x_20 = AcidIndex_CAP\
+$x_21 = LabelAppeal_Positive\
+$x_22 = STARS_1\
+$x_23 = STARS_2\
+$x_24 = STARS_3\
+
+
+*** Coefficient Analysis ***
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.471)} = 0.229696$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.0355)} = 0.965123$ in the number of cases of wine that will be sold \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.07801)} = 0.924955$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.7179)} = 0.487776$ in the number of cases of wine that will be sold \
+- STARS_2, we expect  a decrease of $e^{(-0.3427)} = 0.709851$ in the number of cases of wine that will be sold \
+- STARS_3, we expect  a decrease of $e^{(-0.1734)} = 0.840801$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
+
+
+
+*** Interpretation Zero Inflation Negative Binomial Model 4 - nbmod4zip ***
+
+
+
+"From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}$$
+"
+
+where \
+
+$B_0 = 2.474\
+$B_1 = 0.02185\
+$B_2 = 0.00739\
+$B_3 = 0.0201\
+$B_4 = 0.02352\
+$B_5 = -0.02769\
+$B_6 = -0.00619\
+$B_7 = 0.017\
+$B_8 = -1.36\
+$B_9 = -0.00045\
+$B_10 = -0.03032\
+$B_11 = 0.00559\
+$B_12 = 0.00008\
+$B_13 = -0.02117\
+$B_14 = 0.00015\
+$B_15 = 0.00006\
+$B_16 = -0.2951\
+$B_17 = -0.00806\
+$B_18 = -0.0094\
+$B_19 = 0.00478\
+$B_20 = -0.06702\
+$B_21 = -0.02721\
+$B_22 = -0.6211\
+$B_23 = -0.3267\
+$B_24 = -0.173\
+
+
+\
+
+and
+
+$x_0 = 1$\
+$x_1 = ResidualSugar_MISS\
+$x_2 = Chlorides_MISS\
+$x_3 = FreeSulfurDioxide_MISS\
+$x_4 = TotalSulfurDioxide_MISS\
+$x_5 = pH_MISS\
+$x_6 = Sulphates_MISS\
+$x_7 = Alcohol_MISS\
+$x_8 = STARS_MISS\
+$x_9 = FixedAcidity_CAP\
+$x_10 = VolatileAcidity_CAP\
+$x_11 = CitricAcid_CAP\
+$x_12 = ResidualSugar_CAP\
+$x_13 = Chlorides_CAP\
+$x_14 = FreeSulfurDioxide_CAP\
+$x_15 = TotalSulfurDioxide_CAP\
+$x_16 = Density_CAP\
+$x_17 = pH_CAP\
+$x_18 = Sulphates_CAP\
+$x_19 = Alcohol_CAP\
+$x_20 = AcidIndex_CAP\
+$x_21 = LabelAppeal_Positive\
+$x_22 = STARS_1\
+$x_23 = STARS_2\
+$x_24 = STARS_3\
+
+
+*** Coefficient Analysis ***
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.36)} = 0.256661$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.03032)} = 0.970135$ in the number of cases of wine that will be sold \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.06702)} = 0.935176$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.6211)} = 0.537353$ in the number of cases of wine that will be sold \
+- STARS_2, we expect  a decrease of $e^{(-0.3267)} = 0.7213$ in the number of cases of wine that will be sold \
+- STARS_3, we expect  a decrease of $e^{(-0.173)} = 0.841138$ in the number of cases of wine that will be sold \
+
+
+##################################################################################################
