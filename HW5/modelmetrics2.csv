@@ -7,7 +7,7 @@ Negative  binomial /transformed  data,46370,0.9667395,
 Quasi-Poisson with Original data,Undefined,0.85152,
 Pois with original data,46700,0.851513,
 Negative  binomial /original data,46703,0.851477,
-zero inflation NB with transformed data,Undefined,0.8386927,zero inflation NB with transformed data
-zero inflation Poisson with transformed data,Undefined,0.8386535,zero inflation Poisson with transformed data
+zero inflation NB with transformed data,Undefined,0.8386927,zero inflation NB transformed data
+zero inflation Poisson with transformed data,Undefined,0.8386535,zero inflation Poisson transformed data
 zero inflation NB with orig data,Undefined,0.4637071,zero inflation NB with orig data
 zero inflation Poisson with orig data,Undefined,0.4636815,zero inflation Poisson with orig data
