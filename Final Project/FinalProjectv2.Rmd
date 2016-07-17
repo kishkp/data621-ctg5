@@ -331,19 +331,19 @@ The main objective in the transformations is to achieve linear relationships wit
 
 #3.1 Build Models
 
-In this section, we will create 3 models. Aside from using original and transformed data, we will also be using different methods and functions such as Linear Discriminant Analysis, step function, and logit function to enhance our models. 
+In this section, we will create 3 models. Aside from using original and transformed data, we will be using different modeling methods and functions such as Classification and Regression tree, Random tree and Generalized logistics model to predict outcome. 
 
 Below is our model definition: 
 
 -Model 1- This model will be created using all the variables in train data set with logit function GLM. 
 
--Model 2: This model calssification and regression tree function  
+-Model 2: This model calssification and Regression tree function.  
 
--Model 3- This model will be created using RandomForests model. 
+-Model 3- This model will be created using Random Forests model. 
 
 
 
-Taking the treated data and splitting into 80/20 to train model and validate the data.
+Taking the treated data and splitting into 80/20 to train model and validate the data.One data set (80%) population will be used for training the model. Rest 20% will used be used for evaluation of the model.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -357,7 +357,7 @@ train_index <- sample(seq_len(nrow(bank_train2)), size = smp_size)
 DS_TARGET_FLAG_TRAIN<- bank_train2[train_index, ]
 DS_TARGET_FLAG_VALID <- bank_train2[-train_index, ]
 
-# remove"-" from variable
+# remove"-" from variable to avoid any issues in running the model
 colnames(DS_TARGET_FLAG_TRAIN)[15]<-c("job_blue_collar")
 colnames(DS_TARGET_FLAG_TRAIN)[20]<-c("job_self_employed")
 colnames(DS_TARGET_FLAG_VALID)[15]<-c("job_blue_collar")
@@ -369,60 +369,168 @@ colnames(DS_TARGET_FLAG_VALID)[20]<-c("job_self_employed")
 ## 3.1.1 Model 1
 
 \
-```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE,results="hide"}
 
 
-model1 <- glm(y ~.,family=binomial(link='logit'),data=DS_TARGET_FLAG_TRAIN)
+DS_TARGET_FLAG_TRAIN$y<-as.factor(DS_TARGET_FLAG_TRAIN$y)
+model1 <- glm(y ~.,family=binomial,data=DS_TARGET_FLAG_TRAIN)
 summary(model1)
 
 #anova(model1, test="Chisq")
+model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=DS_TARGET_FLAG_TRAIN)
+
+exp(coef(model1_update))
 
 
 ```
-\
+
+
+### Analysis of model 1 & model1_update:\
+
+1.Using GLM function model 1 has been developed by using all the available variables. model1_update is an enhancement of model1 by using only those predictor having association with response variable and not showing up as NA values in model outcome. in model outcome AIC values for both the models are same.\
+
+2. There are total 10 iterations which have been performed in the model before final selection of variables were made.\
+
+3. Table below provide details on significance of the variables and its odd ratio.\
+
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE}
+
+
+model1_var <-read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Model1_var.csv",
+           sep = ",",
+           header = TRUE)
+kable(model1_var, caption = "Signifcant Variables model 1") 
+
+```
 
 
 ## 3.1.2 Model 2
 
-```{r }
+```{r,echo = FALSE, warning=FALSE, message=FALSE }
 
 model2 <- rpart(y~., data=DS_TARGET_FLAG_TRAIN, method = "class")
 
-plotcp(model2)
+
+model2_update <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
+
+plotcp(model2_update)
+
+#printcp(model2_update) # display the results 
 
 
-model2_ref <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
+```
 
 
-printcp(model2_ref) # display the results 
+### Analysis of model 2 & model2_update:\
 
+1. model 2 has been built using the CRT (classification and Regression Tree).  Based on available data model 2 has been constructed wwit CRT and then using prune function model2_update has been created by pruning the model 2. \
+
+2. Above chart shows the size of the tree and optimal cp values.
+
+3. There are 6 splits in total from this model.\
+
+4. Three key variables are used in this model2_update are - duration,nr.employed ,previous_contact. \
+
+5. Classification tree is given below in the diagram- \
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+              
 # plot the pruned tree 
 par(mfrow=c(1,1))
-plot(model2_ref, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
-text(model2_ref, use.n=TRUE, all=TRUE, cex=.8)
-
+plot(model2_update, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
+text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
 
 
 ```
 
 ## 3.1.3 Model 3
 
-\
-```{r }
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE }
 
 # Random Forest prediction of Kyphosis data
 
 model3 <- randomForest(as.factor(y) ~ .,data=DS_TARGET_FLAG_TRAIN,importance=TRUE, ntree=50)
-print(model3) # view results 
-importance(model3) # importance of each predictor
+# print(model3) # view results 
+
+
+#plot model 3
+
+layout(matrix(c(1,2),nrow=1),
+width=c(4,1)) 
+par(mar=c(5,4,4,0)) #No margin on the right side
+plot(model3, log="y")
+par(mar=c(5,0,4,2)) #No margin on the left side
+plot(c(0,1),type="n", axes=F, xlab="", ylab="")
+legend("top", colnames(model3$err.rate),col=1:4,cex=0.8,fill=1:4)
 
 ```
+
+### Analysis of model 3 :\
+
+1.In Random Forests many classification trees are formed for classification. Each tree gives a classification, each tree is voted for performance for that classification. The forest chooses the classification having the most votes (over all the trees in the forest). Chart above shows how classification erro rate and  change with the increase in number of trees.\
+
+2. The model 3 created here by using RandomForest having tree size of 50 as the data set having records of only around 8000 records.\
+
+3. No of variables tried at each split is 7 and having error rate of 8.92%.\
+
+4. Below chart provides importance of various variables in the model.\
+
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE}
+
+# display importance of variables
+varImpPlot(model3)
+
+```
+
+
+
+
 
 
 #4 Evaluate Models
 
 
 ## 4.1 Model 1 Evaluation
+
+### Model Evaluation function
+
+
+```{r ,echo = FALSE, warning=FALSE, message=FALSE}
+
+#Following function Eval() will be used to calculate various metrics related to the model like Accuracy, Sensitivity, #Precision , Specificity, and F1 score
+
+Eval<-function(x){
+    TP<-x$Freq[x$metrics=="TRUE_1"]
+    FP<-x$Freq[x$metrics=="FALSE_1"]
+    TN<-x$Freq[x$metrics=="FALSE_0"]
+    FN<-x$Freq[x$metrics=="TRUE_0"]
+    Accuracy <-(TP+TN)/(TP+TN+FP+FN)
+    Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
+    Precision<-TP/(TP+FP)
+    sensitivity<-TP/(TP+FN)
+    specificity<-TN/(TN+FP)
+    F1_Score=2*Precision*sensitivity/(sensitivity+specificity)
+    eval_result<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+    
+    eval_result[1,1]<-Accuracy
+    eval_result[1,2]<-Error_Rate
+    eval_result[1,3]<- Precision
+    eval_result[1,4]<-sensitivity
+    eval_result[1,5]<-specificity
+    eval_result[1,6]<-F1_Score
+    eval_result
+}
+
+model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0), AUC=c(0))
+
+
+
+```
+
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
@@ -432,7 +540,7 @@ pR2(model1)
 
 # Predict result from the model 1
 
-results1 <- predict(model1,newdata=DS_TARGET_FLAG_VALID,type='response')
+results1 <- predict(model1_update,newdata=DS_TARGET_FLAG_VALID,type='response')
 
 DS_TARGET_FLAG_VALID$TARGET_FLAG<-results1
 
@@ -458,6 +566,16 @@ myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG)
 
 plot(myRoc, main="ROC Curve for Classification data") 
 
+#confusion matrix model 1
+
+
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG>0.5,DS_TARGET_FLAG_VALID$y))
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+model_comparison[1,]<-Eval(df_pre_train1)
+DS_TARGET_FLAG_VALID$TARGET_FLAG<-as.numeric(ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG >0.5,1,0))
+model_comparison[1,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y,DS_TARGET_FLAG_VALID$TARGET_FLAG))
+kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+
 ```
 
 
@@ -467,11 +585,11 @@ plot(myRoc, main="ROC Curve for Classification data")
 \
 ```{r }
 
-results2 <- predict(model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
+results2 <- predict(model2_update,newdata=DS_TARGET_FLAG_VALID,type="prob")[,2]
 
-DS_TARGET_FLAG_VALID$TARGET_FLAG2<- predict(model2_ref,newdata=DS_TARGET_FLAG_VALID)[,2]
+DS_TARGET_FLAG_VALID$TARGET_FLAG2<- predict(model2_update,newdata=DS_TARGET_FLAG_VALID)[,2]
 
-results2 <- ifelse(results2 > 0.5,1,0)
+DS_TARGET_FLAG_VALID$results2 <- ifelse(results2 > 0.5,1,0)
 
 misClasificError <- mean(results2 != DS_TARGET_FLAG_VALID$y)
 
@@ -490,9 +608,16 @@ plot(prf)
 
 # ROC curve
 
-myRoc2 <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG2, DS_TARGET_FLAG_VALID)
+myRoc2 <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$results2)
 plot(myRoc2, main="ROC Curve for Classification data") 
 
+#confusion matrix model 2
+
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG2>0.5,DS_TARGET_FLAG_VALID$y))
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+model_comparison[2,]<-Eval(df_pre_train1)
+model_comparison[2,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y, DS_TARGET_FLAG_VALID$TARGET_FLAG2))
+kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
 
@@ -503,7 +628,8 @@ plot(myRoc2, main="ROC Curve for Classification data")
 
 # results from model 3
 
-results3 <- as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))
+results3 <- ifelse(as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))==1,0,1)
+
 
 DS_TARGET_FLAG_VALID$TARGET_FLAG3<-results3
 
@@ -521,9 +647,17 @@ plot(prf)
 
 
 # ROC curve
-
-myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG3) 
+levels(DS_TARGET_FLAG_VALID$TARGET_FLAG3)<-c(0,1)
+myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG3,DS_TARGET_FLAG_VALID) 
 plot(myRoc, main="ROC Curve for Classification data") 
+
+#confusion matrix model 3
+
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG3==1,DS_TARGET_FLAG_VALID$y))
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+model_comparison[3,]<-Eval(df_pre_train1)
+model_comparison[3,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y, DS_TARGET_FLAG_VALID$TARGET_FLAG2))
+kable(model_comparison[3,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
 \
