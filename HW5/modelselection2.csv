@@ -1,0 +1,13 @@
+Distribution Type,Model Desciption,Comparaison KPI
+Classical Poisson,Poisson using original data,AIC
+,Poisson using Transformed data,AIC
+Quasi-Poisson,Quasi Poisson using original data,phi =Dispersion parameter
+,Quasi Poisson using transformed data,phi =Dispersion parameter
+Negative Binomial,NB using original data,AIC
+,NB using transformed data,AIC
+ zero-inflation Poisson,zero inflated Pois using original data,Vuong test
+,zero inflated Pois using Transforemed  data,Vuong test
+ zero-inflation NB,zero inflated NB using original data,Vuong test
+,zero inflated NB using transformed data,Vuong test
+LM,linear regression using original data ,AIC
+,linear regression using transformed data ,AIC
