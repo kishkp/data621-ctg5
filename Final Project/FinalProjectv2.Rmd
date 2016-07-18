@@ -7,9 +7,9 @@ author:
 - Shazia Khan
 - Kishore Prasad
 output:
-  html_document:
-    toc: yes
   pdf_document:
+    toc: yes
+  html_document:
     toc: yes
 ---
 
@@ -464,7 +464,7 @@ par(mar=c(5,4,4,0)) #No margin on the right side
 plot(model3, log="y")
 par(mar=c(5,0,4,2)) #No margin on the left side
 plot(c(0,1),type="n", axes=F, xlab="", ylab="")
-legend("top", colnames(model3$err.rate),col=1:4,cex=0.8,fill=1:4)
+legend("top", colnames(model3$err.rate),col=1:3,cex=0.8,fill=1:4)
 
 ```
 
@@ -488,15 +488,7 @@ varImpPlot(model3)
 
 
 
-
-
-
 #4 Evaluate Models
-
-
-## 4.1 Model 1 Evaluation
-
-### Model Evaluation function
 
 
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
@@ -527,77 +519,90 @@ Eval<-function(x){
 
 model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0), AUC=c(0))
 
-
-
 ```
+
+
+## 4.1 Model 1 Evaluation
 
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 #the McFadden R^2 index can be used to assess the model fit.
-pR2(model1)
+#pR2(model1)
 
-# Predict result from the model 1
+# Predict result from the model 1 with probability
 
-results1 <- predict(model1_update,newdata=DS_TARGET_FLAG_VALID,type='response')
-
-DS_TARGET_FLAG_VALID$TARGET_FLAG<-results1
-
-results1 <- ifelse(results1 > 0.5,1,0)
-
-misClasificError <- mean(results1 != DS_TARGET_FLAG_VALID$y)
-
-print(paste('Accuracy',1-misClasificError))
+DS_TARGET_FLAG_VALID$TARGET_FLAG1 <- predict(model1_update,newdata=DS_TARGET_FLAG_VALID,type='response')
 
 
-# sensivity vs Specificity
-
-pr <- prediction(results1, DS_TARGET_FLAG_VALID$y)
-
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-
-plot(prf)
-
-
-# Area under curve
-
-myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG) 
-
-plot(myRoc, main="ROC Curve for Classification data") 
 
 #confusion matrix model 1
 
 
-df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG>0.5,DS_TARGET_FLAG_VALID$y))
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG1>0.5,DS_TARGET_FLAG_VALID$y))
+
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
 model_comparison[1,]<-Eval(df_pre_train1)
-DS_TARGET_FLAG_VALID$TARGET_FLAG<-as.numeric(ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG >0.5,1,0))
-model_comparison[1,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y,DS_TARGET_FLAG_VALID$TARGET_FLAG))
+
+
+# model_comparison[1,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y,DS_TARGET_FLAG_VALID$TARGET_FLAG1))
+
 kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
+
 ```
+
+### Model 1 Evaluation:
+
+1. Significance of McFadden R^2??
+
+2. From above table it can be seen model1_update has a very high accuracy rate of 91.07% when model was evaluated using the validation data set.\
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+
+# sensivity vs Specificity
+results1<-ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG1>0.5,1,0)
+pr <- prediction(results1, DS_TARGET_FLAG_VALID$y)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+
+```
+
+3. Model has a very high rate of sensitivity till 0.4 and low sensitivity. After that it has very high rate of specificity which suggested that there are some records which are easy to classify but as the number grows then it becomes difficult to classify those records. \
+
 
 
 ## 4.2 Model 2 Evaluation
 
 
-\
-```{r }
-
-results2 <- predict(model2_update,newdata=DS_TARGET_FLAG_VALID,type="prob")[,2]
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE }
 
 DS_TARGET_FLAG_VALID$TARGET_FLAG2<- predict(model2_update,newdata=DS_TARGET_FLAG_VALID)[,2]
 
-DS_TARGET_FLAG_VALID$results2 <- ifelse(results2 > 0.5,1,0)
 
-misClasificError <- mean(results2 != DS_TARGET_FLAG_VALID$y)
+#confusion matrix model 2
 
-print(paste('Accuracy',1-misClasificError))
+df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG2>0.5,DS_TARGET_FLAG_VALID$y))
+
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
+model_comparison[2,]<-Eval(df_pre_train1)
+
+model_comparison[2,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y, DS_TARGET_FLAG_VALID$TARGET_FLAG2))
+
+kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+
+```
+
+1. It can be seen from the table above, this model 2 has also very high accuracy rate of 91.05% which is very good.\ 
 
 
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 # Specificity vs Sensivity
 
+results2 <- predict(model2_update,newdata=DS_TARGET_FLAG_VALID,type="prob")[,2]
 
 pr <- prediction(results2, DS_TARGET_FLAG_VALID$y)
 
@@ -605,51 +610,25 @@ prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 
 plot(prf)
 
-
-# ROC curve
-
-myRoc2 <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$results2)
-plot(myRoc2, main="ROC Curve for Classification data") 
-
-#confusion matrix model 2
-
-df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG2>0.5,DS_TARGET_FLAG_VALID$y))
-df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
-model_comparison[2,]<-Eval(df_pre_train1)
-model_comparison[2,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y, DS_TARGET_FLAG_VALID$TARGET_FLAG2))
-kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
-
 ```
+
+2. From the chart above it can be seen that model has very very high rate true positive values which suggests initial stages of accurate classification and gradually rate of specificty increases takes over the increase of sensitivity. That means to achive higher accuracy model mmisclassification increases.\
+
+
+
+
 
 ## 4.3 Model 3 Evaluation
 
 \
-```{r }
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 # results from model 3
 
-results3 <- ifelse(as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))==1,0,1)
+DS_TARGET_FLAG_VALID$TARGET_FLAG3<-as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))
 
+DS_TARGET_FLAG_VALID$TARGET_FLAG3<-ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG3==1,0,1)
 
-DS_TARGET_FLAG_VALID$TARGET_FLAG3<-results3
-
-
-misClasificError <- as.numeric(mean(results3 != DS_TARGET_FLAG_VALID$y))
-print(paste('Accuracy',1-misClasificError))
-
-
-# specificty vs sensitivity
-
-pr <- prediction(results3, DS_TARGET_FLAG_VALID$y)
-
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-plot(prf)
-
-
-# ROC curve
-levels(DS_TARGET_FLAG_VALID$TARGET_FLAG3)<-c(0,1)
-myRoc <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG3,DS_TARGET_FLAG_VALID) 
-plot(myRoc, main="ROC Curve for Classification data") 
 
 #confusion matrix model 3
 
@@ -660,11 +639,56 @@ model_comparison[3,c("AUC")]<-c(auc(DS_TARGET_FLAG_VALID$y, DS_TARGET_FLAG_VALID
 kable(model_comparison[3,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
-\
-\
+
+1. The model created using Randomforest has accuracy of 90.94% which is good but compare to other two models this value is less than what we have. 
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+
+# specificty vs sensitivity
+
+results3 <- ifelse(as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))==1,0,1)
+
+pr <- prediction(DS_TARGET_FLAG_VALID$TARGET_FLAG3, DS_TARGET_FLAG_VALID$y)
+
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+
+plot(prf)
+
+
+```
+
+2. As shown in the chart above this model also shows the similar kind of trend in  classification of data in earlier stages with very stiff line till true positive rate of 0.4 annd then sharp increase in false positive rate.
+
+
 # 5 Discussion and Conclusions:
 
 #5.1 Select Models
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE,eval=FALSE}
+
+# Area under curve model 1
+myRoc1 <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG1) 
+
+# Area under curve model 2
+myRoc2 <- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$results2)
+
+
+# Area under curve model 3
+
+myRoc3<- roc(DS_TARGET_FLAG_VALID$y~DS_TARGET_FLAG_VALID$TARGET_FLAG3,DS_TARGET_FLAG_VALID) 
+
+
+par(mfrow=c(1,3))
+
+plot(myRoc1, main="ROC Curve for Classification data") 
+plot(myRoc2, main="ROC Curve for Classification data") 
+plot(myRoc3, main="ROC Curve for Classification data")
+```
+
+
+
+#5.2 Conclusion
 
 # References:
 
