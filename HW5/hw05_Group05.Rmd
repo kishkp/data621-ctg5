@@ -2057,3 +2057,8 @@ Over all, we were little bit overwhelmed with analyzing about 12 models. However
 
 #Appendix A: DATA621 Homework 05 R Code 
 
+```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/hw05_Group05.Rmd', documentation = 0)), eval = FALSE}
+
+```
+
+
