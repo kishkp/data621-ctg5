@@ -1,4 +1,4 @@
-Distribution Type,Model Desciption,Comparaison KPI
+Distribution Type,Model Description,Comparaison KPI
 Classical Poisson,Poisson using original data,AIC
 ,Poisson using Transformed data,AIC
 Quasi-Poisson,Quasi Poisson using original data,phi =Dispersion parameter
