@@ -1,0 +1,2059 @@
+---
+title: "Homework Assignment - 05"
+author:
+- Critical Thinking Group 5
+- Arindam Barman
+- Mohamed Elmoudni
+- Shazia Khan
+- Kishore Prasad
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+\newpage
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+# changed lib path... 
+
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("car",character.only = TRUE)) (install.packages("car",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("aod",character.only = TRUE)) (install.packages("aod",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("ISLR",character.only = TRUE)) (install.packages("ISLR",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("AUC",character.only = TRUE)) (install.packages("AUC",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("ROCR",character.only = TRUE)) (install.packages("ROCR",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("leaps",character.only = TRUE)) (install.packages("leaps",repos = "http://cran.us.r-project.org", dep=TRUE))
+if (!require("pander",character.only = TRUE)) (install.packages("pander",repos = "http://cran.us.r-project.org", dep=TRUE))
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(pander)
+
+```
+
+#1. Overview \
+
+In this homework assignment, we will explore, analyze and model a data set containing information on approximately 12795 commercially available wines using 16 variables. The variables are mostly related to the chemical properties of the wine being sold. The response variable is the number of sample cases of wine that were purchased by wine distribution companies after sampling a wine. These cases would be used to provide tasting samples to restaurants and wine stores around the United States. The more sample cases purchased, the more likely is a wine to be sold at a high end restaurant. A large wine manufacturer is studying the data in order to predict the number of wine cases ordered based upon the wine characteristics. If the wine manufacturer can predict the number of cases, then that manufacturer will be able to adjust their wine offering to maximize sales.
+
+
+#2. Objective \
+
+Our objective is to build a count regression model to predict the number of cases of wine that will be sold given certain properties of the wine. Using the training data set, we will build at least two different Poisson regression models, at least two different negative binomial regression models, and at least two multiple linear regression models, using different variables (or the same variables with different transformations).
+ 
+To attain our objective, we will be following the below best practice steps and guidelines:
+
+1 -Data Exploration \
+2 -Data Preparation \
+3 -Build Models \
+4 -Select Models \
+
+
+#3 Data Exploration Analysis
+
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Variable Relationships \
+-Data summary analysis \
+-Outliers and Missing Values Identification
+
+##3.1	Variable identification
+
+
+First we look the variables' datatypes and their roles.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+vartypes<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/vartypes.csv")
+kable(vartypes)
+```
+
+From the Table 1 above, we see that that all variables are quantitative mainly of numeric and integer datatype. 
+Also, we will ignore the INDEX variable as it is just a unique identifier for each row.  However, we will use the TARTGET variable as response variable and the remaining variables as predictors. 
+
+
+##3.2 Variable Relationships 
+
+Next let's display and examine the variable relationships as shown in table 2. \
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+winedata <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/wine-training-data.csv")
+variables<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/vars.csv")
+#kable(variables, caption = "Variable Description")
+
+pander::pander(variables, split.cells = c(20, 60, 40), split.table = Inf, justify = 'left', caption = "Variable Description")
+
+```
+
+
+At first glance, we can easily deduce that that the FreeSulfurDioxide (Sulfur Dioxide content of wine) can be derived from the TotalSulfurDioxide (Total Sulfur Dioxide of Wine). However, looking closer at the role of the sulfur dioxide $SO_2$, as it is used as a preservative because of its anti-oxidative and anti-microbial properties in wine and also as a cleaning agent for barrels and winery facilities, we realize that when a winemaker says his/her wine has 100 ppm (part per million) of $SO_2$, he/she is most probably referring to the total amount of $SO_2$ in his wine, and that means: \
+total SO2 = free $SO_2$ + bound $SO_2$. \
+free $SO_2$: molecular $SO_2$ + bisulfites + sulfites \
+bound $SO_2$: sulfites attached to either sugars, acetaldehyde or phenolic compounds \
+
+In this case the  free $SO_2$  portion (not associated with wine molecules) is effectively the buffer against microbes and oxidation... Hence without knowing the bound $SO_2$, we won't be able to derive  FreeSulfurDioxide from TotalSulfurDioxide.  
+
+Also, looking breifly at the VolatileAcidity (Volatile Acid content of wine) and FixedAcidity (Fixed Acidity of Wine), we can easily deduce AcidIndex as the Acid index = Total acid (g/L) - pH. where Total acidity = Volatile Acid + Fixed Acidity. However, in our case the index is weighted average and we don't know the weighted average of either Volatile Acid or Fixed Acidity. Hence we will assume these variable do not have strict arithmetic relationships.
+
+##3.3 Data summary analysis 
+
+In this section, we will create summary data to better understand the initial relationship variables have with
+our dependent variable using correlation, central tendency, and dispersion As shown in table 3.
+
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+library(dplyr)
+
+winedata<- select(winedata, -(ï..INDEX))
+str(winedata)
+ds_stats <- psych::describe(winedata, skew = FALSE, na.rm = TRUE)[c(3:6)]
+
+ds_stats0<- ds_stats
+ds_stats <- cbind(VARIABLE_NAME = rownames(ds_stats), ds_stats)
+kable(ds_stats0, caption = "Data Summary")
+
+```
+
+\newpage
+Below is the missing values and correlation table of the predictor variables to the response variables.   
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+Variable<- rownames(ds_stats)
+fun <- function(x) sum(!complete.cases(x))
+Missing <- sapply(winedata[Variable], FUN = fun) 
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(winedata[Variable], FUN = fun, y=winedata$TARGET) 
+ds_stats2 <- data.frame(cbind( Missing, Correlation))
+kable(ds_stats2, caption = "Missing Data and Data Correlation")
+```
+
+***Missing Values and Correlation Interpretation***
+
+From tables 3 and 4 above, we observe the followings:
+
+- Variable ResidualSugar has 616 and 0.0164913 correlation.  Given the low correlation we will try try some imputation techniques to handle the missing the values and replace missing values with their respective value. 
+- variable Chlorides 638 -0.0382631 correlation. .  Given the low negative correlation we will try we would replace missing values with their respective value 
+- Variable FreeSulfurDioxide 647 0.0438241. Given the low correlation we will impute the missing values with their respective value
+- Variable TotalSulfurDioxide has 682 missing values with 0.0514784 correlation. Given the low correlation we will impute the missing values with their respective value.
+- Variable Alcohol has 682 missing values with 0.0620616 correlation. Given the low correlation we will impute the missing values with their respective value. \
+
+
+Please note that ResidualSugar, Chlorides, FreeSulfurDioxide, Alcohol, and TotalSulfurDioxide variables have similar number of missing values.  They are chemically related. However, we don't think they are arithmetically related. 
+
+- In addition, variable pH has 395 missing values with negative correlation of  -0.0094448. Again we may just ignore these missing values especially that it has very low negative correlation to the target variable. 
+- Variable Sulphates has much higher missing values of 1210 with low negative correlation of -0.0388496.  We will be imputing this values with their respective value 
+- Now, variable STARS has the highest missing values of 3359 and highest correlation of 0.5587938. This is very important variable and it drives sales and consequently heavily impacts our response variable. 
+We have to be careful in fixing the missing values as this variable STARS is rating score variable with 1 being the lowest and 4 the highest  
+
+
+##3.4 Outliers Identification 
+
+In this section we look at boxplots to determine the outliers in variables and decide on whether to act on the
+outliers.
+Lets do some univariate analysis. We will look at the Histogram and Boxplot for each variable to detect
+outliers if any and treat it accordingly.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+show_charts <- function(x, ...) {
+    
+    par(mfrow=c(2,3))
+    
+    xlabel <- unlist(str_split(deparse(substitute(x)), pattern = "\\$"))[2]
+#    ylabel <- unlist(str_split(deparse(substitute(y)), pattern = "\\$"))[2]
+    
+    hist(x,main=xlabel)
+    boxplot(x,main=xlabel)
+
+    y<-log(x)
+    boxplot(y,main='log transform')
+    y<-sqrt(x)
+    boxplot(y,main='sqrt transform')
+    y<-sin(x)
+    boxplot(y,main='sin transform')
+    y<-(x)^(1/9)
+    boxplot(y,main='ninth transform')
+}
+
+show_charts(winedata$FixedAcidity)
+
+```
+
+***Please note that we generated the above plots for all other variables. However we hid the results for ease of streamlining our report. 
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+#show_charts(winedata$FixedAcidity)
+#show_charts(winedata$VolatileAcidity)
+#show_charts(winedata$CitricAcid)
+#show_charts(winedata$ResidualSugar)
+#show_charts(winedata$Chlorides)
+#show_charts(winedata$FreeSulfurDioxide)
+#show_charts(winedata$TotalSulfurDioxide)
+#show_charts(winedata$Density)
+#show_charts(winedata$pH)
+#show_charts(winedata$Sulphates)
+#show_charts(winedata$Alcohol)
+#show_charts(winedata$LabelAppeal)
+#show_charts(winedata$AcidIndex)
+#show_charts(winedata$STARS)
+
+```
+
+
+#4. Data Preparation 
+
+Now that we have completed the preliminary analysis, we will be cleaning and consolidating data into one dataset for use in analysis and modeling. We will be puring the belwo steps as guidlines: \
+- Missing Flags \
+- Missing values treatment \
+- Outliers treatment \
+- Dummy Variables
+
+
+##4.1 Missing Flags
+
+We create flag variables to indicate whether some of the fields are missing any values. If the value is missing, we code it with 1 and if the value is present we code it with 0. The following are the variables that are created: 
+
+- ResidualSugar_MISS
+- Chlorides_MISS
+- FreeSulfurDioxide_MISS
+- TotalSulfurDioxide_MISS
+- pH_MISS
+- Sulphates_MISS
+- Alcohol_MISS
+- STARS_MISS
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+winedata$ResidualSugar_MISS <- ifelse(is.na(winedata$ResidualSugar), 1, 0)
+winedata$Chlorides_MISS <- ifelse(is.na(winedata$Chlorides), 1, 0)
+winedata$FreeSulfurDioxide_MISS <- ifelse(is.na(winedata$FreeSulfurDioxide), 1, 0)
+winedata$TotalSulfurDioxide_MISS <- ifelse(is.na(winedata$TotalSulfurDioxide), 1, 0)
+winedata$pH_MISS <- ifelse(is.na(winedata$pH), 1, 0)
+winedata$Sulphates_MISS <- ifelse(is.na(winedata$Sulphates), 1, 0)
+winedata$Alcohol_MISS <- ifelse(is.na(winedata$Alcohol), 1, 0)
+winedata$STARS_MISS <- ifelse(is.na(winedata$STARS), 1, 0)
+
+```
+
+
+
+##4.2 Missing values treatment
+
+Next we impute missing values. We can go ahead and use the mean as impute values. We will replace the missing values in the original variables. However, for STARS, we will code the missing value as a '0' instead of a mean. The following are the variables that are impacted:
+
+- ResidualSugar
+- Chlorides
+- FreeSulfurDioxide
+- TotalSulfurDioxide
+- pH
+- Sulphates
+- Alcohol
+- STARS
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+winedata$ResidualSugar[is.na(winedata$ResidualSugar)] <- mean(winedata$ResidualSugar, na.rm = T) 
+winedata$Chlorides[is.na(winedata$Chlorides)] <- mean(winedata$Chlorides, na.rm = T) 
+winedata$FreeSulfurDioxide[is.na(winedata$FreeSulfurDioxide)] <- mean(winedata$FreeSulfurDioxide, na.rm = T) 
+winedata$TotalSulfurDioxide[is.na(winedata$TotalSulfurDioxide)] <- mean(winedata$TotalSulfurDioxide, na.rm = T) 
+winedata$pH[is.na(winedata$pH)] <- mean(winedata$pH, na.rm = T) 
+winedata$Sulphates[is.na(winedata$Sulphates)] <- mean(winedata$Sulphates, na.rm = T) 
+winedata$Alcohol[is.na(winedata$Alcohol)] <- mean(winedata$Alcohol, na.rm = T) 
+winedata$STARS[is.na(winedata$STARS)] <- 0 
+
+```
+
+
+##4.3 Outliers treatment
+
+For outliers, we will use the capping method. In this method, we will replace all outliers that lie outside the 1.5 times of IQR limits. We will cap it by replacing those observations less than the lower limit with the value of 5th %ile and those that lie above the upper limit with the value of 95th %ile. 
+
+Accordingly we create the following new variables while retaining the original variables. 
+
+
+- FixedAcidity_CAP
+- VolatileAcidity_CAP
+- CitricAcid_CAP
+- ResidualSugar_CAP
+- Chlorides_CAP
+- FreeSulfurDioxide_CAP
+- TotalSulfurDioxide_CAP
+- Density_CAP
+- pH_CAP
+- Sulphates_CAP
+- Alcohol_CAP
+- AcidIndex_CAP
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+winedata$FixedAcidity_CAP <- treat_outliers(winedata$FixedAcidity)
+winedata$VolatileAcidity_CAP <- treat_outliers(winedata$VolatileAcidity)
+winedata$CitricAcid_CAP <- treat_outliers(winedata$CitricAcid)
+winedata$ResidualSugar_CAP <- treat_outliers(winedata$ResidualSugar)
+winedata$Chlorides_CAP <- treat_outliers(winedata$Chlorides)
+winedata$FreeSulfurDioxide_CAP <- treat_outliers(winedata$FreeSulfurDioxide)
+winedata$TotalSulfurDioxide_CAP <- treat_outliers(winedata$TotalSulfurDioxide)
+winedata$Density_CAP <- treat_outliers(winedata$Density)
+winedata$pH_CAP <- treat_outliers(winedata$pH)
+winedata$Sulphates_CAP <- treat_outliers(winedata$Sulphates)
+winedata$Alcohol_CAP <- treat_outliers(winedata$Alcohol)
+winedata$AcidIndex_CAP <- treat_outliers(winedata$AcidIndex)
+
+```
+
+
+\newpage
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#Lets see how the new variables look in boxplots.
+
+# par(mfrow=c(2,3))
+# 
+# boxplot(winedata$FixedAcidity_CAP)
+# boxplot(winedata$VolatileAcidity_CAP)
+# boxplot(winedata$ResidualSugar_CAP)
+# boxplot(winedata$Chlorides_CAP)
+# boxplot(winedata$FreeSulfurDioxide_CAP)
+# boxplot(winedata$TotalSulfurDioxide_CAP)
+# boxplot(winedata$Density_CAP)
+# boxplot(winedata$pH_CAP)
+# boxplot(winedata$Sulphates_CAP)
+# boxplot(winedata$Alcohol_CAP)
+# boxplot(winedata$AcidIndex_CAP)
+
+
+# In the second set, we will use the sin transformation as identified in the data exploration and create the following variables:
+# 
+# - FixedAcidity_SIN
+# - VolatileAcidity_SIN
+# - CitricAcid_SIN
+# - ResidualSugar_SIN
+# - Chlorides_SIN
+# - FreeSulfurDioxide_SIN
+# - TotalSulfurDioxide_SIN
+# - Density_SIN
+# - pH_SIN
+# - Sulphates_SIN
+# - Alcohol_SIN
+# - AcidIndex_SIN
+# 
+# winedata$FixedAcidity_SIN <- sin(winedata$FixedAcidity)
+# winedata$VolatileAcidity_SIN <- sin(winedata$VolatileAcidity)
+# winedata$CitricAcid_SIN <- sin(winedata$CitricAcid)
+# winedata$ResidualSugar_SIN <- sin(winedata$ResidualSugar)
+# winedata$Chlorides_SIN <- sin(winedata$Chlorides)
+# winedata$FreeSulfurDioxide_SIN <- sin(winedata$FreeSulfurDioxide)
+# winedata$TotalSulfurDioxide_SIN <- sin(winedata$TotalSulfurDioxide)
+# winedata$Density_SIN <- sin(winedata$Density)
+# winedata$pH_SIN <- sin(winedata$pH)
+# winedata$Sulphates_SIN <- sin(winedata$Sulphates)
+# winedata$Alcohol_SIN <- sin(winedata$Alcohol)
+# winedata$AcidIndex_SIN <- sin(winedata$AcidIndex)
+
+
+# par(mfrow=c(2,3))
+# 
+# boxplot(winedata$FixedAcidity_SIN)
+# boxplot(winedata$VolatileAcidity_SIN)
+# boxplot(winedata$ResidualSugar_SIN)
+# boxplot(winedata$Chlorides_SIN)
+# boxplot(winedata$FreeSulfurDioxide_SIN)
+# boxplot(winedata$TotalSulfurDioxide_SIN)
+# boxplot(winedata$Density_SIN)
+# boxplot(winedata$pH_SIN)
+# boxplot(winedata$Sulphates_SIN)
+# boxplot(winedata$Alcohol_SIN)
+# boxplot(winedata$AcidIndex_SIN)
+
+```
+
+
+
+##4.4 Dummy Variables
+
+\
+
+Finally, we will also create dummy variables for the following variables: 
+
+- LabelAppeal : For this variable, we create a dummy variable to indicate if the value is Zero / Positive or Negative. 
+- STARS - We create a Dummy Variable for each of the star ratings - 1,2,3,4. The value is 1 in the respective variable based on the STARS value. A Zero value in all of the STARS dummy vars indicate that the value was missing in the original variable.  
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+winedata$LabelAppeal_Positive <- ifelse(winedata$FreeSulfurDioxide >=0, 1, 0)
+
+winedata$STARS_1 <- ifelse(winedata$STARS == 1, 1, 0)
+winedata$STARS_2 <- ifelse(winedata$STARS == 2, 1, 0)
+winedata$STARS_3 <- ifelse(winedata$STARS == 3, 1, 0)
+winedata$STARS_4 <- ifelse(winedata$STARS == 4, 1, 0)
+
+
+#write.csv(winedata, file = "D:/CUNY/Courses/Business Analytics and Data Mining/Assignments/data621-ctg5/HW5/final.csv")
+
+```
+
+##4.5 Correlation for new variables
+
+\
+
+Lets see how the new variables stack up against the TARGET. 
+\
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+fun <- function(x, y) cor(y, x, use = "na.or.complete")
+Correlation <- sapply(winedata[, 16:ncol(winedata)], FUN = fun, y=winedata$TARGET) 
+Correlation <- sort(Correlation, decreasing = TRUE)
+
+#colnames(Correlation) <- c("Correlation")
+#Correlation <- cbind(variable = rownames(Correlation), Correlation)
+#rownames(Correlation) <- NULL
+
+kable(data.frame(Correlation), caption = "Correlation between TARGET and predictor variables")
+
+#kable(Correlation, caption = "New variables Correlation ")
+#Correlation
+
+```
+
+\
+
+
+From the above Correlations, we can make the following observations:
+
+
+- The following variables have a positive correlation with TARGET: STARS_3, STARS_4, STARS_2, Alcohol_CAP, TotalSulfurDioxide_CAP, FreeSulfurDioxide_CAP, LabelAppeal_Positive, ResidualSugar_CAP, CitricAcid_CAP, ResidualSugar_MISS, TotalSulfurDioxide_MISS, Chlorides_MISS, Alcohol_MISS.
+
+- The following variables have a negative correlation with TARGET: FreeSulfurDioxide_MISS, pH_MISS, pH_CAP, Sulphates_MISS, Chlorides_CAP, Density_CAP, Sulphates_CAP, FixedAcidity_CAP, VolatileAcidity_CAP, STARS_1, AcidIndex_CAP, STARS_MISS.
+
+
+- Not all variable have a strong correlation in either direction. However, the following stand out for having a stronger correlation:  STARS_MISS, STARS_3, STARS_4, STARS_2, AcidIndex_CAP, STARS_1, VolatileAcidity_CAP, Alcohol_CAP, FixedAcidity_CAP, TotalSulfurDioxide_CAP.
+
+ 
+
+
+#5. Build Models
+
+Since we are dealing with count variables, our modeling technique will mainly focus on using variation of the Generalized Linear Model (GLM) family functions. We will start with the classical Poisson regression; then we will enhance it using model Negative binominal model.   
+In addition, we will also create models using linear regression. 
+
+Using original and transformed datasets, we will build at least twelve models as follow: \
+
+- Two Poisson models \
+- Two Quasi-Poisson models \
+- Two Zero-inflated Poisson models \
+- Two Negative binomial models \
+- Two Zero-inflated Negative Binomial models \
+- Two Linear regression models 
+
+
+Below is a summary table showing models' variables. \
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+modelvars <- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/ModelVars.csv")
+kable(modelvars, caption = 'Model Variables')
+
+winedata_orig <- winedata[,c(1:15)]
+winedata_trans <- winedata[,c(1, 16:40)]
+
+
+```
+
+\newpage 
+
+
+##5.1 Poisson models 
+
+Our first attempt to capture the relationship between the wine chemical properties and number of cases of the wine being sold in a parametric regression model, we fit the basic Poisson regression model
+
+##5.1.1 Poisson Model 1  
+
+We will explore the Poisson regression model Using original data with replacing all missing data with the means.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+#winedata <- read.csv("C:/CUNY/Courses/IS621/Assignment602/Assignment05/wine-training-data.csv")
+#dim(winedata)
+#winedata <- select(winedata, (-(INDEX)))
+#str(winedata)
+## all zeros
+# winedata[is.na(winedata)] <- 0
+
+poismod1 <- glm(TARGET ~ ., data=winedata_orig, family=poisson)
+
+c1<- summary(poismod1)
+kable(c1$coefficients, caption = 'Model 1 Poisson Original Data')
+```
+
+
+##5.1.1.2 Interpretation Poisson Model 1
+
+From this output, we have the following estimated model:
+$$\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}$$
+
+where \
+
+$B_0 = 1.526$ \
+$B_1 = -3.045e-04$ \
+$B_2 = -3.343e-02$ \
+$B_3 = 7.773e-03$ \
+$B_4 = 5.676e-05$ \
+$B_5 = -4.141e-02$ \
+$B_6 = 1.254e-04$ \
+$B_7 = 8.296e-05$ \
+$B_8 =-2.823e-01$ \
+$B_9 = -1.572e-02$ \
+$B_10 = -1.267e-02$ \
+$B_11 = 2.201e-03$ \
+$B_12 = 1.332e-01$ \
+$B_13 = -8.705e-02$ \
+$B_14 = 3.113e-0$ \
+\
+
+and
+
+$x_0 =  1$ \
+$x_1 = FixedAcidity$ \
+$x_2 = VolatileAcidity$ \
+$x_3 = CitricAcid$ \
+$x_4 = ResidualSugar$ \
+$x_5 = Chlorides$ \
+$x_6 = FreeSulfurDioxide$ \
+$x_7 = TotalSulfurDioxide$ \
+$x_8 = Density$ \
+$x_9 = pH$ \
+$x_10 = Sulphates$ \
+$x_11 = Alcohol$ \
+$x_12 = LabelAppeal$ \
+$x_13 = AcidIndex$ \
+$x_14 = STARS$ 
+
+
+##5.1.1.3 Coefficient Analysis 
+
+In addition, the coefficient for VolatileAcidity, FreeSulfurDioxide, TotalSulfurDioxide, LabelAppeal, AcidIndex, and STARS are highly significant.  
+
+
+Unlike the linear model, in order to interpret the slope coefficient in a Poisson regression, it makes better sense to look at the ratio of predicted responses (instead of the
+difference) for a unit increase in x. for instance:
+
+$$\frac {e^{b_0+B_1(x+1)}} {e^{b_0+B_1x}} = e^{B_1}$$
+
+For instance, for with $B_1 = -(.0003045)$, we have $e^{B_1} = e^{-(.0003045)} = 0.999695$
+
+Thus, for a unit increase in the FixedAcidity, we would expect to see the number of cases of wine that will be sold
+given certain properties of the wine to decrease by a factor of = 0.999695. \
+
+
+Hence, for a unit increase in our highly significant variables: \
+
+- VolatileAcidity, we expect a decrease of  $e^{-(0.0343)} = 0.9662816$ the number of cases of wine that will be sold \
+- FreeSulfurDioxide, we expect an increase of $e^{0.0000829} = 1.000083$ the number of cases of wine that will be sold \
+- TotalSulfurDioxide, we expect a decrease of $e^{-(0.2823)} = 0.7540474$ the number of cases of wine that will be sold \
+- LabelAppeal, we expect a increase of $e^{(.1332)}  = 1.142478$ the number of cases of wine that will be sold \
+- AcidIndex,we expect a decrease of $e^{-(08705)} =  0.9166313$ the number of cases of wine that will be sold \
+- STARS,we expect a increase of  $e^{(3.113)} = 22.48841$  the number of cases of wine that will be sold 
+
+##5.1.1.4 Overdisperson Analysis: 
+
+
+Another common problem with Poisson regression is that the response is more variable than what is expected by the model; this is called overdisperson. 
+Thus checking for overdispersion, we will examine if the residual deviance greatly exceeds the residual degrees of freedom, then that is an indication
+of an overdispersion problem. \
+
+For our model(1), we see that our Residual deviance is 14728 and degrees of freedom is 12780; our Residual deviance 1.15 greater than our Residual degrees of freedom. Hence, the response is little more variable than what is expected by model (1). However, we won't address this issue as the  Residual deviance does not greatly exceed residual degrees of freedom.
+
+Sine we see that we have over dispersion, let's find out the dispersion parameter $\phi$. 
+Since the variance in the Poisson model is identical to the mean, the expectations are to have $\phi=1$.
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+pr <- residuals(poismod1,"pearson")
+phi <- sum(pr^2)/df.residual(poismod1)
+phi
+```
+
+Our  dispersion parameter is 0.851513; obviously it is not 1. 
+
+
+##5.1.2 Quasi-Poisson model (Model 2)
+
+We will explore the Quasi-Poisson regression model Using original data with replacing all missing data with the means.
+
+Another way of dealing with over-dispersion is to use Quasi-Poisson model which uses the mean regression function and the variance function from the Poisson GLM but to leave the dispersion parameter $\phi$ unrestricted. Thus, $\phi$ is not assumed to be fixed at 1 but is estimated from the data. This strategy leads to the same coefficient estimates as the standard Poisson model but inference is adjusted for over-dispersion.
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+fm_qpois <- glm(TARGET ~ ., data = winedata_orig, family = quasipoisson)
+c2<- summary(fm_qpois)
+kable(c2$coefficients, caption = 'Model 2 Quasi-Poisson Original Data')
+```
+
+
+##5.1.2.1 Interpretation Quasi-Poisson model 
+
+
+From this output, we have the following estimated model:
+
+$$
+\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}
+$$
+
+
+where 
+
+$B_0 = 1.526$ \
+$B_1 = -0.0003$ \
+$B_2 = -0.03343$ \
+$B_3 = 0.00777$ \
+$B_4 = 0.00006$ \
+$B_5 = -0.04141$ \
+$B_6 = 0.00013$ \
+$B_7 = 0.00008$ \
+$B_8 = -0.2823$ \
+$B_9 = -0.01572$ \
+$B_10 = -0.01267$ \
+$B_11 = 0.0022$ \
+$B_12 = 0.1332$ \
+$B_13 = -0.08705$ \
+$B_14 = 0.3113$ \
+
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = FixedAcidity$ \
+$x_2 = VolatileAcidity$ \
+$x_3 = CitricAcid$ \
+$x_4 = ResidualSugar$ \
+$x_5 = Chlorides$ \
+$x_6 = FreeSulfurDioxide$ \
+$x_7 = TotalSulfurDioxide$ \
+$x_8 = Density$ \
+$x_9 = pH$ \
+$x_10 = Sulphates$ \
+$x_11 = Alcohol$ \
+$x_12 = LabelAppeal$ \
+$x_13 = AcidIndex$ \
+$x_14 = STARS$ \
+
+
+
+##5.1.2.2 Coefficient Analysis 
+
+
+The coefficient for VolatileAcidity, FreeSulfurDioxide, TotalSulfurDioxide, LabelAppeal, AcidIndex, STARS are highly significant.  For a unit increase in our highly significant variables: 
+
+- VolatileAcidity, we expect  a decrease of $e^{(-0.03343)} = 0.967123$ in the number of cases of wine that will be sold 
+- FreeSulfurDioxide, we expect  an increase of $e^{(0.0001254)} = 1.000125$ in the number of cases of wine that will be sold 
+- TotalSulfurDioxide, we expect  an increase of $e^{(0.00008296)} = 1.000083$ in the number of cases of wine that will be sold 
+- LabelAppeal, we expect  an increase of $e^{(0.1332)} = 1.142478$ in the number of cases of wine that will be sold 
+- AcidIndex, we expect  a decrease of $e^{(-0.08705)} = 0.916631$ in the number of cases of wine that will be sold 
+- STARS, we expect  an increase of $e^{(0.3113)} = 1.365199$ in the number of cases of wine that will be sold 
+
+
+Please note that the Quasi-Poisson model leads to the same coefficient estimates as the standard Poisson model but inference is adjusted for over-dispersion. 
+Hence please refer to Poison model Coefficient Analysis for details. \
+
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+qpr <- residuals(fm_qpois,"pearson")
+qphi <- sum(qpr^2)/df.residual(fm_qpois)
+qphi
+```
+
+
+Please note that dispersion parameter in the Quasi-Poisson model is 0.851513; which is similar to that 
+of the classical Poisson Model (1) \
+
+
+
+
+##5.1.3 zero-inflation model (Model 3)
+
+We will explore the zero-inflationregression model Using original data with replacing all missing data with the means.
+
+Next we will proceed with zero-inflation model as another very common occurrence when working with count data is that there will be an overabundance of zero counts which is not consistent with the Poisson model. \
+
+
+
+##5.1.3.1 Coefficient Analysis (Model 3) 
+
+
+
+\newpage
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+library(sandwich)
+library(msm)
+library(pscl)
+mod1zip <- zeroinfl(TARGET~ ., data = winedata_orig, dist = "poisson")
+c3<- summary(mod1zip)
+
+
+kable(c3$coefficients, caption = 'Model 3, Zero Inflation Poisson Original Data')
+
+```
+
+
+"From this output, we have the following estimated model:
+$$ 
+\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}
+$$
+
+
+where
+
+$B_0 = 1.443$ \
+$B_1 = 0.00034$ \
+$B_2 = -0.01211$ \
+$B_3 = 0.00049$ \
+$B_4 = -0.00008$ \
+$B_5 = -0.02241$ \
+$B_6 = 0.00003$ \
+$B_7 = -0.00002$ \
+$B_8 = -0.2845$ \
+$B_9 = 0.00593$ \
+$B_10 = 0.00017$ \
+$B_11 = 0.00689$ \
+$B_12 = 0.233$ \
+$B_13 = -0.01858$ \
+$B_14 = 0.1009$ \
+
+
+and
+
+$x_0 = 1$$ \
+$x_1 = FixedAcidity$ \
+$x_2 = VolatileAcidity$ \
+$x_3 = CitricAcid$ \
+$x_4 = ResidualSugar$ \
+$x_5 = Chlorides$ \
+$x_6 = FreeSulfurDioxide$ \
+$x_7 = TotalSulfurDioxide$ \
+$x_8 = Density$ \
+$x_9 = pH$ \
+$x_10 = Sulphates$ \
+$x_11 = Alcohol$ \
+$x_12 = LabelAppeal$ \
+$x_13 = AcidIndex$ \
+$x_14 = STARS$ \
+
+
+##5.1.3.2 Coefficient Analysis 
+
+The coefficient for Alcohol, LabelAppeal, AcidIndex, STARS are highly significant.  For a unit increase in our highly significant variables:  \
+
+- Alcohol, we expect  an increase of $e^{(0.006886)} = 1.00691$ in the number of cases of wine that will be sold  \
+- LabelAppeal, we expect  an increase of $e^{(0.233)} = 1.262381$ in the number of cases of wine that will be sold  \
+- AcidIndex, we expect  a decrease of $e^{(-0.01858)} = 0.981592$ in the number of cases of wine that will be sold  \
+- STARS, we expect  an increase of $e^{(0.1009)} = 1.106166$ in the number of cases of wine that will be sold  \
+
+
+
+We noticed that some variables have their coefficient sign changed  from negative to positive 
+and vice versa. For instance; 
+
+FixedAcidity changed from -3.045e-04 in model 1 to 3.383e-04 in the zip model
+ResidualSugar changed from 5.676e-05 in model 1 to -7.702e-05 in the zip model 
+TotalSulfurDioxide changed  from 8.296e-05 in model 1  to  -1.783e-05 in the zip model. 
+pH changed from -1.572e-02 in model 1 to  pH 5.931e-03 in the zip model. 
+Sulphates changed  from -1.267e-02 in model 1  to 1.726e-04 in the zip model.
+
+##5.1.3.2 Overdisperson Analysis
+
+Please note that dispersion parameter in the zero-inflation modelis 0.4636815; which is lower than of the classical Poisson Model (1)
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+zippr <- residuals(mod1zip,"pearson")
+zipphi <- sum(zippr^2)/df.residual(mod1zip)
+zipphi
+```
+
+
+Note that the zip model output above does not indicate in any way if our zero-inflated model is an improvement over a standard Poisson regression. We can determine this by running the corresponding standard negative Poisson model and then performing a Vuong test of the two models. 
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+vuong(mod1zip,poismod1)
+```
+
+The Vuong test suggests that the zero-inflated Poisson model is slight improvement over a standard Poisson model.
+
+
+##5.2 Poisson Model (Model 4) 
+
+In this model we will be using the basic Poisson regression model; however using transformed data. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+# transformed data. Poisson Model 2
+
+poismod2 <- glm(TARGET ~ ., data=winedata_trans, family=poisson)
+c4<- summary(poismod2)
+
+kable(c4$coefficients, caption = 'Model 4, Poisson Transformed Data')
+
+```
+
+
+
+##5.2.1 Interpretation Poisson Model 4 
+
+
+From this output, we have the following estimated model:
+$$
+\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}
+$$
+
+
+where 
+
+$B_0 = 2.57$ \
+$B_1 = 0.02283$ \
+$B_2 = 0.00302$ \
+$B_3 = 0.023$ \
+$B_4 = 0.01883$ \
+$B_5 = -0.03495$ \
+$B_6 = -0.00676$ \
+$B_7 = 0.02136$ \
+$B_8 = -1.471$ \
+$B_9 = -0.00057$ \
+$B_10 = -0.0355$ \
+$B_11 = 0.00743$ \
+$B_12 = 0.00013$ \
+$B_13 = -0.02664$ \
+$B_14 = 0.00016$ \
+$B_15 = 0.00008$ \
+$B_16 = -0.2848$ \
+$B_17 = -0.01361$ \
+$B_18 = -0.01194$ \
+$B_19 = 0.00396$ \
+$B_20 = -0.07801$ \
+$B_21 = -0.0256$ \
+$B_22 = -0.7179$ \
+$B_23 = -0.3427$ \
+$B_24 = -0.1734$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = ResidualSugar_MISS$ \
+$x_2 = Chlorides_MISS$ \
+$x_3 = FreeSulfurDioxide_MISS$ \
+$x_4 = TotalSulfurDioxide_MISS$ \
+$x_5 = pH_MISS$ \
+$x_6 = Sulphates_MISS$ \
+$x_7 = Alcohol_MISS$ \
+$x_8 = STARS_MISS$ \
+$x_9 = FixedAcidity_CAP$ \
+$x_10 = VolatileAcidity_CAP$ \
+$x_11 = CitricAcid_CAP$ \
+$x_12 = ResidualSugar_CAP$ \
+$x_13 = Chlorides_CAP$ \
+$x_14 = FreeSulfurDioxide_CAP$ \
+$x_15 = TotalSulfurDioxide_CAP$ \
+$x_16 = Density_CAP$ \
+$x_17 = pH_CAP$ \
+$x_18 = Sulphates_CAP$ \
+$x_19 = Alcohol_CAP$ \
+$x_20 = AcidIndex_CAP$ \
+$x_21 = LabelAppeal_Positive$ \
+$x_22 = STARS_1$ \
+$x_23 = STARS_2$ \
+$x_24 = STARS_3$ \
+
+
+##5.2.1.1 Coefficient Analysis 
+
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.471)} = 0.229696$ in the number of cases of wine that will be sold  \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.0355)} = 0.965123$ in the number of cases of wine that will be sold  \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.07801)} = 0.924955$ in the number of cases of wine that will be sold  \
+- STARS_1, we expect  a decrease of $e^{(-0.7179)} = 0.487776$ in the number of cases of wine that will be sold  \
+- STARS_2, we expect  a decrease of $e^{(-0.3427)} = 0.709851$ in the number of cases of wine that will be sold  \
+- STARS_3, we expect  a decrease of $e^{(-0.1734)} = 0.840801$ in the number of cases of wine that will be sold  \
+
+
+
+Most of the coefficients stayed still significant in the model. However, some variables experienced a decrease in p values especially the ones that have capped; which was expected as in the original they had untreated outliers. For instance   FixedAcidity p-value went from 0.710502 to 0.53372. The same for ResidualSugar variable went from 0.713588 to 0.38090. Again this is due to outliers' treatment. \
+
+   
+In addition, the Poisson model with transformed data has a slight improved as its AIC, 46368, is slightly lower than the model 1 AIC (46700.); which was run against the original data. 
+
+
+##5.2.1.2 Overdisperson Analysis 
+
+
+For our model(2), we see that our Residual deviance is  14376 and degrees of freedom is 12770; our Residual deviance 1.12 greater than our Residual degrees of freedom. Hence, the response is little more variable than what is expected by model (2). Please note that this is a slight improvement from model 1  with original data which was 1.15.
+
+Sine we see that we have over dispersion, let's find out the dispersion parameter $\phi$. 
+Since the variance in the Poisson model is identical to the mean, the expectations are to have $\phi=1$.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+pr2 <- residuals(poismod2,"pearson")
+phi2 <- sum(pr2^2)/df.residual(poismod2)
+phi2
+
+```
+
+Our dispersion parameter for Modle (2) is 0.9667917 which is much closer to 1 than  the dispersion parameter of our Modle (1). 
+
+##5.2.2 Quasi-Poisson with transformed data (model 5)
+
+In this model we will be using the Quasi-Poisson regression model; however using transformed data
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+mod2qpois <- glm(TARGET ~ ., data = winedata_trans, family = quasipoisson)
+c5<- summary(mod2qpois)
+
+
+kable(c5$coefficients, caption = 'Model 5 Quasi-Poisson Transformed Data')
+```
+
+##5.2.2.1 Interpretation Quasi-Poisson model 5 
+
+
+"From this output, we have the following estimated model:
+$$
+ \hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}
+$$
+
+
+where
+
+$B_0 = 2.57$ \
+$B_1 = 0.02283$ \
+$B_2 = 0.00302$ \
+$B_3 = 0.023$ \
+$B_4 = 0.01883$ \
+$B_5 = -0.03495$ \
+$B_6 = -0.00676$ \
+$B_7 = 0.02136$ \
+$B_8 = -1.471$ \
+$B_9 = -0.00057$ \
+$B_10 = -0.0355$ \
+$B_11 = 0.00743$ \
+$B_12 = 0.00013$ \
+$B_13 = -0.02664$ \
+$B_14 = 0.00016$ \
+$B_15 = 0.00008$ \
+$B_16 = -0.2848$ \
+$B_17 = -0.01361$ \
+$B_18 = -0.01194$ \
+$B_19 = 0.00396$ \
+$B_20 = -0.07801$ \
+$B_21 = -0.0256$ \
+$B_22 = -0.7179$ \
+$B_23 = -0.3427$ \
+$B_24 = -0.1734$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = ResidualSugar_MISS$ \
+$x_2 = Chlorides_MISS$ \
+$x_3 = FreeSulfurDioxide_MISS$ \
+$x_4 = TotalSulfurDioxide_MISS$ \
+$x_5 = pH_MISS$ \
+$x_6 = Sulphates_MISS$ \
+$x_7 = Alcohol_MISS$ \
+$x_8 = STARS_MISS$ \
+$x_9 = FixedAcidity_CAP$ \
+$x_10 = VolatileAcidity_CAP$ \
+$x_11 = CitricAcid_CAP$ \
+$x_12 = ResidualSugar_CAP$ \
+$x_13 = Chlorides_CAP$ \
+$x_14 = FreeSulfurDioxide_CAP$ \
+$x_15 = TotalSulfurDioxide_CAP$ \
+$x_16 = Density_CAP$ \
+$x_17 = pH_CAP$ \
+$x_18 = Sulphates_CAP$ \
+$x_19 = Alcohol_CAP$ \
+$x_20 = AcidIndex_CAP$ \
+$x_21 = LabelAppeal_Positive$ \
+$x_22 = STARS_1$ \
+$x_23 = STARS_2$ \
+$x_24 = STARS_3$ \
+
+
+##5.2.2.2 Coefficient Analysis 
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.471)} = 0.229696$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.0355)} = 0.965123$ in the number of cases of wine that will be sold  \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.07801)} = 0.924955$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.7179)} = 0.487776$ in the number of cases of wine that will be sold  \
+- STARS_2, we expect  a decrease of $e^{(-0.3427)} = 0.709851$ in the number of cases of wine that will be sold  \
+- STARS_3, we expect  a decrease of $e^{(-0.1734)} = 0.840801$ in the number of cases of wine that will be sold  \
+
+
+Please note that the Quasi-Poisson model leads to the same coefficient estimates as the standard Poisson model but inference is adjusted for over-dispersion. 
+Hence please refer to Poison model Coefficient Analysis for details. 
+
+Also, please note that dispersion parameter in the Quasi-Poisson model is  0.9667917; which is similar to that 
+of the classical Poisson Model (2)
+
+
+##5.2.3 zero-inflation  with transformed data (Model 6) 
+
+In this model we will be using the zero-inflation regression model; however using transformed data
+
+Next we will proceed with zero-inflation model as another very common occurrence when working with count data is that there will be an overabundance of zero counts which is not consistent with the Poisson model.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+library(sandwich)
+library(msm)
+library(pscl)
+#mod2zip <- zeroinfl(TARGET~ ., data = winedata_trans, dist = "poisson")
+#summary(mod2zip)
+
+#####
+
+quine3 <- as.data.frame(model.matrix(poismod2)) ## all regressors 
+quine3 <- quine3[, !is.na(coef(poismod2))]      ## only identified 
+quine3 <- quine3[, -1]                     ## omit intercept 
+quine3$TARGET <- winedata_trans$TARGET                 ## add response 
+
+## re-fit glm.nb() 
+fm1a <- glm(TARGET ~ ., data = quine3, family="poisson") 
+## equivalent to previous fit 
+logLik(fm1a) - logLik(poismod2) 
+coef(fm1a) - na.omit(coef(poismod2)) 
+
+## fit zeroinfl(), now works 
+mod2zip<- zeroinfl(TARGET ~ . | 1, data = quine3, dist = "poisson") 
+
+c6<- summary(mod2zip)
+
+
+```
+
+\newpage
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+kable(c6$coefficients, caption = 'Model 6, Zero Inflation Poisson Transformed Data')
+```
+
+
+\newpage
+
+##5.2.3.1 Interpretation for Zero Inflation Model  (Model 6) 
+
+
+
+From this output, we have the following estimated model:
+$$ 
+\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}
+$$
+
+where 
+
+$B_0 = 2.474$ \
+$B_1 = 0.02186$ \
+$B_2 = 0.00739$ \
+$B_3 = 0.02014$ \
+$B_4 = 0.02353$ \
+$B_5 = -0.0277$ \
+$B_6 = -0.00618$ \
+$B_7 = 0.01696$ \
+$B_8 = -1.36$ \
+$B_9 = -0.00045$ \
+$B_10 = -0.03032$ \
+$B_11 = 0.00559$ \
+$B_12 = 0.00008$ \
+$B_13 = -0.02118$ \
+$B_14 = 0.00015$ \
+$B_15 = 0.00006$ \
+$B_16 = -0.2951$ \
+$B_17 = -0.00806$ \
+$B_18 = -0.0094$ \
+$B_19 = 0.00478$ \
+$B_20 = -0.06702$ \
+$B_21 = -0.02722$ \
+$B_22 = -0.6212$ \
+$B_23 = -0.3267$ \
+$B_24 = -0.173$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = ResidualSugar_MISS$ \
+$x_2 = Chlorides_MISS$ \
+$x_3 = FreeSulfurDioxide_MISS$ \
+$x_4 = TotalSulfurDioxide_MISS$ \
+$x_5 = pH_MISS$ \
+$x_6 = Sulphates_MISS$ \
+$x_7 = Alcohol_MISS$ \
+$x_8 = STARS_MISS$ \
+$x_9 = FixedAcidity_CAP$ \
+$x_10 = VolatileAcidity_CAP$ \
+$x_11 = CitricAcid_CAP$ \
+$x_12 = ResidualSugar_CAP$ \
+$x_13 = Chlorides_CAP$ \
+$x_14 = FreeSulfurDioxide_CAP$ \
+$x_15 = TotalSulfurDioxide_CAP$ \
+$x_16 = Density_CAP$ \
+$x_17 = pH_CAP$ \
+$x_18 = Sulphates_CAP$ \
+$x_19 = Alcohol_CAP$ \
+$x_20 = AcidIndex_CAP$ \
+$x_21 = LabelAppeal_Positive$ \
+$x_22 = STARS_1$ \
+$x_23 = STARS_2$ \
+$x_24 = STARS_3$ \
+
+
+##5.2.3.2 Coefficient Analysis \
+
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables:  \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.36)} = 0.256661$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.03032)} = 0.970135$ in the number of cases of wine that will be sold  \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.06702)} = 0.935176$ in the number of cases of wine that will be sold  \
+- STARS_1, we expect  a decrease of $e^{(-0.6212)} = 0.537299$ in the number of cases of wine that will be sold  \
+- STARS_2, we expect  a decrease of $e^{(-0.3267)} = 0.7213$ in the number of cases of wine that will be sold  \
+- STARS_3, we expect  a decrease of $e^{(-0.173)} = 0.841138$ in the number of cases of wine that will be sold  \
+
+
+Sine we see that we have over dispersion, let's find out the dispersion parameter $\phi$. 
+Since the variance in the Poisson model is identical to the mean, the expectations are to have $\phi=1$.
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+zippr2 <- residuals(mod2zip,"pearson")
+zipphi2 <- sum(zippr2^2)/df.residual(mod2zip)
+zipphi2
+
+```
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+vuong(mod2zip,poismod2)
+```
+
+
+The Vuong test suggests that the zero-inflated Poisson model is a slight improvement over a standard Poisson model using transformed data. 
+
+
+##5.3 Negative Binomial models
+
+A more formal way to accommodate over-dispersion in a count data regression model is to
+use a negative binomial model. Hence we will explore the negative binomial model both in original data as well as transformed data. 
+
+##5.3.1 Negative Binomial with original data (Model 7) 
+
+
+We will explore the Negative Binomial model Using original data with replacing all missing data with the means. 
+
+##5.3.1.1 Negative Binomial vs Poisson Coefficients 
+
+
+As per the below table, it is worth noting that the classical Poisson Coefficients are similar to that of the Negative Binomial's. \
+
+One possible explanation is that if all we care about is fitting separate means to disjoint subsets of our sample, then GLMs will always yield $\hat \mu_j$=$\hat y_j$  for each subset $j$, so the actual error structure and parametrization of the density both become irrelevant to the estimation. In other words, Fitting orthogonal categorical factors by maximum likelihood is equivalent to fitting separate means to disjoint subsets of our sample, so this explains why Poisson and negative binomial GLMs yield the same parameter estimates
+
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+nbmod3 = glm.nb(TARGET ~ ., data = winedata_orig)
+kable(rbind(data.frame("Poisson Coeff"= poismod1$coefficients,"Negative Binom Coeffi" = nbmod3$coefficients)))
+
+```
+
+
+##5.3.1.2 Interpretation Negative Binomial Model 7 
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+
+c7<- summary(nbmod3)
+kable(c7$coefficients, caption = 'Model 7, Negative binomial Original Data')        
+
+#library(vcd)
+#distplot(winedata_orig$TARGET, type = "nbinomial")
+#distplot(winedata_orig$TARGET, type = "poisson")
+
+
+```
+
+
+
+From the summary output, we have the following estimated model:
+$$
+ \hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}
+$$
+
+
+where 
+
+$B_0 = 1.526$ \
+$B_1 = -0.0003$ \
+$B_2 = -0.03343$ \
+$B_3 = 0.00777$ \
+$B_4 = 0.00006$ \
+$B_5 = -0.04142$ \
+$B_6 = 0.00013$ \
+$B_7 = 0.00008$ \
+$B_8 = -0.2824$ \
+$B_9 = -0.01572$ \
+$B_10 = -0.01267$ \
+$B_11 = 0.0022$ \
+$B_12 = 0.1332$ \
+$B_13 = -0.08705$ \
+$B_14 = 0.3113$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = FixedAcidity$ \
+$x_2 = VolatileAcidity$ \
+$x_3 = CitricAcid$ \
+$x_4 = ResidualSugar$ \
+$x_5 = Chlorides$ \
+$x_6 = FreeSulfurDioxide$ \
+$x_7 = TotalSulfurDioxide$ \
+$x_8 = Density$ \
+$x_9 = pH$ \
+$x_10 = Sulphates$ \
+$x_11 = Alcohol$ \
+$x_12 = LabelAppeal$ \
+$x_13 = AcidIndex$ \
+$x_14 = STARS$ \
+
+
+
+##5.3.1.2 Coefficient Analysis
+
+The coefficient for VolatileAcidity, FreeSulfurDioxide, TotalSulfurDioxide, LabelAppeal, AcidIndex, STARS are highly significant.  For a unit increase in our highly significant variables:  \
+
+- VolatileAcidity, we expect  a decrease of $e^{(-0.03343)} = 0.967123$ in the number of cases of wine that will be sold  \
+- FreeSulfurDioxide, we expect  an increase of $e^{(0.0001254)} = 1.000125$ in the number of cases of wine that will be sold  \
+- TotalSulfurDioxide, we expect  an increase of $e^{(0.00008296)} = 1.000083$ in the number of cases of wine that will be sold \
+- LabelAppeal, we expect  an increase of $e^{(0.1332)} = 1.142478$ in the number of cases of wine that will be sold  \
+- AcidIndex, we expect  a decrease of $e^{(-0.08705)} = 0.916631$ in the number of cases of wine that will be sold  \
+- STARS, we expect  an increase of $e^{(0.3113)} = 1.365199$ in the number of cases of wine that will be sold  \
+
+
+In addition, Negative Binomial Model with original data has an AIC value, 46703, is slightly higher than of model 1 AIC (46700.); which was run against the original data. 
+
+##5.3.1.3 Overdisperson Analysis Negative Binomial 
+
+For our model(3), we see that our Residual deviance is   14728 and degrees of freedom is 12780; our Residual deviance 1.15 greater than our Residual degrees of freedom, which similar to that of classical Poisson model (1)  with original data which was also 1.15.
+
+Sine we see that we have over dispersion, let's find out the dispersion parameter $\phi$. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+nbpr3 <- residuals(nbmod3,"pearson")
+nbphi3 <- sum(nbpr3^2)/df.residual(nbmod3)
+nbphi3
+```
+
+The Negative Binomial dispersion parameter for Modle (3) is  0.851477 which is similar to that of the classical Poisson  Model (1). Hence theta value of the of the Negative binomial has not had much impact in improving in having the variance approximates to the mean. 
+
+##5.3.2 zero-inflation model Negative Binomial (Model 8) 
+
+We will explore the Negative Binomial zero-inflation model Using original data with replacing all missing data with the means. 
+
+Next we will proceed with the Negative Binomial zero-inflation model as it is another very common occurrence when working with count data using original data. 
+
+\newpage
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+library(sandwich)
+library(msm)
+library(pscl)
+nbmod3zip <- zeroinfl(TARGET~ ., data = winedata_orig, dist = "negbin")
+c8<- summary(nbmod3zip)
+
+kable(c8$coefficients, caption = 'Model 8, Zero Inflation Negative binomial Original Data')        
+
+```
+
+
+##5.3.2.1 Interpretation Zero Inflation Negative Binomial Model 
+
+
+From this output, we have the following estimated model:
+$$ 
+\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}}
+$$
+
+where  \
+
+$B_0 = 1.444$ \
+$B_1 = 0.00034$ \
+$B_2 = -0.01211$ \
+$B_3 = 0.00049$ \
+$B_4 = -0.00008$ \
+$B_5 = -0.02241$ \
+$B_6 = 0.00003$ \
+$B_7 = -0.00002$ \
+$B_8 = -0.2847$ \
+$B_9 = 0.00593$ \
+$B_10 = 0.00017$ \
+$B_11 = 0.00689$ \
+$B_12 = 0.233$ \
+$B_13 = -0.01858$ \
+$B_14 = 0.1009$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = FixedAcidity$ \
+$x_2 = VolatileAcidity$ \
+$x_3 = CitricAcid$ \
+$x_4 = ResidualSugar$ \
+$x_5 = Chlorides$ \
+$x_6 = FreeSulfurDioxide$ \
+$x_7 = TotalSulfurDioxide$ \
+$x_8 = Density$ \
+$x_9 = pH$ \
+$x_10 = Sulphates$ \
+$x_11 = Alcohol$ \
+$x_12 = LabelAppeal$ \
+$x_13 = AcidIndex$ \
+$x_14 = STARS$ \
+
+
+
+##5.3.2.2 Coefficient Analysis 
+
+The coefficient for Alcohol, LabelAppeal, AcidIndex, STARS, Log(theta) are highly significant.  For a unit increase in our highly significant variables:  \
+
+- Alcohol, we expect  an increase of $e^{(0.006886)} = 1.00691$ in the number of cases of wine that will be sold  \
+- LabelAppeal, we expect  an increase of $e^{(0.233)} = 1.262381$ in the number of cases of wine that will be sold  \
+- AcidIndex, we expect  a decrease of $e^{(-0.01858)} = 0.981592$ in the number of cases of wine that will be sold  \
+- STARS, we expect  an increase of $e^{(0.1009)} = 1.106166$ in the number of cases of wine that will be sold  \
+- Log(theta), we expect  an increase of $e^{(16.96)} = 23207823.508859$ in the number of cases of wine that will be sold  \
+
+let's find out the dispersion parameter $\phi$. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+nbzpr3 <- residuals(nbmod3zip,"pearson")
+nbzphi3 <- sum(nbzpr3^2)/df.residual(nbmod3zip)
+nbzphi3
+
+```
+
+Note that the zero inflation model output above does not indicate in any way if our zero-inflated model is an improvement over a standard Negative Binomial regression. We can determine this by running the corresponding standard Negative Binomial model and then performing a Vuong test of the two models.
+
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+vuong(nbmod3zip,nbmod3)
+```
+
+
+The Vuong test suggests that the zero-inflated Negative Binomial model is slight improvement over a standard Negative Binomial model.
+Please note that The model1 from the vuong() function output in this case refers to the first argument in our vuong(mod3zip,nbmod3) function which is the zero-inflation model Negative Binomial Model (3) 
+
+##5.3.3 Negative Binomial with transformed data. (Model 9)  
+
+In this model we will be using the basic Negative Binomial model; however using transformed data. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+#transformed data. Negative Binomial model 4 
+
+nbmod4 = glm.nb(TARGET ~ ., data = winedata_trans)
+c9<- summary(nbmod4)
+
+kable(c9$coefficients, caption = 'Model 9, Negative binomial Transformed Data')        
+
+```
+
+##5.3.3.1 Interpretation Negative Binomial Model 9
+
+***Note***
+As per the below table, even for transformed data, it is worth noting that the classical Poisson Coefficients are similar to that of the Negative Binomial's for the same reason as was the case for original data. 
+Please refer to Section: 5.3.1.1 "Negative Binomial vs Poisson Coefficients" for more details. \
+
+
+
+In addition, the Negative Binomial model with transformed data has an improved AIC of 46370, as it is lower than the Negative Binomial model 3 AIC (46703); which was run against the original data. \
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+kable(rbind(data.frame("Poisson Coeff"= poismod2$coefficients,"Negative Binom Coeffi" = nbmod4$coefficients)))
+
+```
+
+
+##5.3.3.2 Interpretation Negative Binomial Model 9 
+
+
+
+From this output, we have the following estimated model:
+$$ \hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}
+$$
+
+
+where 
+
+$B_0 = 2.57$ \
+$B_1 = 0.02283$ \
+$B_2 = 0.00302$ \
+$B_3 = 0.023$ \
+$B_4 = 0.01883$ \
+$B_5 = -0.03496$ \
+$B_6 = -0.00676$ \
+$B_7 = 0.02136$ \
+$B_8 = -1.471$ \
+$B_9 = -0.00057$ \
+$B_10 = -0.0355$ \
+$B_11 = 0.00743$ \
+$B_12 = 0.00013$ \
+$B_13 = -0.02664$ \
+$B_14 = 0.00016$ \
+$B_15 = 0.00008$ \
+$B_16 = -0.2848$ \
+$B_17 = -0.01361$ \
+$B_18 = -0.01194$ \
+$B_19 = 0.00396$ \
+$B_20 = -0.07801$ \
+$B_21 = -0.0256$ \
+$B_22 = -0.7179$ \
+$B_23 = -0.3427$ \
+$B_24 = -0.1734$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = ResidualSugar_MISS$ \
+$x_2 = Chlorides_MISS$ \
+$x_3 = FreeSulfurDioxide_MISS$ \
+$x_4 = TotalSulfurDioxide_MISS$ \
+$x_5 = pH_MISS$ \
+$x_6 = Sulphates_MISS$ \
+$x_7 = Alcohol_MISS$ \
+$x_8 = STARS_MISS$ \
+$x_9 = FixedAcidity_CAP$ \
+$x_10 = VolatileAcidity_CAP$ \
+$x_11 = CitricAcid_CAP$ \
+$x_12 = ResidualSugar_CAP$ \
+$x_13 = Chlorides_CAP$ \
+$x_14 = FreeSulfurDioxide_CAP$ \
+$x_15 = TotalSulfurDioxide_CAP$ \
+$x_16 = Density_CAP$ \
+$x_17 = pH_CAP$ \
+$x_18 = Sulphates_CAP$ \
+$x_19 = Alcohol_CAP$ \
+$x_20 = AcidIndex_CAP$ \
+$x_21 = LabelAppeal_Positive$ \
+$x_22 = STARS_1$ \
+$x_23 = STARS_2$ \
+$x_24 = STARS_3$ \
+
+
+##5.3.3.3 Coefficient Analysis 
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.471)} = 0.229696$ in the number of cases of wine that will be sold  \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.0355)} = 0.965123$ in the number of cases of wine that will be sold  \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.07801)} = 0.924955$ in the number of cases of wine that will be sold  \
+- STARS_1, we expect  a decrease of $e^{(-0.7179)} = 0.487776$ in the number of cases of wine that will be sold  \
+- STARS_2, we expect  a decrease of $e^{(-0.3427)} = 0.709851$ in the number of cases of wine that will be sold  \
+- STARS_3, we expect  a decrease of $e^{(-0.1734)} = 0.840801$ in the number of cases of wine that will be sold  \
+
+
+
+##5.3.3.4 Overdisperson Analysis Negative Binomial Model 9 
+
+For our model(4), we see that our Residual deviance is 14375 and degrees of freedom is  12770; our Residual deviance 1.12 greater than our Residual degrees of freedom, which is similar to that of classical Poisson model (1)  with transformed data which was also 1.12.
+
+Sine we see that we have over dispersion, let's find out the dispersion parameter $\phi$. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+nbpr4 <- residuals(nbmod4,"pearson")
+nbphi4 <- sum(nbpr4^2)/df.residual(nbmod4)
+nbphi4
+```
+
+Our dispersion parameter for Modle (4) is 0.9667395 which is much closer to 1 than  the dispersion parameter of our Modle (3). However, it is slightly lower than of the classical Poisson model using transformed data.
+
+##5.3.4 zero-inflation model NB with transformed data (Model 10) 
+
+In this model we will be using the Negative Binomial zero-inflation model; however using transformed data. \
+
+Next we will proceed with the Negative Binomial zero-inflation model as it is another very common occurrence when working with count data using transformed data. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+
+
+library(sandwich)
+library(msm)
+library(pscl)
+
+quine4 <- as.data.frame(model.matrix(nbmod4)) ## all regressors 
+quine4 <- quine4[, !is.na(coef(nbmod4))]      ## only identified 
+quine4 <- quine4[, -1]                     ## omit intercept 
+quine4$TARGET <- winedata_trans$TARGET                 ## add response 
+
+## re-fit glm.nb() 
+fm1a <- glm.nb(TARGET ~ ., data = quine4)
+## equivalent to previous fit 
+logLik(fm1a) - logLik(nbmod4) 
+coef(fm1a) - na.omit(coef(nbmod4)) 
+
+## fit zeroinfl(), now works 
+nbmod4zip<- zeroinfl(TARGET ~ . | 1, data = quine4, dist = "negbin") 
+
+c10<- summary(nbmod4zip)
+
+
+
+#########################
+
+
+```
+
+\newpage 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+kable(c10$coefficients, caption = 'Model 10, Zero Inflation Negative binomial Transformed Data')        
+```
+
+
+##5.3.4.1 Interpretation Zero Inflation Negative Binomial Model 10
+
+
+
+From this output, we have the following estimated model:
+$$
+\hat y = e^{B_0x_0+B_1x_1+B_2x_2+ B_3x_3+B_4x_4+ B_5x_5+B_6x_6+ B_7x_7+B_8x_8+ B_9x_9+B_{10}x_{10}+B_{11}x_{11}+B_{12}x_{12}+ B_{13}x_{13}+B_{14}x_{14}+ B_{15}x_{15}+ B_{16}x_{16}+ B_{17}x_{17}+ B_{18}x_{18}+ B_{19}x_{19}+ B_{20}x_{20}+ B_{21}x_{21}+ B_{22}x_{22}+ B_{23}x_{23}+ B_{24}x_{24}}
+$$
+
+
+where 
+
+$B_0 = 2.474 $ \
+$B_1 = 0.02185 $ \
+$B_2 = 0.00739$ \
+$B_3 = 0.0201$ \
+$B_4 = 0.02352$ \
+$B_5 = -0.02769$ \
+$B_6 = -0.00619$ \
+$B_7 = 0.017$ \
+$B_8 = -1.36$ \
+$B_9 = -0.00045$ \
+$B_10 = -0.03032$ \
+$B_11 = 0.00559$ \
+$B_12 = 0.00008$ \
+$B_13 = -0.02117$ \
+$B_14 = 0.00015$ \
+$B_15 = 0.00006$ \
+$B_16 = -0.2951$ \
+$B_17 = -0.00806$ \
+$B_18 = -0.0094$ \
+$B_19 = 0.00478$ \
+$B_20 = -0.06702$ \
+$B_21 = -0.02721$ \
+$B_22 = -0.6211$ \
+$B_23 = -0.3267$ \
+$B_24 = -0.173$ \
+
+
+and
+
+$x_0 = 1$ \
+$x_1 = ResidualSugar_MISS$ \
+$x_2 = Chlorides_MISS$ \
+$x_3 = FreeSulfurDioxide_MISS$ \
+$x_4 = TotalSulfurDioxide_MISS$ \
+$x_5 = pH_MISS$ \
+$x_6 = Sulphates_MISS$ \
+$x_7 = Alcohol_MISS$ \
+$x_8 = STARS_MISS$ \
+$x_9 = FixedAcidity_CAP$ \
+$x_10 = VolatileAcidity_CAP$ \
+$x_11 = CitricAcid_CAP$ \
+$x_12 = ResidualSugar_CAP$ \
+$x_13 = Chlorides_CAP$ \
+$x_14 = FreeSulfurDioxide_CAP$ \
+$x_15 = TotalSulfurDioxide_CAP$ \
+$x_16 = Density_CAP$ \
+$x_17 = pH_CAP$ \
+$x_18 = Sulphates_CAP$ \
+$x_19 = Alcohol_CAP$ \
+$x_20 = AcidIndex_CAP$ \
+$x_21 = LabelAppeal_Positive$ \
+$x_22 = STARS_1$ \
+$x_23 = STARS_2$ \
+$x_24 = STARS_3$ \
+
+
+##5.3.4.2 Coefficient Analysis 
+
+
+The coefficient for STARS_MISS, VolatileAcidity_CAP, AcidIndex_CAP, STARS_1, STARS_2, STARS_3 are highly significant.  For a unit increase in our highly significant variables: \
+
+- STARS_MISS, we expect  a decrease of $e^{(-1.36)} = 0.256661$ in the number of cases of wine that will be sold \
+- VolatileAcidity_CAP, we expect  a decrease of $e^{(-0.03032)} = 0.970135$ in the number of cases of wine that will be sold \
+- AcidIndex_CAP, we expect  a decrease of $e^{(-0.06702)} = 0.935176$ in the number of cases of wine that will be sold \
+- STARS_1, we expect  a decrease of $e^{(-0.6211)} = 0.537353$ in the number of cases of wine that will be sold \
+- STARS_2, we expect  a decrease of $e^{(-0.3267)} = 0.7213$ in the number of cases of wine that will be sold \
+- STARS_3, we expect  a decrease of $e^{(-0.173)} = 0.841138$ in the number of cases of wine that will be sold \
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+nbzpr4 <- residuals(nbmod4zip,"pearson")
+nbzphi4 <- sum(nbzpr4^2)/df.residual(nbmod4zip)
+nbzphi4
+```
+
+
+Again, Please note that the zero inflation model output above does not indicate in any way if our zero-inflated model is an improvement over a standard Negative Binomial regression. We can determine this by running the corresponding standard Negative Binomial model and then performing a Vuong test of the two models against the transformed data.
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+vuong(nbmod4zip,nbmod4)
+
+```
+
+
+The Vuong test suggests that the zero-inflated Negative Binomial model is slight improvement over a standard Negative Binomial model uing the transformed data.
+Please note that The model1 from the vuong() function output in this case refers to the first argument in our vuong(mod4zip,nbmod4) function which is the zero-inflation model Negative Binomial Model (4) 
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+#step1 <- step(fm_qpois,direction="backward",test="F")
+#summary(step1)
+```
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+library(AICcmodavg)
+#AICc(list(fm_qpois))
+AICc(fm_qpois, return.K = FALSE, second.ord = TRUE,nobs = NULL, c.hat = 1)
+      
+```
+
+
+
+##5.4  Linear Regression models
+
+Although it is highly recommended for continuous variables instead of count variables, we will also create two linear regression models. 
+
+##5.4.1 Linear Regression Model with original data (Model 11)
+
+We will explore the Linear models Using original data with replacing all missing data with the means. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+
+lmod5 = lm(TARGET ~ ., data = winedata_orig)
+c11<- summary(lmod5)
+
+kable(c11$coefficients, caption = 'Model 11, Linear Model Original Data')        
+
+
+x <- summary(lmod5) 
+
+rse <- round(x$sigma, 4)
+r2 <- round(x$r.squared, 4)
+ar2 <- round(x$adj.r.squared,4)
+fstat <- paste0(round(x$fstatistic[1],0), " on ", x$fstatistic[2], " and ", x$fstatistic[3]," DF")
+
+
+y<- as.data.frame(coef(x))
+
+PositiveImpact <- ''
+NegativeImpact <- ''
+Lin_eq <- as.character(round(y[1,1],4))
+Sig_Impact <- '' 
+
+for(i in 2:nrow(y)) {
+
+    if(y[i,1] >= 0)
+        
+        PositiveImpact <- paste0(rownames(y)[i], ", ", PositiveImpact)
+    else 
+        NegativeImpact <- paste0(rownames(y)[i], ", ", NegativeImpact)
+
+    
+    if(y[i,4] <= 0.05 ) 
+        Sig_Impact <- paste0(rownames(y)[i], ", ", Sig_Impact)
+
+
+    Lin_eq <- paste0(Lin_eq, ifelse(y[i,1]>=0, " + ", " - "), as.character(abs(round(y[i,1],6))), " * ", rownames(y)[i])
+}
+
+PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
+NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
+Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
+
+```
+
+##5.4.1.1 Interpretation of Linear Model 11
+
+Based on the summary for Linear Model 5, below are the characteristics :
+
+- The Residual standard error is `r rse`
+- Multiple R-squared: `r r2`
+- Adjusted R-squared: `r ar2`
+- F-statistic: `r fstat`
+- p-value: < 2.2e-16
+
+
+Based on the available coefficients, we can make the following observations:  
+
+- Positive Impact - The following variables have a positive impact on TARGET, meaning an increase in the values of these variables leads to an increase in the number of cases sold: `r PositiveImpact`
+
+- Negative Impact - The following variables have a negative impact on TARGET, meaning an increase in the values of these variables leads to an decrease in the number of cases sold: `r NegativeImpact`
+
+- The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
+
+- Finally, the Linear Model equation is given by the following: 
+
+`r Lin_eq`
+
+
+
+##5.4.2 Linear Regression Model with  transformed data (Model 12) 
+
+In this model we will be using the Linear Regression model; however using transformed data. 
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+lmod6 = lm(TARGET ~ ., data = winedata_trans)
+c12<- summary(lmod6)
+
+
+kable(c12$coefficients, caption = 'Model 11, Linear Model Transformed Data')        
+
+x <- summary(lmod6) 
+
+
+rse <- round(x$sigma, 4)
+r2 <- round(x$r.squared, 4)
+ar2 <- round(x$adj.r.squared,4)
+fstat <- paste0(round(x$fstatistic[1],0), " on ", x$fstatistic[2], " and ", x$fstatistic[3]," DF")
+
+
+y<- as.data.frame(coef(x))
+
+PositiveImpact <- ''
+NegativeImpact <- ''
+Lin_eq <- as.character(round(y[1,1],4))
+Sig_Impact <- '' 
+
+for(i in 2:nrow(y)) {
+
+    if(y[i,1] >= 0)
+        
+        PositiveImpact <- paste0(rownames(y)[i], ", ", PositiveImpact)
+    else 
+        NegativeImpact <- paste0(rownames(y)[i], ", ", NegativeImpact)
+
+    
+    if(y[i,4] <= 0.05 ) 
+        Sig_Impact <- paste0(rownames(y)[i], ", ", Sig_Impact)
+
+
+    Lin_eq <- paste0(Lin_eq, ifelse(y[i,1]>=0, " + ", " - "), as.character(abs(round(y[i,1],6))), " * ", rownames(y)[i])
+}
+
+PositiveImpact <- substr(PositiveImpact, 1, str_length(PositiveImpact)-2)
+NegativeImpact <- substr(NegativeImpact, 1, str_length(NegativeImpact)-2)
+Sig_Impact <- substr(Sig_Impact, 1, str_length(Sig_Impact)-2)
+
+
+# PositiveImpact
+# NegativeImpact
+# Lin_eq
+# Sig_Impact
+
+```
+
+##5.4.2.1 Interpretation of Linear Model 12 
+
+
+Based on the summary for Linear Model 6, below are the characteristics :
+
+- The Residual standard error is `r rse`
+- Multiple R-squared: `r r2`
+- Adjusted R-squared: `r ar2`
+- F-statistic: `r fstat`
+- p-value: < 2.2e-16
+
+
+
+Based on the available coefficients, we can make the following observations:  
+
+- Positive Impact - The following variables have a positive impact on TARGET, meaning an increase in the values of these variables leads to an increase in the number of cases sold: `r PositiveImpact`
+
+- Negative Impact - The following variables have a negative impact on TARGET, meaning an increase in the values of these variables leads to an decrease in the number of cases sold: `r NegativeImpact`
+
+- The following variables have a'significant' impact. These are the more important predictors for TARGET: `r Sig_Impact` 
+
+- Finally, the Linear Model equation is given by the following: 
+
+`r Lin_eq`
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results= 'hide'}
+step5 <- step(lmod5,direction="backward",test="F")
+AIC(step5)
+step6 <- step(lmod6,direction="backward",test="F")
+```
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+AIC(step5)
+AIC(step6)
+```
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+lmpr5 <- residuals(lmod5,"pearson")
+lmphi5 <- sum(lmpr5^2)/df.residual(lmod5)
+lmphi5
+```
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE, results='hide'}
+lmpr6 <- residuals(lmod6,"pearson")
+lmphi6 <- sum(lmpr6^2)/df.residual(lmod6)
+lmphi6
+```
+
+#6 Model Selection 
+
+Before we proceed with our model selection, let take a quick look at our models inventory. We have 12 models using a combination of three different type distributions.  First we created our models using GLM distribution; then we created few using the zero Augmented distribution, and finally the Linear distribution.
+
+##6.1 Model Selection Strategy 
+
+
+Our models selection will be based on the best AIC/ phi =Dispersion parameter for the GLM, AIC for Linear regression; and Vuong test for the zero Augmented distribution.\
+
+
+Below is summary table of model selection strategy:
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+modselect<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/modelselection2.csv")
+kable(modselect, caption = "Model Selection Strategy")
+
+
+```
+
+
+
+Below is a Model Selection KPI table. It is a summary of the major indicators we will use to select the best fit.  To selefct the best model we will be using a combination of the AIC, Dispersion parameter, as well as the Vuong closeness test which is specifically for the zero inflation distributions. \
+
+However, since our data is count data and the problem of dispersion occurs more frequently in count data set, we will be using Dispersion parameter first in our process elimination, followed by AIC, and Voung test. \
+
+Hence, the "Model Selection KPI" table below is sorted using the Dispersion parameter.
+
+
+
+```{r, echo=FALSE , message=FALSE, warning=FALSE}
+modmetrics<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/modelmetrics2.csv")
+kable(modmetrics, caption = "Model Selection KPI")
+```
+
+
+Therefore, from the above table, we can easily eliminate the Linear models both for in the original and transformed data as they respectively have a dispersion parameter of 1.867863 and 1.753383 which are much higher than 1. \
+
+
+Next we will eliminate the zero inflation Negative Binomial and Poisson for the original as they respectively have a dispersion parameter of 0.4637071 and 0.4636815which are much lower than 1. \
+
+
+We will also eliminate the zero inflation Negative Binomial and Poisson for the transformed data as they respectively have a dispersion parameter of 0.8386927 and 0.8386535 which are not close to 1 compared to the rest of the models. \
+
+
+Also, based on dispersion parameter, we will eliminate the Poission, Quasi-Poisson,  and Negative  binomial with original data as they respectively have a dispersion parameter of 0.851513, 0.85152, and 0.851477 which are not close to 1 compared to the rest of the models. \
+
+
+Finally we are left with the following 3 models: \
+
+
+Poisson with transformed  data,  with Dispersion parameter   = 0.9667917
+Quasi-Poisson with transformed data with Dispersion parameter = 0.9667917
+Negative  binomial /transformed  data Dispersion parameter = 0.9667395 \
+
+
+Since we have a virtual tie in the remaining 3 models from dispersion parameter perspective, we will use the second metric, AIC, as defining factor for our remaining 3 model selection. Hence, the Poisson model with transformed data as it has an AIC of 46368 compared to the Negative Binomial which is 46370.
+
+
+
+#7 Prediction Using Evaluation Data 
+
+
+Now that we have selected the final model, we will go ahead and use this model to predict the results for the evaluation dataset. After transforming the data to meet the needs of the trained model, we will apply the model.
+
+
+
+##7.1 Tranformation of Evaluation Data 
+
+First we need to transform the evaluation dataset to account for all the predictors that were used in the model.
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
+
+winedata_eval<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/HW5/wine-evaluation-data.csv")
+
+
+winedata_eval$ResidualSugar_MISS <- ifelse(is.na(winedata_eval$ResidualSugar), 1, 0)
+winedata_eval$Chlorides_MISS <- ifelse(is.na(winedata_eval$Chlorides), 1, 0)
+winedata_eval$FreeSulfurDioxide_MISS <- ifelse(is.na(winedata_eval$FreeSulfurDioxide), 1, 0)
+winedata_eval$TotalSulfurDioxide_MISS <- ifelse(is.na(winedata_eval$TotalSulfurDioxide), 1, 0)
+winedata_eval$pH_MISS <- ifelse(is.na(winedata_eval$pH), 1, 0)
+winedata_eval$Sulphates_MISS <- ifelse(is.na(winedata_eval$Sulphates), 1, 0)
+winedata_eval$Alcohol_MISS <- ifelse(is.na(winedata_eval$Alcohol), 1, 0)
+winedata_eval$STARS_MISS <- ifelse(is.na(winedata_eval$STARS), 1, 0)
+
+winedata_eval$ResidualSugar[is.na(winedata_eval$ResidualSugar)] <- mean(winedata_eval$ResidualSugar, na.rm = T) 
+winedata_eval$Chlorides[is.na(winedata_eval$Chlorides)] <- mean(winedata_eval$Chlorides, na.rm = T) 
+winedata_eval$FreeSulfurDioxide[is.na(winedata_eval$FreeSulfurDioxide)] <- mean(winedata_eval$FreeSulfurDioxide, na.rm = T) 
+winedata_eval$TotalSulfurDioxide[is.na(winedata_eval$TotalSulfurDioxide)] <- mean(winedata_eval$TotalSulfurDioxide, na.rm = T) 
+winedata_eval$pH[is.na(winedata_eval$pH)] <- mean(winedata_eval$pH, na.rm = T) 
+winedata_eval$Sulphates[is.na(winedata_eval$Sulphates)] <- mean(winedata_eval$Sulphates, na.rm = T) 
+winedata_eval$Alcohol[is.na(winedata_eval$Alcohol)] <- mean(winedata_eval$Alcohol, na.rm = T) 
+winedata_eval$STARS[is.na(winedata_eval$STARS)] <- 0 
+
+treat_outliers <- function(x) {
+qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+H <- 1.5 * IQR(x, na.rm = T)
+x[x < (qnt[1] - H)] <- caps[1]
+x[x > (qnt[2] + H)] <- caps[2]
+ 
+return(x)
+}
+
+winedata_eval$FixedAcidity_CAP <- treat_outliers(winedata_eval$FixedAcidity)
+winedata_eval$VolatileAcidity_CAP <- treat_outliers(winedata_eval$VolatileAcidity)
+winedata_eval$CitricAcid_CAP <- treat_outliers(winedata_eval$CitricAcid)
+winedata_eval$ResidualSugar_CAP <- treat_outliers(winedata_eval$ResidualSugar)
+winedata_eval$Chlorides_CAP <- treat_outliers(winedata_eval$Chlorides)
+winedata_eval$FreeSulfurDioxide_CAP <- treat_outliers(winedata_eval$FreeSulfurDioxide)
+winedata_eval$TotalSulfurDioxide_CAP <- treat_outliers(winedata_eval$TotalSulfurDioxide)
+winedata_eval$Density_CAP <- treat_outliers(winedata_eval$Density)
+winedata_eval$pH_CAP <- treat_outliers(winedata_eval$pH)
+winedata_eval$Sulphates_CAP <- treat_outliers(winedata_eval$Sulphates)
+winedata_eval$Alcohol_CAP <- treat_outliers(winedata_eval$Alcohol)
+winedata_eval$AcidIndex_CAP <- treat_outliers(winedata_eval$AcidIndex)
+
+winedata_eval$LabelAppeal_Positive <- ifelse(winedata_eval$FreeSulfurDioxide >=0, 1, 0)
+
+winedata_eval$STARS_1 <- ifelse(winedata_eval$STARS == 1, 1, 0)
+winedata_eval$STARS_2 <- ifelse(winedata_eval$STARS == 2, 1, 0)
+winedata_eval$STARS_3 <- ifelse(winedata_eval$STARS == 3, 1, 0)
+winedata_eval$STARS_4 <- ifelse(winedata_eval$STARS == 4, 1, 0)
+
+```
+
+
+
+
+
+##7.2 Model Output
+
+For ease of display we will display, in transposed format, only the first six rows as we have 42 variables. 
+
+
+###First six Records from output 
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='asis'}
+
+winedata_eval$TARGET <- 0
+
+winedata_eval$TARGET <- predict(poismod2, type="response", newdata=winedata_eval)
+
+winedata_eval$TARGET<- round(winedata_eval$TARGET)
+x<-arrange(winedata_eval, (TARGET))
+#x<-x[-c(1:2),]
+t<- x[1:6,]
+t2<- t(t)
+kable(t2,  caption="Transposed Model Output / Results")
+
+
+```
+
+
+#8 Conclusion 
+
+
+After fitting multiple models using the classical Linear, classical Poisson, and the Binomial distributions using original data and transformed data, we think that the Poisson model has performed well once we have treated the outliers and missing data.  \
+
+
+We also felt confident that the Negative Binomial would perform good as well as it has the same dispersion parameter as classical Poisson. However, the NB AIC was bit higher by .000043 which could be negligible. \
+
+
+In addition we felt confident that Quasi-Poisson would perform well as its dispersion parameter was .96 close to 1. However, we were not comfortable selecting the Quasi-Poisson as we could not generate the AIC value. \
+
+
+The zero inflation models for both Poisson and Negative yielded to promising results especially when using the Voung test. However, lack of AIC and its lower dispersion parameter had made us reconsider our decision in favor of the Poisson. \
+
+
+Over all, we were little bit overwhelmed with analyzing about 12 models. However, we are very satisfied with our Poisson model selection especially that it had leveraged our data preparation and transformation efforts.  
+
+
+\newpage
+
+#Appendix A: DATA621 Homework 05 R Code 
+
