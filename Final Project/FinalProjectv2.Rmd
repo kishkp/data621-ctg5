@@ -31,14 +31,9 @@ This dependent variable tells whether the client will subscribe a bank term depo
 
 # 4 Literature review:
 
-# 5 Methodology:
 
-## 5.1 Data Exploration 
 
-In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
--Variable identification \
--Understanding predictor variables relationship with response variable
--Missing values and Unique Values \
+
 
 
 ##5.1.2	Variable identification 
@@ -458,20 +453,82 @@ The main objective in the transformations is to achieve linear relationships wit
  
 ```
 
-#3 Experimentation and Results: 
+# Methodology
 
-#3.1 Build Models
+CRISP-DM Methodology has been used for this assignment .....Need material???? image/process flow
 
-In this section, we will create 3 models. Aside from using original and transformed data, we will be using different modeling methods and functions such as Classification and Regression tree, Random tree and Generalized logistics model to predict outcome. 
+## Business Understanding :
 
-Below is our model definition: 
+## Data Exploration :
 
--Model 1- This model will be created using all the variables in train data set with logit function GLM. 
+5.1 Data Exploration 
 
--Model 2: This model calssification and Regression tree function.  
+In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: \
+-Variable identification \
+-Understanding predictor variables relationship with response variable
+-Missing values and Unique Values \
 
--Model 3- This model will be created using Random Forests model. 
+## Data Preparation :
 
+
+## Modeling:
+
+### Logistics Regression:
+
+Logistic regression (logit model) is used to model dichotomous outcome variables. In the logit model the log odds of the outcome is modeled as a linear combination of the predictor variables.
+
+Logistic regression predicts the probability of an outcome that can only have two values (i.e. a dichotomy). The prediction is based on the use of one or several predictors (numerical and categorical). A linear regression is not appropriate for predicting the value of a binary variable for two reasons:
+A linear regression will predict values outside the acceptable range (e.g. predicting probabilities
+outside the range 0 to 1)
+Since the dichotomous experiments can only have one of two possible values for each experiment, the residuals will not be normally distributed about the predicted line.
+On the other hand, a logistic regression produces a logistic curve, which is limited to values between 0 and 1. Logistic regression is similar to a linear regression, but the curve is constructed using the natural logarithm of the "odds" of the target variable, rather than the probability. Moreover, the predictors do not have to be normally distributed or have equal variance in each group.
+
+
+In the logistic regression the constant (b0) moves the curve left and right and the slope (b1) defines the steepness of the curve. By simple transformation, the logistic regression equation can be written in terms of an odds ratio.
+
+
+Finally, taking the natural log of both sides, we can write the equation in terms of log-odds (logit) which is a linear function of the predictors. The coefficient (b1) is the amount the logit (log-odds) changes with a one unit change in x. \
+
+
+### Classification Tree
+
+C&RT, a recursive partitioning method, builds classification tree for predicting continuous dependent variables (regression) and categorical predictor variables (classification). The classic C&RT algorithm was popularized by Breiman et al. (Breiman, Friedman, Olshen, & Stone, 1984; see also Ripley, 1996). A general introduction to tree-classifiers, specifically to the QUEST (Quick, Unbiased, Efficient Statistical Trees) algorithm, is also presented in the context of the Classification Trees Analysis facilities, and much of the following discussion presents the same information, in only a slightly different context. Another, similar type of tree building algorithm is CHAID (Chi-square Automatic Interaction Detector; see Kass, 1980).
+
+In most general terms, the purpose of the analyses via tree-building algorithms is to determine a set of if-then logical (split) conditions that permit accurate prediction or classification of cases. \
+
+### RandomForest Model
+
+We assume that the user knows about the construction of single classification trees. Random Forests grows many classification trees. To classify a new object from an input vector, put the input vector down each of the trees in the forest. Each tree gives a classification, and we say the tree "votes" for that class. The forest chooses the classification having the most votes (over all the trees in the forest).
+
+Each tree is grown as follows:
+
+If the number of cases in the training set is N, sample N cases at random - but with replacement, from the original data. This sample will be the training set for growing the tree.
+If there are M input variables, a number m "<<"" M is specified such that at each node, m variables are selected at random out of the M and the best split on these m is used to split the node. The value of m is held constant during the forest growing.
+Each tree is grown to the largest extent possible. There is no pruning. \
+
+
+
+## Evaluation
+
+There are many thousands of tests one can apply to inspect a logistic regression model, and much of this depends on whether one's goal is prediction, classification, variable selection, inference, causal modeling, etc. The Hosmer-Lemeshow test, for instance, assesses model calibration and whether predicted values tend to match the predicted frequency when split by risk deciles. Although, the choice of 10 is arbitrary, the test has asymptotic results and can be easily modified. The HL test, as well as AUC, have (in my opinion) very uninteresting results when calculated on the same data that was used to estimate the logistic regression model. It's a wonder programs like SAS and SPSS made the frequent reporting of statistics for wildly different analyses the de facto way of presenting logistic regression results. Tests of predictive accuracy (e.g. HL and AUC) are better employed with independent data sets, or (even better) data collected over different periods in time to assess a model's predictive ability.
+
+Another point to make is that prediction and inference are very different things. There is no objective way to evaluate prediction, an AUC of 0.65 is very good for predicting very rare and complex events like 1 year breast cancer risk. Similarly, inference can be accused of being arbitrary because the traditional false positive rate of 0.05 is just commonly thrown around.
+
+If I were you, your problem description seemed to be interested in modeling the effects of the manager reported "obstacles" in investing, so focus on presenting the model adjusted associations. Present the point estimates and 95% confidence intervals for the model odds ratios and be prepared to discuss their meaning, interpretation, and validity with others. A forest plot is an effective graphical tool. You must show the frequency of these obstacles in the data, as well, and present their mediation by other adjustment variables to demonstrate whether the possibility of confounding was small or large in unadjusted results. I would go further still and explore factors like the Cronbach's alpha for consistency among manager reported obstacles to determine if managers tended to report similar problems, or, whether groups of people tended to identify specific problems.
+
+I think you're a bit too focused on the numbers and not the question at hand. 90% of a good statistics presentation takes place before model results are ever presented.\
+
+
+
+# Experimentations:
+
+In this section experimentation will be carried out with the data by formulating three different types of models with three different approaches. Following are the three different appraoches to create models with given data- 
+
+-Model 1- This model will be created by using logit function of Generalized Logistics Model(GLM). 
+
+-Model 2: This model will be created by using  Calssification tree function.  
+
+-Model 3- This model will be created by using classification technique RandomForests model. 
 
 
 Taking the treated data and splitting into 80/20 to train model and validate the data.One data set (80%) population will be used for training the model. Rest 20% will used be used for evaluation of the model.
@@ -495,16 +552,17 @@ colnames(DS_TARGET_FLAG_VALID)[15]<-c("job_blue_collar")
 colnames(DS_TARGET_FLAG_VALID)[20]<-c("job_self_employed")
 
 # remove"-" from variable to avoid any issues in running the model in test
-colnames(bank_test2)[15]<-c("job_blue_collar")
-colnames(DS_TARGET_FLAG_TRAIN)[20]<-c("job_self_employed")
+#colnames(bank_test2)[15]<-c("job_blue_collar")
+#colnames(DS_TARGET_FLAG_TRAIN)[20]<-c("job_self_employed")
 
 
 ```
 
+### Logistics regression- Model 1:
 
-## 3.1.1 Model 1
+Logistics regression function GLM has been used to classify the campaign response variable. Intial model generated by using GLM function has been enhanced by making adjustment to non associated predictorr variables tagged as "NA" in basic model. Then updated model has been validated by using k=5 fold cross validation proess.\
 
-\
+
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE,results="hide"}
 
 
@@ -517,18 +575,23 @@ model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education
 
 exp(coef(model1_update))
 
+# Cross validation of model for K=5
+
+library(boot)
+
+t1<-cv.glm(DS_TARGET_FLAG_TRAIN, model1_update, K = 10)$call
+cv.glm(data = DS_TARGET_FLAG_TRAIN, glmfit = model1_update, K = 5)
 
 ```
 
 
-### Analysis of model 1 & model1_update:\
+### Interpretation from Logistics Regression model:\
 
-1.Using GLM function model 1 has been developed by using all the available variables. model1_update is an enhancement of model1 by using only those predictor having association with response variable and not showing up as NA values in model outcome. in model outcome AIC values for both the models are same.\
+1. There were total 10 iterations been performed before final selection of variables were made. AIC value from model 1 and model1_update(enhanced) model were same 13776. Hence removing variables from basic model does not help performance wise but reduced complexity with less degrees of freedom.\
 
-2. There are total 10 iterations which have been performed in the model before final selection of variables were made.\
+2.By using k=5 cross validation, ($delta) error value came out to be low 0.06289177 and no adjustment was made on the model.
 
-3. Table below provide details on significance of the variables and its odd ratio.\
-
+3. Table below provide details on significance of the variables and its odd ratio-\
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -542,12 +605,15 @@ kable(model1_var, caption = "Signifcant Variables model 1")
 ```
 
 
-## 3.1.2 Model 2
+###  Classification Tree- Model 2:
+
+The basic idea of classification tree model is to predict a response variable y for the campaign from
+inputs X1, X2, . . . Xp. Model does this by growing a binary tree. At each interna node in the tree, a test is applied to one of the inputs. Depending on the outcome of the test two route to be followed left or right. Eventually a leaf node is reached where a prediction is made about the binary outcome of campaign response. Model 2 has been reated using the Classification function from ROCR package.Basic model has been optimized using prune function. \ 
+
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE }
 
 model2 <- rpart(y~., data=na.omit(DS_TARGET_FLAG_TRAIN), method = "class")
-
 
 model2_update <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
 
@@ -555,21 +621,18 @@ plotcp(model2_update)
 
 #printcp(model2_update) # display the results 
 
-
 ```
 
 
-### Analysis of model 2 & model2_update:\
+### Interpretation of Classification Tree Model :\
 
-1. model 2 has been built using the CRT (classification and Regression Tree).  Based on available data model 2 has been constructed wwit CRT and then using prune function model2_update has been created by pruning the model 2. \
+1. Total 6 leafs(decision points) have been formed from this model.\
 
-2. Above chart shows the size of the tree and optimal cp values.
+2. Following are the most important variables from this model-duration ,nr.employed ,euribor3m ,emp.var.rate , cons.conf.idx , cons.price.idx. \
 
-3. There are 6 splits in total from this model.\
+3. From above chart t can be sheen the size of the tree and optimal cp values.\
 
-4. Three key variables are used in this model2_update are - duration,nr.employed ,previous_contact. \
-
-5. Classification tree is given below in the diagram- \
+5. Complete Classification tree is given below in the diagram- \
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
               
@@ -581,7 +644,10 @@ text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
 
 ```
 
-## 3.1.3 Model 3
+
+### RandomForest- Model 3:
+
+In Random Forests many classification trees are formed to classify campaign reponse variable y. Each tree gives a classification, each tree is voted for performance for that classification. The forest chooses the classification having the most votes (over all the trees in the forest). One model will be created using this method method with tree size 50. Then this model will bbe evaluated with a model of tree size 100.\ 
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE }
@@ -618,15 +684,15 @@ legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
 
 ```
 
-### Analysis of model 3 :\
+### Interpretation of RandomForest:\
 
-1.In Random Forests many classification trees are formed for classification. Each tree gives a classification, each tree is voted for performance for that classification. The forest chooses the classification having the most votes (over all the trees in the forest). Chart above shows how classification erro rate and  change with the increase in number of trees.\
+1. From the chart above it can be seen that classification error rate to classify negative responses reduces with the increase in number of trees but there is no significant change in error rate for positive response.\
 
-2. The model 3 created here by using RandomForest having tree size of 50 as the data set having records of only around 8000 records.\
+2. There is  only slight reduction in error rate for negative responses when tree size is increased to 100 from 50.\
 
-3. No of variables tried at each split is 7 and having error rate of 8.92%.\
+3. Number of variables tried at each split are 7 with negative classification rate of 0.03 and positive classification error rate of 0.51.\
 
-4. Below chart provides importance of various variables in the model.\
+4. Below chart provides importance of various variables used in the model.\
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE}
@@ -637,8 +703,7 @@ varImpPlot(model3)
 ```
 
 
-
-#4 Evaluate Models
+# Results :
 
 
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
@@ -672,11 +737,13 @@ model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensit
 ```
 
 
-## 4.1 Model 1 Evaluation
+## Results from Regression Model
 
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+
+
 
 #the McFadden R^2 index can be used to assess the model fit.
 #pR2(model1)
@@ -709,14 +776,10 @@ model_comparison[1,c("AUC")]<-c(auc1@y.values[1])
 
 kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
-
 ```
 
-### Model 1 Evaluation:
 
-1. Significance of McFadden R^2??
-
-2. From above table it can be seen model1_update has a very high accuracy rate of 91.07% when model was evaluated using the validation data set.\
+1. From above table it can be seen model1_update has a very high accuracy rate of 91.07% when model was evaluated using the validation data set.\
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
 
@@ -729,14 +792,22 @@ prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 
 plot(prf)
 
-
 ```
 
 
 
 
+```{r Hosmer-Lemeshow goodness,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+library(ResourceSelection)
+m <- model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(DS_TARGET_FLAG_TRAIN))
+hoslem.test(model1_update$y, fitted(m))
+```
 
-## 4.2 Model 2 Evaluation
+
+3. Hosmer-Lemeshow goodness-of-fit (GOF) tests help you decide whether your model is correctly specified. They produce a p-value-if it's low (say, below .05), you reject the model. If it's high, then the model passes the test.As per the Hosmer-Lemeshow test is a statistical test for goodness of fit for logistic regression models this is not good fit for regression with low p value p-value < 2.2e-16.
+
+
+## Results from CRT Model
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE }
@@ -790,7 +861,7 @@ plot(prf)
 
 
 
-## 4.3 Model 3 Evaluation
+## Results from RandomForest Model
 
 \
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
@@ -850,7 +921,6 @@ plot(prf)
 
 # 5 Discussion and Conclusions:
 
-#5.1 Select Models
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
@@ -859,6 +929,14 @@ kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comp
 
 ```
 
+Based on the Accuracy of the model, model 2 and model 3 are very close around 91% accurate with probability threshold of 0.5. But Accuracy is not always the key criteria for a model as Accuracy is calculated based on a defined threshold. Based on Hosmer-Lemeshow goodness of fit test Logistics Regression model is not a good fit for this scenario. Based on AUC model 2 has the best AUC value of 0.834 which is a good score. This model seems to be the best model out of the pack.
+
+For all three models it is found variables duration is most important variables by far. This variable has positive has impact in positive response of campaign. This could be due to the fact that longer the Customer stays in phone more productive conversation is taking place to get the Customer start their term deposit.
+euribor3m is another important variable which denotes inter bank interest rate in Eurozone. Term deposit interest rates are generally interlink with this variable. This variable has positive impact on response variable. Variable "nr.employed" denotes number of employees for the bank. This variable has positive impact on response variable. More the number of employees more visible the bank is and in turn more customers it gets through its campaign.
+
+Among the negative variables "emp.var.rate" has negative impact on response variable. As negative rate of this variable indicates issues with economy and lower economic activities. That in turn could impact the savings rate and people tend to use their savings that time.
+
+In conclusion it can be suggested to the bank management that focus should be given in hiring more people, doing more quality phone calls. Also to time the campaign in a stable macroeconomic environment to get better return on investment from this campaign. 
 
 
 
@@ -887,7 +965,9 @@ plot(myRoc3, main="ROC Curve for Classification data")
 
 
 
-#5.2 Conclusion
+
+
+
 
 # References:
 
