@@ -475,48 +475,26 @@ In section we will explore and gain some insights into the dataset by pursuing t
 
 ### Logistics Regression:
 
-Logistic regression (logit model) is used to model dichotomous outcome variables. In the logit model the log odds of the outcome is modeled as a linear combination of the predictor variables.
-
-Logistic regression predicts the probability of an outcome that can only have two values (i.e. a dichotomy). The prediction is based on the use of one or several predictors (numerical and categorical). A linear regression is not appropriate for predicting the value of a binary variable for two reasons:
-A linear regression will predict values outside the acceptable range (e.g. predicting probabilities
-outside the range 0 to 1)
-Since the dichotomous experiments can only have one of two possible values for each experiment, the residuals will not be normally distributed about the predicted line.
-On the other hand, a logistic regression produces a logistic curve, which is limited to values between 0 and 1. Logistic regression is similar to a linear regression, but the curve is constructed using the natural logarithm of the "odds" of the target variable, rather than the probability. Moreover, the predictors do not have to be normally distributed or have equal variance in each group.
-
-
-In the logistic regression the constant (b0) moves the curve left and right and the slope (b1) defines the steepness of the curve. By simple transformation, the logistic regression equation can be written in terms of an odds ratio.
-
-
-Finally, taking the natural log of both sides, we can write the equation in terms of log-odds (logit) which is a linear function of the predictors. The coefficient (b1) is the amount the logit (log-odds) changes with a one unit change in x. \
+Logistic regression (logit model) is used to model dichotomous outcome variables. In the logit model the log odds of the outcome is modeled as a linear combination of the predictor variables.Logistic regression predicts the probability of an outcome of response variable that can only have two values.  Logistic regression produces a logistic curve, which is limited to values between 0 and 1 and natural logarithm of the "odds" of the response variable.The predictors do not have to be normally distributed or have equal variance in each group. In the given scenario tis model will be used to predict odds of campaign response in relationship to given predictor variables. \
 
 
 ### Classification Tree
 
-C&RT, a recursive partitioning method, builds classification tree for predicting continuous dependent variables (regression) and categorical predictor variables (classification). The classic C&RT algorithm was popularized by Breiman et al. (Breiman, Friedman, Olshen, & Stone, 1984; see also Ripley, 1996). A general introduction to tree-classifiers, specifically to the QUEST (Quick, Unbiased, Efficient Statistical Trees) algorithm, is also presented in the context of the Classification Trees Analysis facilities, and much of the following discussion presents the same information, in only a slightly different context. Another, similar type of tree building algorithm is CHAID (Chi-square Automatic Interaction Detector; see Kass, 1980).
+Classification Tree is used to predict the outcome of a categorical response variable.The purpose of the analyses via tree-building algorithms is to determine a set of logical conditional split that permit accurate classification of cases and accurate prediction. Effectiveness of classification tree model is one of the reason for selection for this analysis study. \
 
-In most general terms, the purpose of the analyses via tree-building algorithms is to determine a set of if-then logical (split) conditions that permit accurate prediction or classification of cases. \
 
 ### RandomForest Model
 
-We assume that the user knows about the construction of single classification trees. Random Forests grows many classification trees. To classify a new object from an input vector, put the input vector down each of the trees in the forest. Each tree gives a classification, and we say the tree "votes" for that class. The forest chooses the classification having the most votes (over all the trees in the forest).
-
-Each tree is grown as follows:
-
-If the number of cases in the training set is N, sample N cases at random - but with replacement, from the original data. This sample will be the training set for growing the tree.
-If there are M input variables, a number m "<<"" M is specified such that at each node, m variables are selected at random out of the M and the best split on these m is used to split the node. The value of m is held constant during the forest growing.
-Each tree is grown to the largest extent possible. There is no pruning. \
-
+Random Forests grows many classification trees for given set of response and predictor variables. Each tree gives a classification, and all the outputs from different trees are "votes" for that class. The forest chooses the classification having the most votes (over all the trees in the forest). Overfitting problem with the classification tree can be overcome by this appraoch with weighted average of more number of trees. \
 
 
 ## Evaluation
 
-There are many thousands of tests one can apply to inspect a logistic regression model, and much of this depends on whether one's goal is prediction, classification, variable selection, inference, causal modeling, etc. The Hosmer-Lemeshow test, for instance, assesses model calibration and whether predicted values tend to match the predicted frequency when split by risk deciles. Although, the choice of 10 is arbitrary, the test has asymptotic results and can be easily modified. The HL test, as well as AUC, have (in my opinion) very uninteresting results when calculated on the same data that was used to estimate the logistic regression model. It's a wonder programs like SAS and SPSS made the frequent reporting of statistics for wildly different analyses the de facto way of presenting logistic regression results. Tests of predictive accuracy (e.g. HL and AUC) are better employed with independent data sets, or (even better) data collected over different periods in time to assess a model's predictive ability.
+There are number of ways to evaluate the regression model based on purpose like prediction, classification, variable selection etc. In the given busineess scenario classification of the response variable is requried to identify the influencing variables and use that information for business benefit.
 
-Another point to make is that prediction and inference are very different things. There is no objective way to evaluate prediction, an AUC of 0.65 is very good for predicting very rare and complex events like 1 year breast cancer risk. Similarly, inference can be accused of being arbitrary because the traditional false positive rate of 0.05 is just commonly thrown around.
+(1) The Hosmer-Lemeshow test, assesses model calibration and whether predicted values tend to match the predicted frequency when split by risk deciles. This test will be used for Logistics regression model validation.
 
-If I were you, your problem description seemed to be interested in modeling the effects of the manager reported "obstacles" in investing, so focus on presenting the model adjusted associations. Present the point estimates and 95% confidence intervals for the model odds ratios and be prepared to discuss their meaning, interpretation, and validity with others. A forest plot is an effective graphical tool. You must show the frequency of these obstacles in the data, as well, and present their mediation by other adjustment variables to demonstrate whether the possibility of confounding was small or large in unadjusted results. I would go further still and explore factors like the Cronbach's alpha for consistency among manager reported obstacles to determine if managers tended to report similar problems, or, whether groups of people tended to identify specific problems.
-
-I think you're a bit too focused on the numbers and not the question at hand. 90% of a good statistics presentation takes place before model results are ever presented.\
+(2) AUC alogn with Model Accuracy will be used for model evaluation. Accuracy is calculated based on certain threshold where as AUC is overall performance evaluation of model as various points.AUC criteria will be given more weightage for model evaluation in this case.
 
 
 
@@ -535,26 +513,13 @@ Taking the treated data and splitting into 80/20 to train model and validate the
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
-smp_size <- floor(0.80 * nrow(bank_train2))
-
-## set the seed to make your partition reproductible
-set.seed(123)
-
-train_index <- sample(seq_len(nrow(bank_train2)), size = smp_size)
-
-DS_TARGET_FLAG_TRAIN<- bank_train2[train_index, ]
-DS_TARGET_FLAG_VALID <- bank_train2[-train_index, ]
-
-# remove"-" from variable to avoid any issues in running the model
-colnames(DS_TARGET_FLAG_TRAIN)[15]<-c("job_blue_collar")
-colnames(DS_TARGET_FLAG_TRAIN)[20]<-c("job_self_employed")
-colnames(DS_TARGET_FLAG_VALID)[15]<-c("job_blue_collar")
-colnames(DS_TARGET_FLAG_VALID)[20]<-c("job_self_employed")
+# update "-" in train set
+colnames(bank_train2)[15]<-c("job_blue_collar")
+colnames(bank_train2)[20]<-c("job_self_employed")
 
 # remove"-" from variable to avoid any issues in running the model in test
-#colnames(bank_test2)[15]<-c("job_blue_collar")
-#colnames(DS_TARGET_FLAG_TRAIN)[20]<-c("job_self_employed")
-
+colnames(bank_test2)[12]<-c("job_blue_collar")
+colnames(bank_test2)[16]<-c("job_self_employed")
 
 ```
 
@@ -566,21 +531,22 @@ Logistics regression function GLM has been used to classify the campaign respons
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE,results="hide"}
 
 
-DS_TARGET_FLAG_TRAIN$y<-as.factor(DS_TARGET_FLAG_TRAIN$y)
-model1 <- glm(y ~.,family=binomial,data=na.omit(DS_TARGET_FLAG_TRAIN))
+bank_train2$y<-as.factor(bank_train2$y)
+model1 <- glm(y ~.,family=binomial,data=na.omit(bank_train2))
 summary(model1)
 
 #anova(model1, test="Chisq")
-model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(DS_TARGET_FLAG_TRAIN))
+model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(bank_train2))
 
-exp(coef(model1_update))
+
+# exp(coef(model1_update))
 
 # Cross validation of model for K=5
 
 library(boot)
 
-t1<-cv.glm(DS_TARGET_FLAG_TRAIN, model1_update, K = 10)$call
-cv.glm(data = DS_TARGET_FLAG_TRAIN, glmfit = model1_update, K = 5)
+t1<-cv.glm(bank_train2, model1_update, K = 10)$call
+cv.glm(data = bank_train2, glmfit = model1_update, K = 5)
 
 ```
 
@@ -613,7 +579,7 @@ inputs X1, X2, . . . Xp. Model does this by growing a binary tree. At each inter
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE }
 
-model2 <- rpart(y~., data=na.omit(DS_TARGET_FLAG_TRAIN), method = "class")
+model2 <- rpart(y~., data=na.omit(bank_train2), method = "class")
 
 model2_update <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
 
@@ -622,7 +588,6 @@ plotcp(model2_update)
 #printcp(model2_update) # display the results 
 
 ```
-
 
 ### Interpretation of Classification Tree Model :\
 
@@ -650,14 +615,16 @@ text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
 In Random Forests many classification trees are formed to classify campaign reponse variable y. Each tree gives a classification, each tree is voted for performance for that classification. The forest chooses the classification having the most votes (over all the trees in the forest). One model will be created using this method method with tree size 50. Then this model will bbe evaluated with a model of tree size 100.\ 
 
 
+
 ```{r,echo = FALSE, warning=FALSE, message=FALSE }
 
 # Random Forest prediction of Kyphosis data
 
-model3 <- randomForest(as.factor(y) ~ .,data=DS_TARGET_FLAG_TRAIN,importance=TRUE, ntree=50)
+model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=50)
 # print(model3) # view results 
 
-model4 <- randomForest(as.factor(y) ~ .,data=DS_TARGET_FLAG_TRAIN,importance=TRUE, ntree=100)
+
+model4 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=100)
 
 #plot model 3
 
@@ -683,6 +650,8 @@ legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
 
 
 ```
+
+
 
 ### Interpretation of RandomForest:\
 
@@ -743,21 +712,19 @@ model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensit
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
-
-
 #the McFadden R^2 index can be used to assess the model fit.
 #pR2(model1)
 
 # Predict result from the model 1 with probability
 
-DS_TARGET_FLAG_VALID$TARGET_FLAG1<-predict(model1_update,newdata=na.omit(DS_TARGET_FLAG_VALID),type='response')
+bank_test2$TARGET_FLAG1<-predict(model1_update,newdata=na.omit(bank_test2),type='response')
 
 
 
 #confusion matrix model 1
 
 
-df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG1>0.5,DS_TARGET_FLAG_VALID$y))
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG1>0.5,bank_test2$y))
 
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 
@@ -765,9 +732,9 @@ model_comparison[1,]<-Eval(df_pre_train1)
 
 # cauculate AUC
 
-results1<-ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG1>0.5,1,0)
+results1<-ifelse(bank_test2$TARGET_FLAG1>0.5,1,0)
 
-pr <- prediction(results1, DS_TARGET_FLAG_VALID$y)
+pr <- prediction(results1, bank_test2$y)
 
 auc1<- performance(pr,"auc")
 
@@ -781,43 +748,28 @@ kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs
 
 1. From above table it can be seen model1_update has a very high accuracy rate of 91.07% when model was evaluated using the validation data set.\
 
-```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
-
-# sensivity vs Specificity
-results1<-ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG1>0.5,1,0)
-
-pr <- prediction(results1, DS_TARGET_FLAG_VALID$y)
-
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-
-plot(prf)
-
-```
-
-
-
 
 ```{r Hosmer-Lemeshow goodness,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 library(ResourceSelection)
-m <- model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(DS_TARGET_FLAG_TRAIN))
+m <- model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(bank_test2))
 hoslem.test(model1_update$y, fitted(m))
 ```
 
 
-3. Hosmer-Lemeshow goodness-of-fit (GOF) tests help you decide whether your model is correctly specified. They produce a p-value-if it's low (say, below .05), you reject the model. If it's high, then the model passes the test.As per the Hosmer-Lemeshow test is a statistical test for goodness of fit for logistic regression models this is not good fit for regression with low p value p-value < 2.2e-16.
+3. Hosmer-Lemeshow goodness-of-fit (GOF) tests help you decide whether your model is correctly specified. They produce a p-value-if it's low (say, below .05), you reject the model. If it's high, then the model passes the test.As per the Hosmer-Lemeshow test is a statistical test for goodness of fit for logistic regression models this is a good fit for regression with low p value p-value >0.05
 
 
-## Results from CRT Model
+## Results from Classification Tree- Model 2
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE }
 
-DS_TARGET_FLAG_VALID$TARGET_FLAG2<- predict(model2_update,newdata=DS_TARGET_FLAG_VALID)[,2]
+bank_test2$TARGET_FLAG2<- predict(model2_update,newdata=bank_test2)[,2]
 
 
 #confusion matrix model 2
 
-df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG2>0.5,DS_TARGET_FLAG_VALID$y))
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG2>0.5,bank_test2$y))
 
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 
@@ -825,9 +777,9 @@ model_comparison[2,]<-Eval(df_pre_train1)
 
 # Calulate AUC
 
-results2 <- predict(model2_update,newdata=DS_TARGET_FLAG_VALID,type="prob")[,2]
+results2 <- predict(model2_update,newdata=bank_test2,type="prob")[,2]
 
-pr <- prediction(results2, DS_TARGET_FLAG_VALID$y)
+pr <- prediction(results2, bank_test2$y)
 
 
 auc2<- performance(pr,"auc")
@@ -838,44 +790,30 @@ kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs
 
 ```
 
+
 1. It can be seen from the table above, this model 2 has also very high accuracy rate of 91.05% which is very good.\ 
 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
-# Specificity vs Sensivity
-
-results2 <- predict(model2_update,newdata=DS_TARGET_FLAG_VALID,type="prob")[,2]
-
-pr <- prediction(results2, DS_TARGET_FLAG_VALID$y)
-
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-
-plot(prf)
-
-
-```
-
 2. It can be seen that model has very very high rate true positive values which suggests initial stages of accurate classification and gradually rate of specificty increases takes over the increase of sensitivity. That means to achive higher accuracy model mmisclassification increases.\
-
-
-
 
 
 ## Results from RandomForest Model
 
 \
+
+
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 # results from model 3
 
-DS_TARGET_FLAG_VALID$TARGET_FLAG3<-as.numeric(predict(model3,newdata=DS_TARGET_FLAG_VALID,type='response'))
+bank_test2$TARGET_FLAG3<-as.numeric(predict(model3,newdata=bank_test2,type='response'))
 
-DS_TARGET_FLAG_VALID$TARGET_FLAG3<-ifelse(DS_TARGET_FLAG_VALID$TARGET_FLAG3==1,0,1)
+bank_test2$TARGET_FLAG3<-ifelse(bank_test2$TARGET_FLAG3==1,0,1)
 
 
 #confusion matrix model 3
 
-df_pre_train1<-as.data.frame(table(DS_TARGET_FLAG_VALID$TARGET_FLAG3==1,DS_TARGET_FLAG_VALID$y))
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG3==1,bank_test2$y))
 
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 
@@ -883,9 +821,9 @@ model_comparison[3,]<-Eval(df_pre_train1)
 
 # Calculaate AUC
 
-results3 <- ifelse(as.numeric(predict(model4,newdata=na.omit(DS_TARGET_FLAG_VALID),type='response'))==1,0,1)
+results3 <- ifelse(as.numeric(predict(model4,newdata=na.omit(bank_test2),type='response'))==1,0,1)
 
-pr <- prediction(DS_TARGET_FLAG_VALID$TARGET_FLAG3, DS_TARGET_FLAG_VALID$y)
+pr <- prediction(bank_test2$TARGET_FLAG3, bank_test2$y)
 
 
 auc3<- performance(pr,"auc")
@@ -896,26 +834,10 @@ model_comparison[3,c("AUC")]<-c(auc3@y.values[1])
 
 kable(model_comparison[3,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
-
-
 ```
 
 1. The model created using Randomforest has accuracy of 90.94% which is good but compare to other two models this value is less than what we have. 
 
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
-
-# specificty vs sensitivity
-
-results3 <- ifelse(as.numeric(predict(model4,newdata=na.omit(DS_TARGET_FLAG_VALID),type='response'))==1,0,1)
-
-pr <- prediction(DS_TARGET_FLAG_VALID$TARGET_FLAG3, DS_TARGET_FLAG_VALID$y)
-
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-
-plot(prf)
-
-```
 
 2. It can be seen that this model also shows the similar kind of trend in  classification of data in earlier stages with very stiff line till true positive rate of 0.4 annd then sharp increase in false positive rate.
 
@@ -924,7 +846,7 @@ plot(prf)
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
- model_comparison$Model_No<-c("GLM_model1","CRT_model2","RF_model3")
+model_comparison$Model_No<-c("GLM_model1","CRT_model2","RF_model3")
 kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comparison of 3 Model3")
 
 ```
@@ -943,16 +865,16 @@ In conclusion it can be suggested to the bank management that focus should be gi
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 # Area under curve model 1
-myRoc1 <- roc(DS_TARGET_FLAG_VALID$TARGET_FLAG1,DS_TARGET_FLAG_VALID$y) 
+myRoc1 <- roc(bank_test2$TARGET_FLAG1,bank_test2$y) 
 
 
 # Area under curve model 2
-myRoc2 <- roc(DS_TARGET_FLAG_VALID$TARGET_FLAG2,DS_TARGET_FLAG_VALID$y)
+myRoc2 <- roc(bank_test2$TARGET_FLAG2,bank_test2$y)
 
 
 # Area under curve model 3
 
-myRoc3<- roc(DS_TARGET_FLAG_VALID$TARGET_FLAG3,DS_TARGET_FLAG_VALID$y) 
+myRoc3<- roc(bank_test2$TARGET_FLAG3,bank_test2$y) 
 
 
 par(mfrow=c(1,3))
@@ -1102,10 +1024,10 @@ kable(uniques, caption = "Unique Values")
 
 ##6.1.4 Data Summary post conversion 
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
 
 #str(bank_train2)
-
+#bank_train2$y<-as.numeric(bank_train2$y)
 ds_stats <- psych::describe(bank_train2, skew = TRUE, na.rm = TRUE)
 #ds_stats
 kable(ds_stats[1:7], caption= "Data Summary")
@@ -1141,7 +1063,7 @@ p <- ggplot(data = mdata2, aes(x=variable, y=value)) +
 p + facet_wrap( ~ variable, scales="free", ncol=4)
 ```
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
 
 bank_train2 <- bank_train2 %>%
   select(-y, everything())
@@ -1165,7 +1087,7 @@ for (i in 2:ncol(bank_train2)) {
 
 ##6.1.6 Analysis of link functions for given variables
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
 
 #move y to the last column
 
