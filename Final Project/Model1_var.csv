@@ -1,8 +1,8 @@
 variable importance,Variables,Odd ratio
-***, duration\ campaign \ emp.var.rate,1.004\0.957\0.182
-***,cons.price.idx\job_blue_collar\contact_telephone,8.64\0.615\0.541
-***,month_may\month_aug \month_nov\month_mar ,0.481\1.80\0.526\5.72
-**,education_secondary\month_jun\poutcome_failure,0.858\0.443\0.448
-*,cons.conf.idx\job_housemaid\job_services,1.022\0.661\0.707
-*,job_admin.\job_technician \job_self_employed \,0.778\0.772\0.680
-*,job_entrepreneur \day_of_week_mon \day_of_week_wed,0.672\0.844\1.185
+"***", "duration\ campaign \ emp.var.rate","1.004\0.957\0.182"
+"***","cons.price.idx\job_blue_collar\contact_telephone","8.64\0.615\0.541"
+"***","month_may\month_aug \month_nov\month_mar","0.481\1.80\0.526\5.72"
+"**","education_secondary\month_jun\poutcome_failure","0.858\0.443\0.448"
+"*","cons.conf.idx\job_housemaid\job_services","1.022\0.661\0.707"
+"*","job_admin.\job_technician \job_self_employed \","0.778\0.772\0.680"
+"*","job_entrepreneur \day_of_week_mon \day_of_week_wed","0.672\0.844\1.185"
