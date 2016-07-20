@@ -17,14 +17,10 @@ affiliation:
   - id: 1
     institution: City University of New York (CUNY)
 
-abstract: |
-   the Title page, the Abstract page, and the references page do not count when using APA Style ... as such, you need to have 12 pages besides those three pages
-   use 250 words or less to summarize your problem, methodology, and major outcomes. Even though direct marketing is a standard method for banks to utilize in the face of competition and financial unstability, it has, however, been shown to exhibit poor performance. The telemarketing calls are simply not answered or answered and immediately disconnected. It is however welcomed by the right person who is in need of financial relief. The aim of this exercise is to target clients more effectively and efficiently based on the data from a Portuguese bank telemarketing effort.
-   We first used logistic regression to predict the binary response variable. 
-   The outcomes....
+
   
   
-keywords: "select a few key words (up to five) related to your work....logistic regression model, linear discriminant analysis (LDA), predictive modeling, bank telemarketing, direct marketing, Data Mining"
+keywords: select a few key words (up to five) related to your work....logistic regression model, linear discriminant analysis (LDA), predictive modeling, bank telemarketing, direct marketing, Data Mining
 
 
 class: man
@@ -41,6 +37,12 @@ output: papaja::apa6_pdf
 library("papaja")
 apa_prepare_doc() # Prepare document for rendering
 ```
+
+
+abstract: |
+In this project objective is to improve given Portuguese bank's tele marketing campaign efficiency by identifying socio economic attributes of Customers as the driving factor for term deposit product selection. Cross Industry Data Standard Process for data mining(CRISP DM) framework has been used in this project. With this approach Business case understanding was the first step, followed by data exploration, data preparation, modeling, evaluation and recommendation from final model.
+In given data set 16 variables related to Customers socio economic conditions have been analyzed  for around 41188 Customer records. Three different models have been used in this project- Logistics Regression, Classification tree, RandomForest  for classification of binary variable campaign response. Several criteria have been used for evaluation of those three models, some of the key indicators are model accuracy, (AUC), F1 score etc. Based on the model comparison data RandomForest has been found as the most efficient model with AUC score of around 92%for the given case scenario. Among predictor variables it is found call "duration" variable is the most important predictor with longer duration calls resulting in more productive discussion and success of the campaign. This was followed by variables euribor3m and nr.employed.	
+With given data set % of response records are disproportionate compared to the population, around 10% success out of data set. This is real life scenario but creates challenges for the model. To take care of that Area under curve (AUC)metrics has been used for final model selection rather than the accuracy number.
 
 
 # Introduction
@@ -78,9 +80,19 @@ References:
   
   
 # Methodology
-  discuss the key aspects of your problem, data set and regression model(s). Given that you are working on real-world data, explain at a high-level your exploratory data analysis, how you prepared the data for regression modeling, your process for building regression models, and your model selection. . <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+In this project we will be using CRISP DM methodology.
   
-  The data is available on website for UC Irvine Machine Learning Repository. There are two different data sets available. The "bank" data has 45,211 records with 16 attributes and 1 response variable. The "bank-additional" data has 41,188 records with additional attributes added to "bank" data, it has 20 attributes and 1 response variable. We chose to use the data with additional attributes.
+<!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+  
+
+## Business Understanding
+
+
+   
+## Data Exploration
+
+The data is available on website for UC Irvine Machine Learning Repository. There are two different data sets available. The "bank" data has 45,211 records with 16 attributes and 1 response variable. The "bank-additional" data has 41,188 records with additional attributes added to "bank" data, it has 20 attributes and 1 response variable. We chose to use the data with additional attributes.
   
   The data consists of four groups of information.
   - Client's personal infomation
@@ -95,17 +107,17 @@ References:
   1 - Binary values of "yes" and "no" wit null values given as "unknown".
   2 - Categorical values with "unknown" as missing values. The categorical variable require dummy variables to be created for each unique value. We included "unknown" as one of the dummy variable.
   3 - numeric values with "999" as indication of null value. We created a variable to indicate if the data was missing or present.
-  
 
-# Experimentation and Results
-  describe the specifics of what you did (data exploration, data preparation, model building, selection, evaluation) and what you found out (statistical analysis, inter presentation and discussion of the results)
-   
-## Data Exploration
-
-  In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries: 
--Variable identification 
+ Also following two areas have been explored in the training data set.
 -Missing values and Unique Values 
 -Variables relationship to y
+
+We notice that the variables are numerical, categorical and binary. The response variable y is binary.
+
+Based on the original dataset, our predictor input has 21 variables. And our response variable is 1 variable called y. 
+
+Binomial Logistic regression is the appropriate regression analysis to conduct when the dependent variable is dichotomous (binary).  Like all regression analyses, the logistic regression is a predictive analysis.  Logistic regression is used to describe data and to explain the relationship between one dependent binary variable and one or more metric (interval or ratio scale) independent variables.
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
@@ -169,17 +181,6 @@ bank_test <-read.table(
            header = TRUE)
 ```
 
-We notice that the variables are numerical, categorical and binary. The response variable y is binary.
-
-Based on the original dataset, our predictor input has 21 variables. And our response variable is 1 variable called y. 
-
-Binomial Logistic regression is the appropriate regression analysis to conduct when the dependent variable is dichotomous (binary).  Like all regression analyses, the logistic regression is a predictive analysis.  Logistic regression is used to describe data and to explain the relationship between one dependent binary variable and one or more metric (interval or ratio scale) independent variables.
-
-
-##5.1.3 Preliminary Data Analysis
-
-##5.1.4 Analysis of Predictor variable 
-
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 variable_analysis<- read.csv(
@@ -188,18 +189,9 @@ kable(variable_analysis, caption = "Variable Analysis")
 
 ```
 
-##5.1.4 Missing values 
+5.1.4 Missing values 
 
-We see that there are no missing values in our dataset as shown in table 2 and graph format.
-The unique values are given in the table 
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE}
-
-
-
-```
-
-##5.1.5 Proportion of Response Variables 
+We see that there are no missing values in our dataset. 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -207,17 +199,24 @@ The unique values are given in the table
 
 ```
 
+5.1.5 Proportion of Response Variables 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
 
-#5.2	Data Preparation
+
+```
+
+
+
+##  Data Preparation
 
 -Convert Binary to 0 and 1
 -Create dummy variables
 -Data Summary Analysis
 -Correlation of Variables with y
 
-
-##5.2.1 Convert Binary yes and no to 0 and 1
+Convert Binary yes and no to 0 and 1
 
 Now in order to prepare the data for modeling, we need to update Yes = 1 and No = 0.
 
@@ -233,7 +232,7 @@ bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
 
 ```
 
-##5.2.2 Create dummy variables
+Create dummy variables
 
 Now we need to create dummy variables to find out the relationship between y variables and dependent variables, for all categorical variables.
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -358,7 +357,7 @@ bank_train2$poutcome <- NULL
 ```
 
 
-### Prepare test data
+Prepare test data
 
 We will treat the test data the same way as the train data, and then apply models created using the treated train data.
 
@@ -490,15 +489,15 @@ bank_test2$poutcome <- NULL
 ```
 
 
-##5.2.3 Data Summary with Dummy variables
+Data Summary with Dummy variables
 
 
-##5.2.4 Correlation between Response and Predictor of Variables
+Correlation between Response and Predictor of Variables
 Now we will produce the correlation table between the independent variables and the dependent variable
 
 
 
-##2.5 Outliers Handling
+Outliers Handling
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -507,7 +506,7 @@ Now we will produce the correlation table between the independent variables and 
 ```
 
 
-##5.2.6 Analysis the link function for given variables 
+ Analysis the link function for given variables 
 
 In this section, we will investigate how our initial data aligns with a typical logistic model plot.
 
@@ -530,41 +529,12 @@ The main objective in the transformations is to achieve linear relationships wit
  
 ```
 
-# Methodology
 
-CRISP-DM Methodology has been used for this assignment .....Need material???? image/process flow
 
   
 ![CRISP-DM](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/CRISP-DM.png)
 
-## Business Understanding :
 
-## Data Exploration :
-
-5.1 Data Exploration 
-
-In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries:
--Variable identification 
--Understanding predictor variables relationship with response variable
--Missing values and Unique Values
-
-## Data Preparation :
-
-# Methodology
-
-
-## Business Understanding :
-
-## Data Exploration :
-
-5.1 Data Exploration 
-
-In section we will explore and gain some insights into the dataset by pursuing the below high level steps and inquiries:
--Variable identification
--Understanding predictor variables relationship with response variable
--Missing values and Unique Values
-
-## Data Preparation :
 
 
 ## Modeling:
