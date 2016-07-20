@@ -981,16 +981,17 @@ kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comp
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 # Area under curve model 1
-myRoc1 <- roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
+
+bank_test2$y<-as.factor(bank_test2$y)
+
+myRoc1 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
 
 # Area under curve model 2
-myRoc2 <- roc(bank_test2$y,bank_test2$TARGET_FLAG2)
+myRoc2 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG2)
 
 # Area under curve model 3
 
-myRoc3<- roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
-
-
+myRoc3<- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
 
 plot (c(1,0),c(0,1),type="n", xlab="Specificity",ylab="Sensitivity", xlim=rev(range(myRoc1$specificities)))
 
