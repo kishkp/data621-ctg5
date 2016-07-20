@@ -616,7 +616,7 @@ In Random Forests many classification trees are formed to classify campaign resp
 
 # Random Forest prediction of Kyphosis data
 
-model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=50)
+model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=10)
 # print(model3) # view results 
 
 
@@ -761,6 +761,8 @@ bank_test2$TARGET_FLAG2<- predict(model2_update,newdata=bank_test2)[,2]
 
 df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG2>0.5,bank_test2$y))
 
+
+
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 
 model_comparison[2,]<-Eval(df_pre_train1)
@@ -797,7 +799,11 @@ bank_test2$TARGET_FLAG3<-ifelse(bank_test2$TARGET_FLAG3==1,0,1)
 
 #confusion matrix model 3
 
-df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG3==1,bank_test2$y))
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG3,bank_test2$y))
+
+df_pre_train1$Var1<-as.character(df_pre_train1$Var1)
+df_pre_train1$Var1[df_pre_train1$Var1==0]<-c("FALSE")
+df_pre_train1$Var1[df_pre_train1$Var1==1]<-c("TRUE")
 
 df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
 
@@ -805,7 +811,7 @@ model_comparison[3,]<-Eval(df_pre_train1)
 
 # Calculaate AUC
 
-results3 <- ifelse(as.numeric(predict(model4,newdata=na.omit(bank_test2),type='response'))==1,0,1)
+#results3 <- ifelse(as.numeric(predict(model4,newdata=na.omit(bank_test2),type='response'))==1,0,1)
 
 pr <- prediction(bank_test2$TARGET_FLAG3, bank_test2$y)
 
@@ -846,23 +852,32 @@ In conclusion it can be suggested to the bank management that focus should be gi
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
 # Area under curve model 1
-myRoc1 <- roc(bank_test2$TARGET_FLAG1,bank_test2$y) 
+myRoc1 <- roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
 
 
 # Area under curve model 2
-myRoc2 <- roc(bank_test2$TARGET_FLAG2,bank_test2$y)
+myRoc2 <- roc(bank_test2$y,bank_test2$TARGET_FLAG2)
 
 
 # Area under curve model 3
 
-myRoc3<- roc(bank_test2$TARGET_FLAG3,bank_test2$y) 
+myRoc3<- roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
 
 
-par(mfrow=c(1,1))
+#par(mfrow=c(1,1))
 
-plot(myRoc1, main="ROC Curve from GLM Model") 
-plot(myRoc2, main="ROC Curve from CRT ") 
-plot(myRoc3, main="ROC Curve for Classification data")
+#plot(myRoc1, main="ROC Curve from GLM Model") 
+#plot(myRoc2, main="ROC Curve from CRT ") 
+#plot(myRoc3, main="ROC Curve for Classification data")
+
+
+plot (c(1,0),c(0,1),type="n", xlab="Specificity",ylab="Sensitivity", xlim=rev(range(myRoc1$specificities)))
+
+lines(x = myRoc1$specificities,y=myRoc1$sensitivities,col="green",lwd=2.5)
+lines(x = myRoc2$specificities,y=myRoc2$sensitivities,col="red",lwd=2.5)
+lines(x = myRoc3$specificities,y=myRoc3$sensitivities,col="blue",lwd=2.5)
+
+legend(x = "bottomright", c("GLM_model1","CRT_model2","RF_model3"), lty=c(1,1), lwd=c(2.5,2.5),col=c("green","red","blue"))
 
 ```
 
