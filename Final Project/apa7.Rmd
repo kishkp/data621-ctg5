@@ -65,7 +65,7 @@ This dependent variable tells whether the client will subscribe a bank term depo
 # Literature Review
   discuss how other researchers have addressed similar problems, what their achievements are, and what the advantage and drawbacks of each reviewed approach are.  Explain how your investigation is similar or different to the state-of-the-art.  Please do not discuss paper one at a time, instead, identify key characteristics of your topic, and discuss them in a whole. Please cite the relevant papers where appropriate.  
   
-  We will be reviewing three papers addresseing the same problem of bank  telemarketing.\
+  We will be reviewing three papers addressing the same problem of bank  telemarketing.\
   
   1. http://bru-unide.iscte.pt/RePEc/pdfs/13-06.pdf \
   2. http://www.ijmbs.com/Vol6/1/4-vaidehi-r.pdf \
@@ -85,7 +85,7 @@ This dependent variable tells whether the client will subscribe a bank term depo
   
   The main problem with the dataset is that it consists of many missing values which are labeled "Unknown". The missing data consists of 26% of the data. We decided to retain the missing data to help with our regression modeling. The other problem with the data is that only 12% of the data shows the response variable to be "y".
   
-  We looked at each varable and the unique values contained in each variable and what they represented. Wecan divide the variables in the follwing three categories:\
+  We looked at each varable and the unique values contained in each variable and what they represented. We can divide the variables in the following three categories:\
   
   1 - Binary values of "yes" and "no" wit null values given as "unknown". \
   2 - Categorical values with "unknown" as missing values. The categorical variable require dummy variables to be created for each unique value. We included "unknown" as one of the dummy variable. \
@@ -93,7 +93,7 @@ This dependent variable tells whether the client will subscribe a bank term depo
   
 
 # Experimentation and Results
-  describe the specifics of what you did (data exploration, data preparation, model building, selection, evalutation) and what you found out (statistical analysis, inter pretation and discussion of the results)
+  describe the specifics of what you did (data exploration, data preparation, model building, selection, evaluation) and what you found out (statistical analysis, inter presentation and discussion of the results)
    
 ## Data Exploration
 
@@ -565,7 +565,7 @@ In section we will explore and gain some insights into the dataset by pursuing t
 
 ### Logistics Regression:
 
-Logistic Regression is a probabilistic statistical classification model. It is also used to predict a binary response from a binary predictor.Logistics model doesn't't suffer a lot from severe class imbalance. Logistic Regression creates log odds of the response as a linear function of predictor variables. Many of the categorical predictors in the data set for this project have sparse and unbalanced distributions. Using logistics model with the given set of data would need adjustment of variables to fine tune the model.\
+Logistic Regression is a probabilistic statistical classification model. It is also used to predict a binary response from a binary predictor.Logistics model doesn't suffer a lot from severe class imbalance. Logistic Regression creates log odds of the response as a linear function of predictor variables. Many of the categorical predictors in the data set for this project have sparse and unbalanced distributions. Using logistics model with the given set of data would need adjustment of variables to fine tune the model.\
 
 
 
@@ -971,12 +971,45 @@ kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comp
 
 ```
 
-Based on the Accuracy of the model, model 1 and model 2 are very close around 91% accuracy with probability threshold of 0.5. Model 3 has much higher value of 98%.  But Accuracy is not always the key criteria for a model as Accuracy is calculated based on a defined threshold. Based on AUC value model 3 has the best AUC value of 0.9398 which is a very good score. Model 3 stands out among the three models.
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
+
+# Area under curve model 1
+myRoc1 <- roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
+
+# Area under curve model 2
+myRoc2 <- roc(bank_test2$y,bank_test2$TARGET_FLAG2)
+
+# Area under curve model 3
+
+myRoc3<- roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
+
+
+
+plot (c(1,0),c(0,1),type="n", xlab="Specificity",ylab="Sensitivity", xlim=rev(range(myRoc1$specificities)))
+lines(x = myRoc1$specificities,y=myRoc1$sensitivities,col="green",lwd=2.5)
+lines(x = myRoc2$specificities,y=myRoc2$sensitivities,col="red",lwd=2.5)
+lines(x = myRoc3$specificities,y=myRoc3$sensitivities,col="blue",lwd=2.5)
+legend(x = "bottomright", c("GLM_model1","CRT_model2","RF_model3"), lty=c(1,1), lwd=c(2.5,2.5),col=c("green","red","blue"))
+
+```
+
+$ Final model selection: \
+
+Based on the Accuracy of the model, model 1 and model 2 are very close around 91% accuracy with probability threshold of 0.5. Model 3 has much higher value of 98%.  But Accuracy is not always the key criteria for a model as Accuracy is calculated based on a defined threshold. Also due to imbalance of data o 10% to 90% distribution of response variable forced to choose the model based on other criteria. Model Based on AUC value is model 3 having AUC value of 0.9398 which is a very good score. Model 3 stands out among the three models.
+
+$ Key predictor variables:
 
 For all three models it is found variables "duration" is most important variables by far. This variable has positive impact in campaign outcome. This could be due to the fact that longer the Customer stays on phone more productive conversation is taking place to get the Customer start their term deposit Account.
 "euribor3m" is most important variable which denotes inter bank interest rate in Eurozone. Term deposit interest rates are generally interlinked and tends to go up together. This variable has positive impact on response variable. Predictor "nr.employed" denotes number of employees for the bank. This variable also has positive impact on campaign response. More the number of employees more visible the bank is and in turn more customers it gets through the campaign.
 
 Among the negative variables "emp.var.rate" has negative impact on response. As negative rate of this variable indicates issues with economy and lower economic activities. That in turn could impact the savings rate and people tend to use their savings that time.
+
+$ Shortcomings 
+
+Imbalance of response variable only 10% of population was the main shortcomings that we have in the model creation. This issue has been addressed partially by using Area Under Curve as the criteria for model selection.
+
+$ Final Recommendation
 
 In conclusion it can be suggested to the bank management that focus should be given in hiring more people, doing more quality phone calls. Also to time the campaign in a stable macroeconomic environment to get better return on investment from this campaign. 
 
