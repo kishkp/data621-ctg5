@@ -657,8 +657,9 @@ Complete Classification tree is given below in the diagram.
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
               
 # plot the pruned tree 
+par(mfrow = c(1, 3), mar = rep(0.1, 4))
 par(mfrow=c(1,1))
-plot(model2_update, uniform=TRUE, main="Pruned Classification Tree for TARGET_FLAG")
+plot(model2_update, uniform=TRUE, main=NA)
 text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
 
 
@@ -675,7 +676,7 @@ In Random Forests many classification trees are formed to classify campaign resp
 
 # Random Forest prediction of Kyphosis data
 
-model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=10)
+model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=50)
 # print(model3) # view results 
 
 
@@ -683,25 +684,25 @@ model4 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=
 
 #plot model 3
 
-par(mfrow=c(2,4))
+par(mfrow=c(2,3))
 
 #layout(matrix(c(1,2),nrow=1),
-#width=c(4,1)) 
-par(mar=c(2,4,4,0)) #No margin on the right side
+#width=c(1,1)) 
+par(mar=c(1,1,2,0)) #No margin on the right side
 plot(model3, log="y")
-par(mar=c(1,3,3,1)) #No margin on the left side
+par(mar=c(3,3,1,1)) #No margin on the left side
 plot(c(0,1),type="n", axes=F, xlab="", ylab="")
 legend("top", colnames(model3$err.rate),col=1:3,cex=0.8,fill=1:4)
 
 # plot model 4
 
 #layout(matrix(c(1,2),nrow=1),
-#width=c(4,1)) 
-par(mar=c(1,4,4,0)) #No margin on the right side
+#width=c(1,1)) 
+par(mar=c(1,1,2,1)) #No margin on the right side
 plot(model4, log="y")
-par(mar=c(2,3,3,1)) #No margin on the left side
+par(mar=c(1,3,1,1)) #No margin on the left side
 plot(c(0,1),type="n", axes=F, xlab="", ylab="")
-legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
+#legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
 
 
 ```
