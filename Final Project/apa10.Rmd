@@ -67,7 +67,7 @@ apa_prepare_doc() # Prepare document for rendering
 
   In this project we will be using CRISP DM methodology.
 
-![CRISP-DM](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/CRISP-DM_resize.png)
+![CRISP-DM Methodology](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/CRISP-DM_resize.png)
 
 
 <!-- https://en.wikipedia.org/wiki/Cross_Industry_Standard_Process_for_Data_Mining -->
@@ -196,17 +196,19 @@ bank_test <-read.table(
            sep = ";",
            header = TRUE)
 
-variable_analysis<- read.csv(
-  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Variable%20Analysis.csv")
 
-kable(variable_analysis, caption = "Variable Analysis") 
-
-pander::pander(variable_analysis, split.cells = c(20, 20, 60), split.table = Inf, justify = 'left', caption = "Variable Analysis")
+# # Enable below code when running without APA format
+# variable_analysis<- read.csv(
+#   "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Variable%20Analysis.csv")
+# 
+# kable(variable_analysis, caption = "Variable Analysis") 
+# 
+# pander::pander(variable_analysis, split.cells = c(20, 20, 60), split.table = Inf, justify = 'left', caption = "Variable Analysis")
 
 
 ```
 
-![Variable-Analysis](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Var_Analysis.png)
+![Variable Analysis](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Var_Analysis.png)
 
 
 ##  Data Preparation
@@ -523,59 +525,77 @@ cv.glm(data = bank_train2, glmfit = model1_update, K = 5)
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE, results= 'hide'}
 
-model1_var<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Model1_var.csv", quote = '"')
-
-model1_var$Variables <- str_replace_all(model1_var$Variables, "--", ",")
-model1_var$Odd.ratio <- str_replace_all(model1_var$Odd.ratio, "--", ",")
-
-pander::pander(model1_var, split.cells = c(8, 67, 25 ), split.table = Inf, justify = 'left', caption = "Signifcant Variables Model 1")
-
-kable(model1_var, caption = "Signifcant Variables Model 1") 
+# # Enable below code when running without APA format
+# model1_var<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Model1_var.csv", quote = '"')
+# 
+# model1_var$Variables <- str_replace_all(model1_var$Variables, "--", ",")
+# model1_var$Odd.ratio <- str_replace_all(model1_var$Odd.ratio, "--", ",")
+# 
+# pander::pander(model1_var, split.cells = c(8, 67, 25 ), split.table = Inf, justify = 'left', caption = "Signifcant Variables Model 1")
+# 
+# kable(model1_var, caption = "Signifcant Variables Model 1") 
 
 ```
 
-![Variable-Importance](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Var_Imp.png)
+![Variable Importance](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Var_Imp.png)
 
 
 ###  Classification Tree - Model 2
 
   The basic idea of classification tree model is to predict a response variable y for the campaign from predictor variables. Model does this by growing a binary tree. At each node in the tree, a test is applied to one of the inputs. Depending on the outcome of the test two routes to be followed left or right. Eventually a leaf node is reached where a prediction is made about the binary outcome of campaign response. Model 2 has been rated using the Classification function from ROCR package. Basic model has been optimized using prune function.
   
-```{r,echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+<!-- ![Tree Size](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Tree_Size.png) -->
+
+
+
+![Classification Tree](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/C_Tree.png)
+
+
+  
+```{r,echo = FALSE, warning=FALSE, message=FALSE}
 par(mfrow=c(1,1))
 
 model2 <- rpart(y~., data=na.omit(bank_train2), method = "class")
 
 model2_update <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
 
-plotcp(model2_update)
+# # Enable below code when running without APA format
+# 
+# plotcp(model2_update)
 
 #printcp(model2_update) # display the results 
 
 ```
 
-![Tree_Size](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Tree_Size.png)
 
   Following are the most important variables from this model: duration, nr.employed, euribor3m, emp.var.rate, cons.conf.idx, cons.price.idx. Total 6 leaves (decision points) have been formed from this model. Complete Classification tree is given below in the diagram.
+
   
-```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
-par(mfrow=c(1,1))
-              
-plot the pruned tree 
-par(mfrow = c(1, 3), mar = rep(0.1, 4))
-par(mfrow=c(1,1))
-plot(model2_update, uniform=TRUE, main=NA)
-text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+# # Enable below code when running without APA format
+# 
+# par(mfrow=c(1,1))
+#               
+# # plot the pruned tree 
+# par(mfrow = c(1, 3), mar = rep(0.1, 4))
+# par(mfrow=c(1,1))
+# plot(model2_update, uniform=TRUE, main=NA)
+# text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
 
 ```
 
-![C_Tree](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/C_Tree.png)
+\newpage
 
 ### RandomForest- Model 3
 
   In Random Forests many classification trees are formed to classify campaign response variable y. Each tree creates separate set of classification, each tree is voted for performance for that classification. The forest chooses the classification having the most votes (over all the trees in the forest). One model will be created using this method with tree size 50. Then this model will be evaluated with a model of tree size 100.
 
-```{r,echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+![Classification Error Rate Comparison](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/RF_Chart1.png)
+
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE}
 
 # Random Forest prediction of Kyphosis data
 
@@ -584,44 +604,52 @@ model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=
 
 model4 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=100)
 
-#plot model 3
-
-par(mfrow=c(2,3))
-
-#layout(matrix(c(1,2),nrow=1),
-#width=c(1,1)) 
-par(mar=c(1,1,2,0)) #No margin on the right side
-plot(model3, log="y")
-par(mar=c(3,3,1,1)) #No margin on the left side
-plot(c(0,1),type="n", axes=F, xlab="", ylab="")
-legend("top", colnames(model3$err.rate),col=1:3,cex=0.8,fill=1:4)
-
-# plot model 4
-
-#layout(matrix(c(1,2),nrow=1),
-#width=c(1,1)) 
-par(mar=c(1,1,2,1)) #No margin on the right side
-plot(model4, log="y")
-par(mar=c(1,3,1,1)) #No margin on the left side
-plot(c(0,1),type="n", axes=F, xlab="", ylab="")
-#legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
-
+# # Enable below code when running without APA format
+# 
+# #plot model 3
+# 
+# par(mfrow=c(2,3))
+# 
+# #layout(matrix(c(1,2),nrow=1),
+# #width=c(1,1)) 
+# par(mar=c(1,1,2,0)) #No margin on the right side
+# plot(model3, log="y")
+# par(mar=c(3,3,1,1)) #No margin on the left side
+# plot(c(0,1),type="n", axes=F, xlab="", ylab="")
+# legend("top", colnames(model3$err.rate),col=1:3,cex=0.8,fill=1:4)
+# 
+# # plot model 4
+# 
+# #layout(matrix(c(1,2),nrow=1),
+# #width=c(1,1)) 
+# par(mar=c(1,1,2,1)) #No margin on the right side
+# plot(model4, log="y")
+# par(mar=c(1,3,1,1)) #No margin on the left side
+# plot(c(0,1),type="n", axes=F, xlab="", ylab="")
+# #legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
+# 
 
 ```
-
-![RF_Chart1](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/RF_Chart1.png)
 
 
   From the chart above it can be seen that classification error rate to classify negative responses reduces with the increase in number of trees but there is no significant change in error rate for positive response. There is only slight reduction in error rate for negative responses when tree size is increased to 100 from 50. Number of variables tried at each split are 7 with negative classification rate of 0.03 and positive classification error rate of 0.51. Below chart provides importance of various variables used in the model.
 
-```{r,echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+<!-- ![Random Forest - Variable Importance](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/RF_Chart2.png) -->
+
+
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE}
 
 # display importance of variables
- varImpPlot(model3)
+
+# # Enable below code when running without APA format
+varImpPlot(model3)
 
 ```
 
-![RF_Chart2](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/RF_Chart2.png)
+
+
 
 
 ## Results from Models
@@ -779,31 +807,34 @@ model_comparison$Model<-c("GLM","CRT","RF")
 
 kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comparison of the Models")
 
-# Area under curve model 1
-
-bank_test2$y<-as.factor(bank_test2$y)
-
-myRoc1 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
-
-# Area under curve model 2
-myRoc2 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG2)
-
-# Area under curve model 3
-
-myRoc3<- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
-
-par(mfrow=c(1,1))
-plot (c(1,0),c(0,1),type="n", xlab="Specificity",ylab="Sensitivity", xlim=rev(range(myRoc1$specificities)))
-
-lines(x = myRoc1$specificities,y=myRoc1$sensitivities,lwd=2.5, lty=1)
-lines(x = myRoc2$specificities,y=myRoc2$sensitivities,lwd=2.5, lty=2)
-lines(x = myRoc3$specificities,y=myRoc3$sensitivities,lwd=2.5, lty=3)
-
-legend(x = "bottomright", c("GLM","CRT","RF"), lty=c(1,2,3), lwd=c(2.5,2.5, 2.5))
+# # Enable below code when running without APA format
+# 
+# # Area under curve model 1
+# 
+# bank_test2$y<-as.factor(bank_test2$y)
+# 
+# myRoc1 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
+# 
+# # Area under curve model 2
+# myRoc2 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG2)
+# 
+# # Area under curve model 3
+# 
+# myRoc3<- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
+# 
+# par(mfrow=c(1,1))
+# plot (c(1,0),c(0,1),type="n", xlab="Specificity",ylab="Sensitivity", xlim=rev(range(myRoc1$specificities)))
+# 
+# lines(x = myRoc1$specificities,y=myRoc1$sensitivities,lwd=2.5, lty=1)
+# lines(x = myRoc2$specificities,y=myRoc2$sensitivities,lwd=2.5, lty=2)
+# lines(x = myRoc3$specificities,y=myRoc3$sensitivities,lwd=2.5, lty=3)
+# 
+# legend(x = "bottomright", c("GLM","CRT","RF"), lty=c(1,2,3), lwd=c(2.5,2.5, 2.5))
 
 ```
 
-![ROC_Curve](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/ROC_Curve.png)
+
+![ROC Curves](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/ROC_Curve.png)
 
 
 ## Final model selection
