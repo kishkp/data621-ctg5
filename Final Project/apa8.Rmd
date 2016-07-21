@@ -39,7 +39,7 @@ apa_prepare_doc() # Prepare document for rendering
 ```
 
 
-abstract: |
+# abstract: 
 In this project objective is to improve given Portuguese bank's tele marketing campaign efficiency by identifying socio economic attributes of Customers as the driving factor for term deposit product selection. Cross Industry Data Standard Process for data mining(CRISP DM) framework has been used in this project. With this approach Business case understanding was the first step, followed by data exploration, data preparation, modeling, evaluation and recommendation from final model.
 In given data set 16 variables related to Customers socio economic conditions have been analyzed  for around 41188 Customer records. Three different models have been used in this project- Logistics Regression, Classification tree, RandomForest  for classification of binary variable campaign response. Several criteria have been used for evaluation of those three models, some of the key indicators are model accuracy, (AUC), F1 score etc. Based on the model comparison data RandomForest has been found as the most efficient model with AUC score of around 92%for the given case scenario. Among predictor variables it is found call "duration" variable is the most important predictor with longer duration calls resulting in more productive discussion and success of the campaign. This was followed by variables euribor3m and nr.employed.	
 With given data set % of response records are disproportionate compared to the population, around 10% success out of data set. This is real life scenario but creates challenges for the model. To take care of that Area under curve (AUC)metrics has been used for final model selection rather than the accuracy number.
@@ -95,14 +95,14 @@ In this project we will be using CRISP DM methodology.
 The data is available on website for UC Irvine Machine Learning Repository. There are two different data sets available. The "bank" data has 45,211 records with 16 attributes and 1 response variable. The "bank-additional" data has 41,188 records with additional attributes added to "bank" data, it has 20 attributes and 1 response variable. We chose to use the data with additional attributes.
   
   The data consists of four groups of information.
-  - Client's personal infomation
+  - Client's personal information
   - Client's bank information
   - Bank's telemarketing campaign information
   - Social and economic information
   
   The main problem with the dataset is that it consists of many missing values which are labeled "Unknown". The missing data consists of 26% of the data. We decided to retain the missing data to help with our regression modeling. The other problem with the data is that only 12% of the data shows the response variable to be "y".
   
-  We looked at each varable and the unique values contained in each variable and what they represented. We can divide the variables in the following three categories:
+  We looked at each variable and the unique values contained in each variable and what they represented. We can divide the variables in the following three categories:
   
   1 - Binary values of "yes" and "no" wit null values given as "unknown".
   2 - Categorical values with "unknown" as missing values. The categorical variable require dummy variables to be created for each unique value. We included "unknown" as one of the dummy variable.
@@ -497,7 +497,7 @@ Now we will produce the correlation table between the independent variables and 
 
 
 
-Outliers Handling
+Outlines Handling
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 
@@ -733,7 +733,7 @@ varImpPlot(model3)
 
 
 
-# Results
+# Results from Models:
 
 
 ```{r ,echo = FALSE, warning=FALSE, message=FALSE}
@@ -768,7 +768,10 @@ model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensit
 
 
 
-## Results from Regression Model
+
+
+
+ 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
@@ -801,51 +804,12 @@ auc1<- performance(pr,"auc")
 model_comparison[1,c("AUC")]<-c(auc1@y.values[1])
 
 
-kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+#kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
 
 
-
-## Results from Regression Model
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
-
-#the McFadden R^2 index can be used to assess the model fit.
-#pR2(model1)
-
-# Predict result from the model 1 with probability
-
-bank_test2$TARGET_FLAG1<-predict(model1_update,newdata=na.omit(bank_test2),type='response')
-
-
-
-#confusion matrix model 1
-
-
-df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG1>0.5,bank_test2$y))
-
-df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
-
-model_comparison[1,]<-Eval(df_pre_train1)
-
-# cauculate AUC
-
-results1<-ifelse(bank_test2$TARGET_FLAG1>0.5,1,0)
-
-pr <- prediction(results1, bank_test2$y)
-
-auc1<- performance(pr,"auc")
-
-model_comparison[1,c("AUC")]<-c(auc1@y.values[1])
-
-
-kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
-
-```
-
-
-From above table it can be seen Logistics Regression model has a very high accuracy rate of 91.42% when model was evaluated using the validation data set. Though the AUC value for this model was comparatively lower 0.702 which indicates not good fitment of the model.
+Results from Regression Model: Logistics Regression model has a very high accuracy rate of 91.42% when model was evaluated using the validation data set. Though the AUC value for this model was comparatively lower 0.702 which indicates not good fitment of the model. By using Hosmer-Lemeshow goodness-of-fit (GOF) tests when model was evaluated p value came to be greater than 0.05. With this test if the p value is lower than 0.05 model is rejected and if it's high, then the model passes the test. Regression model passed this test.
 
 
 ```{r Hosmer-Lemeshow goodness,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
@@ -855,10 +819,9 @@ hoslem.test(model1_update$y, fitted(m))
 ```
 
 
-By using Hosmer-Lemeshow goodness-of-fit (GOF) tests when model was evaluated p value came to be greater than 0.05. With this test if the p value is lower than 0.05 model is rejected and if it's high, then the model passes the test. Regression model passed this test.
 
 
-## Results from Classification Tree- Model 2
+
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE }
@@ -887,14 +850,13 @@ auc2<- performance(pr,"auc")
 
 model_comparison[2,c("AUC")]<-c(auc2@y.values[1])
 
-kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+#kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
 
-It can be seen from the table above, this model 2 has also very high accuracy rate of 91.81% which is very good.This model has AUC value of 0.865 which seem to be inline with given high accuracy.
+Results from Classification Tree-this model has also very high accuracy rate of 91.81% which is very good.This model has AUC value of 0.865 which seem to be inline with given high accuracy.
 
 
-## Results from RandomForest Model
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
@@ -931,18 +893,18 @@ auc3<- performance(pr,"auc")
 model_comparison[3,c("AUC")]<-c(auc3@y.values[1])
 
 
-kable(model_comparison[3,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+#kable(model_comparison[3,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
 
 ```
 
-The model created using Randomforest has accuracy of 98.64% which is extraordinary results and give rise to suspicion model is able to separate out the classification based on certain variable. When we looked at the importance of variable "duration " it becomes apparent that this variable is being used in a big way to classify response accurately. It can be seen that this model also shows the similar kind of trend in  classification of data in earlier stages with very stiff line till true positive rate of 0.4 and then sharp increase in false positive rate.
+Results from RandomForest Model-The model created using Randomforest has accuracy of 98.64% which is extraordinary results and give rise to suspicion model is able to separate out the classification based on certain variable. When we looked at the importance of variable "duration " it becomes apparent that this variable is being used in a big way to classify response accurately. It can be seen that this model also shows the similar kind of trend in  classification of data in earlier stages with very stiff line till true positive rate of 0.4 and then sharp increase in false positive rate.
 
-# 5 Discussion and Conclusions:
+#  Discussion and Conclusions:
 
 
 ```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
 
-model_comparison$Model_No<-c("GLM_model1","CRT_model2","RF_model3")
+model_comparison$Model<-c("GLM","CRT","RF")
 kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comparison of 3 Model3")
 
 ```
