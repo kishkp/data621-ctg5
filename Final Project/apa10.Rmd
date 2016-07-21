@@ -1,0 +1,1122 @@
+---
+title: "How to do Effective and Successful Bank Telemarketing "
+shorttitle: "Predictive Modeling with Logistic Regression "
+author: 
+  - name: Arindam Barman
+    affiliation: "1"
+    corresponding: no    # Define only one corresponding author
+    address: New York, NY
+    email: my@email.com
+  - name: Mohamed Elmoudni
+    affiliation: "1"
+  - name: Shazia Khan
+    affiliation: "1"
+  - name: Kishore Prasad
+    affiliation: "1"
+affiliation:
+  - id: 1
+    institution: City University of New York (CUNY)
+
+
+class: man
+lang: english
+figsintext: yes
+lineno: yes
+bibliography:
+  - r-references.bib
+
+output: papaja::apa6_pdf
+---
+
+# Abstract
+
+  The objective of this project is to analyze and improve a Portuguese bank's telemarketing campaign efficiency by identifying socio-economic attributes of customers as the driving factor for term deposit product selection. As methodology, we will be using the Cross Industry Data Standard Process for Data Mining (CRISP DM) framework for this project. We will start with the business case, followed by data exploration, data preparation, modeling, evaluation, and recommendation from final model. The dataset has 16 variables related to customer's socio-economic conditions and about 41188 customer records. The response is binary variable, the campaign response.  We will create different models - Logistic Regression, Classification Tree, and Random Forest. To evaluate and select from the three models, we used accuracy, (AUC), F1 score etc. With the given dataset, the response is disproportionate to the population with 10% success. This specific correlation incurred some challenges in the model. Hence we had to use the Area under curve (AUC) metrics for our final selection rather than the accuracy number. Based on our model comparison Random Forest has been found as the most efficient model with AUC score of around 92% for the given case scenario. Among predictor variables, we found that the "duration" variable is the most important predictor; with longer duration calls resulting into more productive discussions and success of the campaign. The next important predictor variables are inter-bank transfer rate (euribor3m) and (nr.employed), high transfer rates and number of bank employees respectively lead to successful campaigns. 
+  
+# Keywords
+
+  "Logistics Regression Model, Classification Tree, Random Forest, Area under curve (AUC), Predictive modeling, Bank Telemarketing, Direct Marketing, Data Mining"
+
+
+
+
+```{r message = FALSE, warning = FALSE}
+library("papaja")
+apa_prepare_doc() # Prepare document for rendering
+```
+
+
+# Introduction
+
+  Banks are increasingly concerned about their investment in marketing campaigns. High and fierce bank competitions have reduced the response rate from marketing campaigns to low, sometimes close to single digit. Consequently, banks have invested aggressively in their marketing campaigns to overcome competition and gain edge over their competitors. Adversely, negative impact of mass campaigns also influences bank's brand and value. 
+    
+  Banking companies have started working on addressing this tradeoff. One solution is to be able to identify customers who may have higher chances of response to a marketing campaign. Although the solution is intuitive, it carries multiple challenges such as methods on how to identify those customers and target them for higher responses, the accuracy of predicting responses, and maintaining response success rate above expectations. 
+    
+  Therefore, our objective in this project is to develop a classification solution to enhance the identification of our target customers, customers that are most likely to respond to our bank telemarketing campaign, develop a model to predict customer response with over 90% accuracy.
+
+# Literature Review
+  
+  There have been few papers that have addressed this requirement.  A common thread across all papers was the use of GLM based algorithms. In addition, other algorithms used Neural Networks^1^, Random Forests^1^, KNN^1^, CART^2^, Naive Bayes^3^ and Support Vector Machines (SVM)^3^.  Out of these, Neural Networks and Random Forests seemed to stand out to giving better performances^1^.
+  
+  We have not used KNN in our approach as we cannot interpret the effect of different predictors on our dependent variable^1^. We have not used Neural Networks as it does not fit well to data that was not part of the original training dataset^1^. In our approach, we did not use SVM as it requires a lot of processing power and can sometimes be non-responsive^3^. 
+  
+  Data Imbalance^1^ was another factor that was considered in one of the papers. This was addressed in that approach by using over or Under sampling, or a mix of both, from the training dataset.  However, the results from each of these approaches can vary considerably when applied in a real world situation. It will also differ based on the algorithms that will be applied. We have not addressed this in our approach since we believe that the data imbalance will be inherent in real data and the applied model should appropriately apply some bias. 
+  
+  Based on the literature review, we decided to apply GLM, CART and Random Forests for training the predictive models. Duration was one of the variables highlighted in almost all papers. Some of the papers resorted to extensive feature engineering^1^ ^3^. However, the results in such papers showed that the basic variables like Duration were the ones that had higher predictive power as opposed to other exotic features.  Again in our approach, we did not delve deep into feature engineering and stuck to the basic feature engineering. The advantages of extensive feature engineering seemed to be negligible.
+
+# Methodology - CRISP-DM
+
+  In this project we will be using CRISP DM methodology.
+
+![CRISP-DM](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/CRISP-DM_resize.png)
+
+
+<!-- https://en.wikipedia.org/wiki/Cross_Industry_Standard_Process_for_Data_Mining -->
+  As per wikipedia, "Cross Industry Standard Process for Data Mining, commonly known by its acronym CRISP-DM, was a data mining process model that describes commonly used approaches that data mining experts use to tackle problems. Polls conducted at one and the same website (KDNuggets) in 2002, 2004, 2007 and 2014 show that it was the leading methodology used by industry data miners who decided to respond to the survey. CRISP-DM breaks the process of data mining into six major phases.[9]. The sequence of the phases is not strict and moving back and forth between different phases is always required. The arrows in the process diagram indicate the most important and frequent dependencies between phases. The outer circle in the diagram symbolizes the cyclic nature of data mining itself. A data mining process continues after a solution has been deployed. The lessons learned during the process can trigger new, often more focused business questions and subsequent data mining processes will benefit from the experiences of previous ones."
+
+## Business Understanding
+
+  The data consists of client's personal and transactional profile. In addition we have information on the various campaigns that were conducted and the response from these campaigns. This is the data that has been used in this project to train and select the model to be deployed.
+
+## Data Exploration
+
+  We used exploratory graphs,  Predictor and Response variable Association, count of response by each variable to explore the data. During the data exploration, the various charts and tables enabled us to see how the variables were making an impact on the response. 
+  
+
+## Data Preparation
+
+    
+  The data preparation were basically handling the "unknowns" and missing values. Most of the variables were categorical and we created dummy variables to handle the same. We did not omit the missing records but incorporated in our data to see if there was value in it. 
+
+## Modeling
+
+### Logistics Regression
+
+  Logistic Regression is a probabilistic statistical classification model. It is also used to predict a binary response from a binary predictor. Logistics model doesn't suffer a lot from severe class imbalance. Logistic Regression creates log odds of the response as a linear function of predictor variables. Many of the categorical predictors in the data set for this project have sparse and unbalanced distributions. Using logistics model with the given set of data would need adjustment of variables to fine tune the model.
+
+### Classification Tree
+
+  Classification Tree is used to predict the outcome of a categorical response variable. The purpose of the analyses via tree-building algorithms is to determine a set of logical conditional split that permit accurate classification of cases and accurate prediction. Effectiveness of classification tree model with binary variable is one of the reason for selection for this analysis study. This model though has problem with over fitting. We will also create RandomForest model to overcome that.
+
+### RandomForest Model
+
+  Random Forests grows many classification trees for given set of response and predictor variables. Each tree gives a classification, and all the outputs from different trees are "votes" for that class. The forest chooses the classification having the most votes (over all the trees in the forest). Over fitting problem with the classification tree can be overcome by this approach with weighted average of more number of trees. This method is good for prediction but a little bit difficult to interpret. Since we are facing the binary category, Random Forest is a good classification method to try.
+
+## Evaluation
+
+  In the given business scenario, the objective is to build a model that can predict likelihood of response from Customer. Following evaluation criteria we have used for model evaluation:
+
+- The Hosmer-Lemeshow test assesses the model calibration and how predicted values tend to match the predicted frequency when split by risk decides. This test will be used for Logistics regression model validation.
+
+- AUC along with Model Accuracy will be used for model evaluation. Accuracy is calculated based on certain threshold whereas AUC is overall performance evaluation of model as various points. AUC criteria will be given more weight age for model evaluation in this case.
+
+
+# Experimentations and Results
+
+## Data Exploration
+
+  The data is available on website for UC Irvine Machine Learning Repository. There are two different data sets available.  We chose to use the dataset with additional attributes, "bank-additional", that has 41,188 records and it has 20 attributes and 1 response variable. The data consists of four groups of information.
+    
+    
+  - Client's personal information
+  - Client's bank information
+  - Bank's telemarketing campaign information
+  - Social and economic information
+  
+  The main problem with the dataset is that it consists of many missing values which are labeled "Unknown". The missing data consists of 26% of the data. We decided to retain the missing data to help with our regression modeling. The other problem with the data is that only 12% of the data shows the response variable to be "y". We looked at each variable and the unique values contained in each variable and what they represented. We can divide the variables in the following three categories:
+
+- Binary values of "yes" and "no" with null values given as "unknown".
+- Categorical values with "unknown" as missing values. The categorical variable require dummy variables to be created for each unique value. We included "unknown" as one of the dummy variable. - numeric values with "999" as indication of null value. We created a variable to indicate if the data was missing or present.
+
+  Also following two areas have been explored in the training data set.
+
+- Missing values and Unique Values
+- Variables relationship to y
+
+  We also investigated how the initial data aligns with a typical logistic model plot. Recall the Logistic Regression is part of a larger class of algorithms known as Generalized Linear Model (GLM). The fundamental equation of generalized linear model is:
+
+g(E(y)) = a+ Bx1+B2x2+ B3x_3+...
+
+  where, g() is the link function, E(y) is the expectation of target variable and B0 + B1x1 + B2x2+B3x3 is the linear predictor B0,B1,B2, B3 to be predicted. The role of link function is to 'link' the expectation of y to linear predictor. In logistic regression, we are only concerned about the probability of outcome dependent variable success or failure. As described above, g() is the link function. This function is established using two things: Probability of Success as p and Probability of Failure as 1-p. p should meet following criteria: It must always be positive (since p >= 0) It must always be less than equals to 1 (since p <= 1).
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+if (!require("ggplot2",character.only = TRUE)) (install.packages("ggplot2",dep=TRUE))
+if (!require("MASS",character.only = TRUE)) (install.packages("MASS",dep=TRUE))
+if (!require("knitr",character.only = TRUE)) (install.packages("knitr",dep=TRUE))
+if (!require("xtable",character.only = TRUE)) (install.packages("xtable",dep=TRUE))
+if (!require("dplyr",character.only = TRUE)) (install.packages("dplyr",dep=TRUE))
+if (!require("psych",character.only = TRUE)) (install.packages("psych",dep=TRUE))
+if (!require("stringr",character.only = TRUE)) (install.packages("stringr",dep=TRUE))
+#if (!require("car",character.only = TRUE)) (install.packages("car",dep=TRUE))
+if (!require("faraway",character.only = TRUE)) (install.packages("faraway",dep=TRUE))
+if (!require("popbio",character.only = TRUE)) (install.packages("popbio",dep=TRUE))
+if (!require("gdata",character.only = TRUE)) (install.packages("gdata",dep=TRUE))
+if (!require("reshape",character.only = TRUE)) (install.packages("reshape",dep=TRUE))
+if (!require("rpart",character.only = TRUE)) (install.packages("rpart",dep=TRUE))
+if (!require("randomForest",character.only = TRUE)) (install.packages("randomForest",dep=TRUE))
+if (!require("boot",character.only = TRUE)) (install.packages("boot",dep=TRUE))
+
+
+#install.packages("fancyvrb")
+
+library(ggplot2)
+library(MASS)
+library(knitr)
+library(xtable)
+library(dplyr)
+library(psych)
+library(stringr)
+#library(car)
+library(faraway)
+library(aod)
+library(Rcpp)
+library(leaps)
+library(ISLR)
+library(AUC)
+library(ROCR)
+library(Amelia)
+library(popbio)
+library(gdata)
+library(reshape)
+library(gridExtra)
+library(rpart)
+library(randomForest)
+library(boot)
+library(ResourceSelection)
+library(pander)
+
+
+bank_train <- read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional-full.csv",
+           sep = ";",
+           header = TRUE)
+
+bank_test <-read.table(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/bank-additional.csv",
+           sep = ";",
+           header = TRUE)
+
+variable_analysis<- read.csv(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Variable%20Analysis.csv")
+
+kable(variable_analysis, caption = "Variable Analysis") 
+
+pander::pander(variable_analysis, split.cells = c(20, 20, 60), split.table = Inf, justify = 'left', caption = "Variable Analysis")
+
+
+```
+
+![Variable-Analysis](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Var_Analysis.png)
+
+
+##  Data Preparation
+
+  The main objective in the transformations is to achieve linear relationships with the dependent variable or, really, with its logit. As discussed above, we carried out the following transformations:
+
+- Convert Binary variable to 0 and 1 from yes and no
+- Create dummy variables for categorical variables
+- Data Summary Analysis
+- Correlation of Variables with y
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+bank_train2<-bank_train
+
+#update response variable y to binary values of 0 and 1
+#levels(bank_train2$y)
+levels(bank_train2$y) <- c(0, 1)
+bank_train2$y <- as.numeric(levels(bank_train2$y))[bank_train2$y]
+#str(bank_train2)
+
+
+# age is numeric 
+
+#create dummy variables for job values
+for(level in unique(bank_train2$job)){
+  bank_train2[paste("job", level, sep = "_")] <- ifelse(bank_train2$job == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$job <- NULL
+#head(bank_train2)
+
+#create dummy variables for marital values
+#levels(bank_train2$marital)
+for(level in unique(bank_train2$marital)){
+  bank_train2[paste("marital", level, sep = "_")] <- ifelse(bank_train2$marital == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$marital <- NULL
+#head(bank_train2)
+
+#--------------------------------------------------------------------------
+#education dummy variables primary, secondary tertiary, unknown and illiterate
+
+#education_None
+bank_train2$education_illiterate <- as.numeric(ifelse(bank_train2$education == "illiterate", 1, 0))
+#table(bank_train2$education_Illiterate)
+
+#education_Unknown
+bank_train2$education_unknown <-as.numeric(ifelse(bank_train2$education == "unknown", 1, 0))
+#table(bank_train2$education_Unknown)
+
+#education_Primary
+bank_train2$education_primary <- as.numeric(ifelse(bank_train2$education == "basic.4y" 
+                                        | bank_train2$education == "basic.6y", 1, 0))
+#table(bank_train2$education_Primary)
+
+#education_Secondary
+bank_train2$education_secondary <- as.numeric(ifelse(bank_train2$education == "basic.9y" 
+                                        | bank_train2$education == "high.school", 1, 0))
+#table(bank_train2$education_Secondary)
+
+#education_Tertiary
+bank_train2$education_tertiary <- as.numeric(ifelse(bank_train2$education == "professional.course" 
+                                        | bank_train2$education == "university.degree", 1, 0))
+#table(bank_train2$education_Tertiary)
+
+#Delete original catagorical variable
+bank_train2$education <- NULL
+
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_train2$default)
+for(level in unique(bank_train2$default)){
+  bank_train2[paste("default", level, sep = "_")] <- ifelse(bank_train2$default == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$default <- NULL
+
+
+#levels(bank_train2$housing)
+for(level in unique(bank_train2$housing)){
+  bank_train2[paste("housing", level, sep = "_")] <- ifelse(bank_train2$housing == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$housing <- NULL
+
+#levels(bank_train2$loan)
+for(level in unique(bank_train2$loan)){
+  bank_train2[paste("loan", level, sep = "_")] <- ifelse(bank_train2$loan == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$loan <- NULL
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_train2$contact)
+for(level in unique(bank_train2$contact)){
+  bank_train2[paste("contact", level, sep = "_")] <- ifelse(bank_train2$contact == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$contact <- NULL
+
+#levels(bank_train2$month)
+for(level in unique(bank_train2$month)){
+  bank_train2[paste("month", level, sep = "_")] <- ifelse(bank_train2$month == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$month <- NULL
+
+#levels(bank_train2$day_of_week)
+for(level in unique(bank_train2$day_of_week)){
+  bank_train2[paste("day_of_week", level, sep = "_")] <- ifelse(bank_train2$day_of_week == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$day_of_week <- NULL
+
+#duration is numeric
+#campaign is numeric
+
+#pdays is numeric
+#dummy variable for pdays -previous contact yes or no ; 1 or 0  when 999
+bank_train2$previous_contact <- as.numeric(ifelse(bank_train2$pdays == 999, 0, 1))
+
+#previous is numeric
+
+#levels(bank_train2$poutcome)
+for(level in unique(bank_train2$poutcome)){
+  bank_train2[paste("poutcome", level, sep = "_")] <- ifelse(bank_train2$poutcome == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_train2$poutcome <- NULL
+
+# emp.var.rate is numeric
+# cons.price.idx is numeric
+# cons.conf.idx  is numeric
+# euribor3m is numeric
+# nr.employed is numeric
+
+
+bank_test2<-bank_test
+
+#update response variable to binary values of 0 and 1
+levels(bank_test2$y) <- c(0, 1)
+bank_test2$y <- as.numeric(levels(bank_test2$y))[bank_test2$y]
+
+# age is numeric 
+
+#create dummy variables for job values
+for(level in unique(bank_test2$job)){
+  bank_test2[paste("job", level, sep = "_")] <- ifelse(bank_test2$job == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$job <- NULL
+#head(bank_test2)
+
+#create dummy variables for marital values
+#levels(bank_test2$marital)
+for(level in unique(bank_test2$marital)){
+  bank_test2[paste("marital", level, sep = "_")] <- ifelse(bank_test2$marital == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$marital <- NULL
+#head(bank_test2)
+
+#--------------------------------------------------------------------------
+#education dummy variables primary, secondary tertiary, unknown and illiterate
+
+#education_None
+bank_test2$education_illiterate <- as.numeric(ifelse(bank_test2$education == "illiterate", 1, 0))
+#table(bank_test2$education_Illiterate)
+
+#education_Unknown
+bank_test2$education_unknown <-as.numeric(ifelse(bank_test2$education == "unknown", 1, 0))
+#table(bank_test2$education_Unknown)
+
+#education_Primary
+bank_test2$education_primary <- as.numeric(ifelse(bank_test2$education == "basic.4y" 
+                                        | bank_test2$education == "basic.6y", 1, 0))
+#table(bank_test2$education_Primary)
+
+#education_Secondary
+bank_test2$education_secondary <- as.numeric(ifelse(bank_test2$education == "basic.9y" 
+                                        | bank_test2$education == "high.school", 1, 0))
+#table(bank_test2$education_Secondary)
+
+#education_Tertiary
+bank_test2$education_tertiary <- as.numeric(ifelse(bank_test2$education == "professional.course" 
+                                        | bank_test2$education == "university.degree", 1, 0))
+#table(bank_test2$education_Tertiary)
+
+#Delete original catagorical variable
+bank_test2$education <- NULL
+#---------------------------------------------------
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_test2$default)
+for(level in unique(bank_test2$default)){
+  bank_test2[paste("default", level, sep = "_")] <- ifelse(bank_test2$default == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$default <- NULL
+
+
+#levels(bank_test2$housing)
+for(level in unique(bank_test2$housing)){
+  bank_test2[paste("housing", level, sep = "_")] <- ifelse(bank_test2$housing == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$housing <- NULL
+
+#levels(bank_test2$loan)
+for(level in unique(bank_test2$loan)){
+  bank_test2[paste("loan", level, sep = "_")] <- ifelse(bank_test2$loan == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$loan <- NULL
+
+# contact has 2 levels - 1 variable is required
+#levels(bank_test2$contact)
+for(level in unique(bank_test2$contact)){
+  bank_test2[paste("contact", level, sep = "_")] <- ifelse(bank_test2$contact == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$contact <- NULL
+
+#levels(bank_test2$month)
+for(level in unique(bank_test2$month)){
+  bank_test2[paste("month", level, sep = "_")] <- ifelse(bank_test2$month == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$month <- NULL
+
+#levels(bank_test2$day_of_week)
+for(level in unique(bank_test2$day_of_week)){
+  bank_test2[paste("day_of_week", level, sep = "_")] <- ifelse(bank_test2$day_of_week == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$day_of_week <- NULL
+
+#duration is numeric
+#campaign is numeric
+
+#pdays is numeric
+#dummy variable for pdays -previous contact yes or no ; 1 or 0  when 999
+bank_test2$previous_contact <- as.numeric(ifelse(bank_test2$pdays == 999, 0, 1))
+
+#previous is numeric
+
+#levels(bank_test2$poutcome)
+for(level in unique(bank_test2$poutcome)){
+  bank_test2[paste("poutcome", level, sep = "_")] <- ifelse(bank_test2$poutcome == level, 1, 0)
+}
+#Delete original catagorical variable
+bank_test2$poutcome <- NULL
+
+# emp.var.rate is numeric
+# cons.price.idx is numeric
+# cons.conf.idx  is numeric
+# euribor3m is numeric
+# nr.employed is numeric
+
+
+```
+
+
+## Model Building
+
+  In this section experimentation will be carried out with the data by formulating three different types of models with three different approaches. Following are the three different approaches that will be used here:
+
+- Model 1: This model will be created by using logit function of Generalized Logistics Model (GLM).
+- Model 2: This model will be created by using Classification tree function.  
+- Model 3: This model will be created by using classification technique RandomForests model. 
+
+  There are two data set given with the business case training and test set. Training set will be used to train the model and the test set will be used to evaluate the model performance.
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+# update "-" in train set
+colnames(bank_train2)[15]<-c("job_blue_collar")
+colnames(bank_train2)[20]<-c("job_self_employed")
+
+# remove"-" from variable to avoid any issues in running the model in test
+colnames(bank_test2)[12]<-c("job_blue_collar")
+colnames(bank_test2)[16]<-c("job_self_employed")
+
+```
+### Logistics Regression - Model 1 
+
+  Logistics regression function GLM has been used to classify the campaign response variable. Basic model generated by using GLM function has been enhanced by making necessary adjustments to non-associated predictor variables shown as "NA" in basic model output. Next the model has been validated by using k=5 fold cross validation press to do necessary adjustment to the model.
+
+  A total 10 iterations been performed before final selection of variables were made. AIC value from model 1 and model1_update (enhanced) model were same 13776. Hence removing variables from basic model does not help performance wise but reduced complexity with less degrees of freedom. By using k=5 cross validation, ($delta) error value came out to be low 0.06289177.
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE, results="hide"}
+bank_train2$y<-as.factor(bank_train2$y)
+model1 <- glm(y ~.,family=binomial,data=na.omit(bank_train2))
+summary(model1)
+
+#anova(model1, test="Chisq")
+model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(bank_train2))
+
+# exp(coef(model1_update))
+# Cross validation of model for K=5
+t1<-cv.glm(bank_train2, model1_update, K = 10)$call
+cv.glm(data = bank_train2, glmfit = model1_update, K = 5)
+
+# model1_var <-read.table("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Model1_var.csv",
+#            sep = ",",
+#            header = TRUE)
+
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE, results= 'hide'}
+
+model1_var<- read.csv("https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Model1_var.csv", quote = '"')
+
+model1_var$Variables <- str_replace_all(model1_var$Variables, "--", ",")
+model1_var$Odd.ratio <- str_replace_all(model1_var$Odd.ratio, "--", ",")
+
+pander::pander(model1_var, split.cells = c(8, 67, 25 ), split.table = Inf, justify = 'left', caption = "Signifcant Variables Model 1")
+
+kable(model1_var, caption = "Signifcant Variables Model 1") 
+
+```
+
+![Variable-Importance](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Var_Imp.png)
+
+
+###  Classification Tree - Model 2
+
+  The basic idea of classification tree model is to predict a response variable y for the campaign from predictor variables. Model does this by growing a binary tree. At each node in the tree, a test is applied to one of the inputs. Depending on the outcome of the test two routes to be followed left or right. Eventually a leaf node is reached where a prediction is made about the binary outcome of campaign response. Model 2 has been rated using the Classification function from ROCR package. Basic model has been optimized using prune function.
+  
+```{r,echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+par(mfrow=c(1,1))
+
+model2 <- rpart(y~., data=na.omit(bank_train2), method = "class")
+
+model2_update <- prune(model2, cp = model2$cptable[which.min(model2$cptable[,"xerror"]),"CP"])
+
+plotcp(model2_update)
+
+#printcp(model2_update) # display the results 
+
+```
+
+![Tree_Size](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Tree_Size.png)
+
+  Following are the most important variables from this model: duration, nr.employed, euribor3m, emp.var.rate, cons.conf.idx, cons.price.idx. Total 6 leaves (decision points) have been formed from this model. Complete Classification tree is given below in the diagram.
+  
+```{r, echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+par(mfrow=c(1,1))
+              
+plot the pruned tree 
+par(mfrow = c(1, 3), mar = rep(0.1, 4))
+par(mfrow=c(1,1))
+plot(model2_update, uniform=TRUE, main=NA)
+text(model2_update, use.n=TRUE, all=TRUE, cex=.8)
+
+```
+
+![C_Tree](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/C_Tree.png)
+
+### RandomForest- Model 3
+
+  In Random Forests many classification trees are formed to classify campaign response variable y. Each tree creates separate set of classification, each tree is voted for performance for that classification. The forest chooses the classification having the most votes (over all the trees in the forest). One model will be created using this method with tree size 50. Then this model will be evaluated with a model of tree size 100.
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# Random Forest prediction of Kyphosis data
+
+model3 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=50)
+# print(model3) # view results 
+
+model4 <- randomForest(as.factor(y) ~ .,data=bank_train2,importance=TRUE, ntree=100)
+
+#plot model 3
+
+par(mfrow=c(2,3))
+
+#layout(matrix(c(1,2),nrow=1),
+#width=c(1,1)) 
+par(mar=c(1,1,2,0)) #No margin on the right side
+plot(model3, log="y")
+par(mar=c(3,3,1,1)) #No margin on the left side
+plot(c(0,1),type="n", axes=F, xlab="", ylab="")
+legend("top", colnames(model3$err.rate),col=1:3,cex=0.8,fill=1:4)
+
+# plot model 4
+
+#layout(matrix(c(1,2),nrow=1),
+#width=c(1,1)) 
+par(mar=c(1,1,2,1)) #No margin on the right side
+plot(model4, log="y")
+par(mar=c(1,3,1,1)) #No margin on the left side
+plot(c(0,1),type="n", axes=F, xlab="", ylab="")
+#legend("top", colnames(model4$err.rate),col=1:3,cex=0.8,fill=1:4)
+
+
+```
+
+![RF_Chart1](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/RF_Chart1.png)
+
+
+  From the chart above it can be seen that classification error rate to classify negative responses reduces with the increase in number of trees but there is no significant change in error rate for positive response. There is only slight reduction in error rate for negative responses when tree size is increased to 100 from 50. Number of variables tried at each split are 7 with negative classification rate of 0.03 and positive classification error rate of 0.51. Below chart provides importance of various variables used in the model.
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE, results='hide'}
+
+# display importance of variables
+ varImpPlot(model3)
+
+```
+
+![RF_Chart2](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/RF_Chart2.png)
+
+
+## Results from Models
+
+
+```{r ,echo = FALSE, warning=FALSE, message=FALSE}
+
+#Following function Eval() will be used to calculate various metrics related to the model like Accuracy, Sensitivity, #Precision , Specificity, and F1 score
+
+Eval<-function(x){
+    TP<-x$Freq[x$metrics=="TRUE_1"]
+    FP<-x$Freq[x$metrics=="FALSE_1"]
+    TN<-x$Freq[x$metrics=="FALSE_0"]
+    FN<-x$Freq[x$metrics=="TRUE_0"]
+    Accuracy <-(TP+TN)/(TP+TN+FP+FN)
+    Error_Rate<-(FP+FN)/(TP+TN+FP+FN)
+    Precision<-TP/(TP+FP)
+    sensitivity<-TP/(TP+FN)
+    specificity<-TN/(TN+FP)
+    F1_Score=2*Precision*sensitivity/(sensitivity+specificity)
+    eval_result<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0))
+    
+    eval_result[1,1]<-Accuracy
+    eval_result[1,2]<-Error_Rate
+    eval_result[1,3]<- Precision
+    eval_result[1,4]<-sensitivity
+    eval_result[1,5]<-specificity
+    eval_result[1,6]<-F1_Score
+    eval_result
+}
+
+model_comparison<-data.frame(Accuracy=c(0),Error_Rate=c(0),Precision=c(0),sensitivity=c(0),specificity=c(0),F1_Score=c(0), AUC=c(0))
+
+#the McFadden R^2 index can be used to assess the model fit.
+#pR2(model1)
+
+# Predict result from the model 1 with probability
+
+bank_test2$TARGET_FLAG1<-predict(model1_update,newdata=na.omit(bank_test2),type='response')
+
+
+
+#confusion matrix model 1
+
+
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG1>0.5,bank_test2$y))
+
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
+model_comparison[1,]<-Eval(df_pre_train1)
+
+# cauculate AUC
+
+results1<-ifelse(bank_test2$TARGET_FLAG1>0.5,1,0)
+
+pr <- prediction(results1, bank_test2$y)
+
+auc1<- performance(pr,"auc")
+
+model_comparison[1,c("AUC")]<-c(auc1@y.values[1])
+
+
+#kable(model_comparison[1,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+
+```
+
+### Logistic Regression Results
+
+  Results from Logistics Regression model has a very high accuracy rate of 91.42% when model was evaluated using the validation data set. The AUC for this model was comparatively lower (0.702), which indicates not good fitment of the model. By using Hosmer-Lemeshow goodness-of-fit (GOF) tests when model was evaluated p value came to be greater than 0.05. With this test if the p value is lower than 0.05 model is rejected and if it's high, then the model passes the test. Regression model passed this test.
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+library(ResourceSelection)
+
+m <- model1_update<-glm(y ~.-job_student-marital_unknown-education_tertiary-education_tertiary-default_yes-housing_unknown-loan_yes-loan_unknown-contact_cellular-month_sep-day_of_week_fri-poutcome_success,family=binomial,data=na.omit(bank_test2))
+
+a <- hoslem.test(model1_update$y, fitted(m))
+
+bank_test2$TARGET_FLAG2<- predict(model2_update,newdata=bank_test2)[,2]
+
+
+#confusion matrix model 2
+
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG2>0.5,bank_test2$y))
+
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
+model_comparison[2,]<-Eval(df_pre_train1)
+
+# Calulate AUC
+
+results2 <- predict(model2_update,newdata=bank_test2,type="prob")[,2]
+
+pr <- prediction(results2, bank_test2$y)
+
+auc2<- performance(pr,"auc")
+
+model_comparison[2,c("AUC")]<-c(auc2@y.values[1])
+
+#kable(model_comparison[2,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+
+```
+
+### Classification Tree Results
+
+  Results from Classification Tree Model-this model has also very high accuracy rate of 91.81% which is very good.This model has AUC value of 0.865 which seem to be in line with given high accuracy.
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+
+# results from model 3
+
+bank_test2$TARGET_FLAG3<-as.numeric(predict(model3,newdata=bank_test2,type='response'))
+
+bank_test2$TARGET_FLAG3<-ifelse(bank_test2$TARGET_FLAG3==1,0,1)
+
+
+#confusion matrix model 3
+
+df_pre_train1<-as.data.frame(table(bank_test2$TARGET_FLAG3,bank_test2$y))
+
+df_pre_train1$Var1<-as.character(df_pre_train1$Var1)
+df_pre_train1$Var1[df_pre_train1$Var1==0]<-c("FALSE")
+df_pre_train1$Var1[df_pre_train1$Var1==1]<-c("TRUE")
+
+df_pre_train1$metrics <- paste(df_pre_train1$Var1,df_pre_train1$Var2, sep = '_') 
+
+model_comparison[3,]<-Eval(df_pre_train1)
+
+# Calculaate AUC
+
+#results3 <- ifelse(as.numeric(predict(model4,newdata=na.omit(bank_test2),type='response'))==1,0,1)
+
+pr <- prediction(bank_test2$TARGET_FLAG3, bank_test2$y)
+
+
+auc3<- performance(pr,"auc")
+
+
+model_comparison[3,c("AUC")]<-c(auc3@y.values[1])
+
+
+#kable(model_comparison[3,],row.names = TRUE, caption = " Model 1 evaluation KPIs")
+
+```
+
+### Random Forest Results
+
+  Results from RandomForest Model-The model created using Randomforest has accuracy of 98.64% which is extraordinary results and give rise to suspicion model is able to separate out the classification based on certain variable. When we looked at the importance of variable "duration" it becomes apparent that this variable is being used in a big way to classify response accurately. It can be seen that this model also shows the similar kind of trend in  classification of data in earlier stages with very stiff line till true positive rate of 0.4 and then sharp increase in false positive rate.
+
+#  Discussion and Conclusions
+
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE, results='hide'}
+
+model_comparison$Model<-c("GLM","CRT","RF")
+
+kable(model_comparison[1:3,c(8,1,2,3,4,5,6,7)],row.names = TRUE, caption = "Comparison of the Models")
+
+# Area under curve model 1
+
+bank_test2$y<-as.factor(bank_test2$y)
+
+myRoc1 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG1) 
+
+# Area under curve model 2
+myRoc2 <- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG2)
+
+# Area under curve model 3
+
+myRoc3<- pROC::roc(bank_test2$y,bank_test2$TARGET_FLAG3) 
+
+par(mfrow=c(1,1))
+plot (c(1,0),c(0,1),type="n", xlab="Specificity",ylab="Sensitivity", xlim=rev(range(myRoc1$specificities)))
+
+lines(x = myRoc1$specificities,y=myRoc1$sensitivities,lwd=2.5, lty=1)
+lines(x = myRoc2$specificities,y=myRoc2$sensitivities,lwd=2.5, lty=2)
+lines(x = myRoc3$specificities,y=myRoc3$sensitivities,lwd=2.5, lty=3)
+
+legend(x = "bottomright", c("GLM","CRT","RF"), lty=c(1,2,3), lwd=c(2.5,2.5, 2.5))
+
+```
+
+![ROC_Curve](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/ROC_Curve.png)
+
+
+## Final model selection
+
+  Based on the Accuracy of the model, model 1 and model 2 are very close around 91% accuracy with probability threshold of 0.5. Model 3 has much higher value of 98%.  But Accuracy is not always the key criteria for a model as Accuracy is calculated based on a defined threshold. Also due to imbalance of data o 10% to 90% distribution of response variable forced to choose the model based on other criteria. Model Based on AUC value is model 3 having AUC value of 0.9398 which is a very good score. Model 3 stands out among the three models.
+
+
+## Key predictor variables
+
+  For all three models it is found variables "duration" is most important variables by far. This variable has positive impact in campaign outcome. This could be due to the fact that longer the Customer stays on phone more productive conversation is taking place to get the Customer start their term deposit Account. "euribor3m" is most important variable which denotes inter-bank interest rate in Eurozone. Term deposit interest rates are generally interlinked and tend to go up together. This variable has positive impact on response variable. Predictor "nr.employed" denotes number of employees for the bank. This variable also has positive impact on campaign response. More the number of employees more visible the bank is and in turn more customers it gets through the campaign. Among the negative variables "emp.var.rate" has negative impact on response. A negative rate of this variable indicates issues with economy and lower economic activities. That in turn could impact the savings rate and people tend to use their savings during such time.
+
+
+## Shortcomings
+
+  Imbalance of response variable only 10% of population was the main shortcomings that we have in the model creation. This issue has been addressed partially by using Area Under Curve as the criteria for model selection.
+
+
+## Final Recommendation
+
+  In conclusion it can be suggested to the bank management that focus should be given in hiring more people, doing more quality phone calls. Also to time the campaign in a stable macroeconomic environment to get better return on investment from this campaign. 
+
+
+
+\newpage
+
+
+# References
+
+```{r,echo = FALSE, warning=FALSE, message=FALSE,eval=TRUE}
+r_refs(file = "r-references.bib")
+```
+
+# Appendix
+
+- Supplemental tables and/or figures.
+- R statistical programming code.
+
+## Data Analysis details
+
+### Variable Description
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+variables<- read.csv(
+  "https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Variable%20Description.csv")
+
+kable(variables, caption = "Variable Description") 
+
+```
+
+
+###  Predictor and Response variable Association
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+
+#round(prop.table(table(bank_train$y, bank_train$age),2)*100,2)  #student, retired
+ggplot(bank_train, aes(age)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$job),2)*100,2)  #student, retired
+ggplot(bank_train, aes(job)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$marital),2)*100,2) #unknown
+ggplot(bank_train, aes(marital)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$education),2)*100,2) #illeterate
+ggplot(bank_train, aes(education)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$default),2)*100,2) #no
+ggplot(bank_train, aes(default)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$housing),2)*100,2) #no
+ggplot(bank_train, aes(housing)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$loan),2)*100,2) #no
+ggplot(bank_train, aes(loan)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$contact),2)*100,2) #cellular
+ggplot(bank_train, aes(contact)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+#round(prop.table(table(bank_train$y, bank_train$month),2)*100,2) #march, dec, sep, oct
+ggplot(bank_train, aes(month)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+#round(prop.table(table(bank_train$y, bank_train$day_of_week),2)*100,2) #Thursday
+ggplot(bank_train, aes(day_of_week)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+#round(prop.table(table(bank_train$y, bank_train$duration),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(duration)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+ xlim(0, 2200)
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$campaign),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(campaign)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$pdays),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(pdays)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+#round(prop.table(table(bank_train$y, bank_train$previous),2)*100,2) #increases with every contact upto 5
+ggplot(bank_train, aes(previous)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+  #round(prop.table(table(bank_train$y, bank_train$poutcome),2)*100,2) #success
+ggplot(bank_train, aes(poutcome)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+ #round(prop.table(table(bank_train$y, bank_train$emp.var.rate),2)*100,2) #success
+ggplot(bank_train, aes(emp.var.rate)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+ #round(prop.table(table(bank_train$y, bank_train$cons.price.idx),2)*100,2) #success
+ggplot(bank_train, aes(cons.price.idx)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+ #round(prop.table(table(bank_train$y, bank_train$cons.conf.idx),2)*100,2) #success
+ggplot(bank_train, aes(cons.conf.idx)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+ #round(prop.table(table(bank_train$y, bank_train$euribor3m),2)*100,2) #success
+ggplot(bank_train, aes(euribor3m)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+ #round(prop.table(table(bank_train$y, bank_train$nr.employed),2)*100,2) #success
+ggplot(bank_train, aes(nr.employed)) + geom_bar(aes(fill = y), position = "fill")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+```
+
+###  Unique Value & Missing value
+
+  We see that there are no missing values in our dataset as shown in table 2 and graph format.
+The unique values are given in the table 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+par(mfrow=c(1,1))
+#finding missing values
+missings<- data.frame(sapply(bank_train,function(x) sum(is.na(x))))
+names(missings)[1]<- paste("Missing Values")
+kable(missings, caption = "Missing Values")
+
+# missing values graph
+#missmap(bank_train, main = "Missing values vs observed")
+
+### finding unique values
+uniques<- data.frame(sapply(bank_train, function(x) length(unique(x))))
+names(uniques)[1]<- paste("Unique Values")
+kable(uniques, caption = "Unique Values")
+
+```
+
+
+### Data Summary post conversion 
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
+
+#str(bank_train2)
+#bank_train2$y<-as.numeric(bank_train2$y)
+ds_stats <- psych::describe(bank_train2, skew = TRUE, na.rm = TRUE)
+#ds_stats
+kable(ds_stats[1:7], caption= "Data Summary")
+kable(ds_stats[8:13], caption= "Data Summary (Cont)")
+
+#head(bank_train2)
+
+fun1 <- function(a, y) cor(y, a)
+x<-bank_train2[,]
+Correlation <- sapply(x, FUN = fun1, y=bank_train2$y) 
+
+
+Correlation <- sort(Correlation, decreasing = TRUE)
+#head(Correlation)
+kable(Correlation, caption = "Variable Correlation")
+
+#str(bank_train2)
+#str(bank_train)
+#summary(bank_train2)
+
+```
+
+### Outliers Analysis
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+
+mdata<- select(bank_train2,  age, previous, duration, campaign, emp.var.rate, cons.price.idx, euribor3m,nr.employed)
+mdata2 <- melt(mdata)
+
+# Output the boxplot
+p <- ggplot(data = mdata2, aes(x=variable, y=value)) + 
+  geom_boxplot() + ggtitle("Outliers Identification")
+p + facet_wrap( ~ variable, scales="free", ncol=4)
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
+
+bank_train2 <- bank_train2 %>%
+  select(-y, everything())
+
+fun1 <- function(a, y) cor(y, a)
+x<-bank_train2[,]
+Correlation <- sapply(x, FUN = fun1, y=bank_train2$y) 
+
+
+Correlation <- sort(Correlation, decreasing = TRUE)
+
+vars <- names(Correlation)
+
+
+par(mfrow=c(2,4))
+for (i in 2:ncol(bank_train2)) {
+  hist(bank_train2[,vars[i]], main = vars[i], xlab = "")
+}
+
+```
+
+### Analysis of link functions for given variables
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE,eval=FALSE}
+
+#move y to the last column
+
+
+par(mfrow=c(2,4))
+#Show in the order of Correlation
+p = list()
+#for (i in 2:ncol(bank_train2)) p[[i]] <- qplot(bank_train2[,i], xlab=names(bank_train2)[[i]])
+for (i in 2:ncol(bank_train2)) {
+  p[[i]] <- logi.hist.plot(bank_train2[,vars[i]],bank_train2$y,logi.mod = 1, type='hist', boxp=FALSE,col='grey', 
+                           mainlabel = vars[i])
+}
+#do.call(grid.arrange, p)
+#plot(p)
+#plot(p[[1]], p[[2]])
+#plot (p$your.x.coordinate, p$your.y.coordinate)
+#head(bank_train2)
+
+ 
+```
+
+
+## R Code
+
+
+```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/apa10.Rmd', documentation = 0)), eval = FALSE}
+```
+
+
+
+
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+\setlength{\parskip}{11pt}
+
