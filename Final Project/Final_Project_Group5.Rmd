@@ -1157,8 +1157,10 @@ varImpPlot(model3)
 
 ## R Code
 
-```{r code=readLines(knitr::purl('https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Final_Project_Group5.Rmd', documentation = 0)), eval = FALSE}
-```
+Below is the link to the R source code:
+
+[R Code](https://raw.githubusercontent.com/kishkp/data621-ctg5/master/Final%20Project/Final_Project_Group5.Rmd) 
+
 
 
 
